@@ -28,25 +28,35 @@ async function handleStreamProxy(req, res) {
       const urlObj = new URL(targetUrl);
       const baseUrl = urlObj.origin + urlObj.pathname.substring(0, urlObj.pathname.lastIndexOf('/') + 1);
 
+      const resolveAbsolute = (rawUri) => {
+        if (!rawUri) return rawUri;
+        if (rawUri.startsWith('http://') || rawUri.startsWith('https://')) return rawUri;
+        if (rawUri.startsWith('/')) return `${urlObj.origin}${rawUri}`;
+        return `${baseUrl}${rawUri}`;
+      };
+
       // Rewrite relative URLs di dalam playlist agar melalui proxy
       const rewritten = m3u8Content.split('\n').map(line => {
         const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith('#')) return line;
+        if (!trimmed) return line;
 
-        let absoluteLineUrl = trimmed;
-        if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
-          if (trimmed.startsWith('/')) {
-            absoluteLineUrl = `${urlObj.origin}${trimmed}`;
-          } else {
-            absoluteLineUrl = `${baseUrl}${trimmed}`;
-          }
+        // Handle #EXT-X-MAP:URI="..." or #EXT-X-KEY:URI="..."
+        if (trimmed.includes('URI="')) {
+          return trimmed.replace(/URI="([^"]+)"/g, (match, uri) => {
+            const abs = resolveAbsolute(uri);
+            return `URI="/api/stream/proxy?url=${encodeURIComponent(abs)}"`;
+          });
         }
 
+        if (trimmed.startsWith('#')) return line;
+
+        const absoluteLineUrl = resolveAbsolute(trimmed);
         return `/api/stream/proxy?url=${encodeURIComponent(absoluteLineUrl)}`;
       }).join('\n');
 
-      res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+      res.setHeader('Content-Type', 'application/vnd.apple.mpegurl; charset=utf-8');
       res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Headers', '*');
       res.setHeader('Cache-Control', 'public, max-age=60');
       return res.send(rewritten);
     } else {
@@ -62,11 +72,17 @@ async function handleStreamProxy(req, res) {
       });
 
       res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Headers', '*');
+      res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range, Accept-Ranges');
+      res.setHeader('Accept-Ranges', 'bytes');
+
       if (response.headers['content-type']) res.setHeader('Content-Type', response.headers['content-type']);
       if (response.headers['content-length']) res.setHeader('Content-Length', response.headers['content-length']);
       if (response.headers['content-range']) {
         res.setHeader('Content-Range', response.headers['content-range']);
         res.status(206);
+      } else {
+        res.status(response.status || 200);
       }
 
       response.data.pipe(res);

@@ -361,7 +361,7 @@ function setupVideoPlayer(data) {
 
   let streamUrl = data.videoUrl;
 
-  // Hancurkan player lama jika ada
+  // Hancurkan instance HLS lama jika ada
   if (appState.hlsPlayer) {
     try { appState.hlsPlayer.destroy(); } catch {}
     appState.hlsPlayer = null;
@@ -381,16 +381,25 @@ function setupVideoPlayer(data) {
   const isM3u8 = streamUrl.includes('.m3u8') || streamUrl.includes('/hls');
 
   if (isM3u8 && window.Hls && Hls.isSupported()) {
+    // Route M3U8 melalui stream proxy untuk menghindari CORS block pada CDNs
+    const proxiedM3u8Url = streamUrl.startsWith('/api/') 
+      ? streamUrl 
+      : `/api/stream/proxy?url=${encodeURIComponent(streamUrl)}`;
+
     const hls = new Hls({
       maxBufferLength: 30,
-      enableWorker: true
+      enableWorker: true,
+      xhrSetup: (xhr, url) => {
+        xhr.withCredentials = false;
+      }
     });
+
     appState.hlsPlayer = hls;
-    hls.loadSource(streamUrl);
+    hls.loadSource(proxiedM3u8Url);
     hls.attachMedia(video);
 
     hls.on(Hls.Events.MANIFEST_PARSED, (event, manifestData) => {
-      // Setup hls level qualities jika ada
+      hide('videoLoader');
       if (manifestData.levels && manifestData.levels.length > 1) {
         setupHlsQualities(manifestData.levels);
       }
@@ -400,31 +409,52 @@ function setupVideoPlayer(data) {
     });
 
     hls.on(Hls.Events.ERROR, (event, errData) => {
+      console.warn('HLS Event Error:', errData);
       if (errData.fatal) {
         switch (errData.type) {
           case Hls.ErrorTypes.NETWORK_ERROR:
-            // Coba proxy route jika CORS error
-            if (!streamUrl.includes('/api/stream/proxy')) {
-              const proxied = `/api/stream/proxy?url=${encodeURIComponent(streamUrl)}`;
-              hls.loadSource(proxied);
-            } else {
-              hls.startLoad();
-            }
+            hls.startLoad();
             break;
           case Hls.ErrorTypes.MEDIA_ERROR:
             hls.recoverMediaError();
             break;
           default:
             hls.destroy();
+            // Fallback native play
+            video.src = proxiedM3u8Url;
+            video.load();
+            video.play().catch(() => show('bigPlayOverlay'));
             break;
         }
       }
     });
   } else {
-    // Direct MP4 / Native HLS (Safari / iOS)
-    video.src = streamUrl;
+    // Direct MP4 / Native Video
+    // Gunakan proxy jika URL tidak memiliki HTTPS atau rentan CORS
+    const playUrl = (streamUrl.startsWith('http://') || streamUrl.includes('dramaboxdb.com') || streamUrl.includes('bytedrama.com') || streamUrl.includes('melolostatic.com'))
+      ? `/api/stream/proxy?url=${encodeURIComponent(streamUrl)}`
+      : streamUrl;
+
+    video.onerror = () => {
+      if (!video.src.includes('/api/stream/proxy')) {
+        console.log('Direct MP4 error, switching to proxy...');
+        video.src = `/api/stream/proxy?url=${encodeURIComponent(streamUrl)}`;
+        video.load();
+        video.play().catch(() => show('bigPlayOverlay'));
+      }
+    };
+
+    video.onloadeddata = () => {
+      hide('videoLoader');
+    };
+
+    video.src = playUrl;
     video.load();
-    video.play().catch(() => {
+    video.play().then(() => {
+      hide('videoLoader');
+      hide('bigPlayOverlay');
+    }).catch(() => {
+      hide('videoLoader');
       show('bigPlayOverlay');
     });
   }
