@@ -716,9 +716,24 @@ function setupVideoPlayer(data, sessionId) {
       if (manifestData.levels && manifestData.levels.length > 1) {
         setupHlsQualities(manifestData.levels);
       }
+      video.muted = false;
+      video.volume = 1;
       video.play().catch(() => {
         show('bigPlayOverlay');
       });
+    });
+
+    hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, (event, audioData) => {
+      if (sessionId !== playbackSessionId) return;
+      if (audioData.audioTracks && audioData.audioTracks.length > 0) {
+        const indoIdx = audioData.audioTracks.findIndex(t => 
+          (t.name || t.lang || '').toLowerCase().includes('id') || 
+          (t.name || t.lang || '').toLowerCase().includes('indo')
+        );
+        if (indoIdx !== -1) {
+          hls.audioTrack = indoIdx;
+        }
+      }
     });
 
     hls.on(Hls.Events.ERROR, (event, errData) => {

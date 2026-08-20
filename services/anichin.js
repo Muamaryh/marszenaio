@@ -386,6 +386,18 @@ async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
   if (!streamData) {
     const res = await sendWsRequest(source, 'episode', { id: String(id), ep: String(ep) });
     streamData = normalizeEpisodeStream(res.data, source, id, ep);
+
+    if (source === 'dramawave') {
+      // Pastikan DramaWave menggunakan Master Playlist (h264-*.m3u8) agar audio & video tersinkronisasi penuh dengan suara
+      try {
+        const detail = await getDramaDetail(source, id);
+        const epIndex = Number(ep) - 1;
+        const masterUrl = detail?.drama?.episodes?.[epIndex]?.videoUrl;
+        if (masterUrl && masterUrl.includes('.m3u8')) {
+          streamData.videoUrl = masterUrl;
+        }
+      } catch (e) {}
+    }
   }
 
   return { success: true, source, id, ...streamData };
