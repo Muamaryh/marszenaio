@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>DracinHub - Nonton Ribuan Short Drama Gratis Tanpa Iklan</title>
+  <meta name="description" content="Platform nonton drama pendek asia (dracin, reelshort, dramabox, shortmax) terlengkap dengan subtitle Indonesia dan kualitas HD.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <!-- HLS.js for HLS streaming support -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Navbar Header -->
+    <header class="navbar">
+      <div class="nav-container">
+        <a href="/" class="brand-logo">
+          <span class="brand-icon">🎬</span>
+          <span class="brand-text">DRACIN<span class="brand-highlight">HUB</span></span>
+          <span class="brand-badge">AIO STREAM</span>
+        </a>
+
+        <!-- Global Search Bar in Header -->
+        <div class="header-search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="headerSearchInput" placeholder="Cari judul drama, CEO, naga, reinkarnasi..." autocomplete="off">
+          <button class="search-clear-btn hidden" id="headerSearchClear">&times;</button>
+        </div>
+
+        <div class="header-right">
+          <div class="live-status">
+            <span class="live-pulse"></span>
+            <span class="live-text">16+ Provider Aktif</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-content">
+      <!-- Provider Selection Bar -->
+      <section class="sources-section">
+        <div class="section-header-compact">
+          <span class="section-title-sm">PILIH PROVIDER DRAMA:</span>
+          <span class="source-info-sub" id="sourceDesc">Direct M3U8 streaming dengan subtitle</span>
+        </div>
+        <div class="sources-pill-scroll" id="sourcesPillsBar">
+          <!-- Dynamic sources will be rendered here -->
+        </div>
+      </section>
+
+      <!-- Category Filter Tabs -->
+      <section class="feed-tabs-section">
+        <div class="feed-tabs-row">
+          <div class="feed-tabs" id="feedTabsContainer">
+            <button class="feed-tab-btn active" data-type="trending" onclick="setFeedType('trending')">
+              <span>🔥</span> Trending
+            </button>
+            <button class="feed-tab-btn" data-type="foryou" onclick="setFeedType('foryou')">
+              <span>✨</span> Untuk Anda
+            </button>
+            <button class="feed-tab-btn" data-type="hotrank" onclick="setFeedType('hotrank')">
+              <span>🏆</span> Peringkat Populer
+            </button>
+            <button class="feed-tab-btn" data-type="recommended" onclick="setFeedType('recommended')">
+              <span>💎</span> Rekomendasi
+            </button>
+          </div>
+
+          <div class="feed-active-indicator">
+            <span class="feed-label" id="currentFeedTitle">🔥 Trending Dramas</span>
+            <span class="feed-count-badge" id="feedCountBadge">Memuat...</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Drama Cards Grid -->
+      <section class="drama-catalog-section">
+        <!-- Drama Grid -->
+        <div class="drama-grid" id="dramaGridContainer"></div>
+
+        <!-- Loader Spinner -->
+        <div id="dramaCatalogLoader" class="catalog-loader">
+          <div class="spinner-ring"></div>
+          <p>Mengambil koleksi drama dari server...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div id="dramaEmptyState" class="empty-state-box hidden">
+          <div class="empty-emoji">🎭</div>
+          <h3>Tidak Ada Drama Ditemukan</h3>
+          <p>Coba pilih provider lain di atas atau gunakan kata kunci pencarian berbeda.</p>
+        </div>
+
+        <!-- Pagination -->
+        <div id="dramaPagination" class="pagination-bar hidden">
+          <button class="page-nav-btn" id="btnPrevPage" onclick="changePage(-1)">← Sebelumnya</button>
+          <span class="page-current-tag" id="pageCurrentDisplay">Halaman 1</span>
+          <button class="page-nav-btn" id="btnNextPage" onclick="changePage(1)">Berikutnya →</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-container">
+        <p>DracinHub &bull; All-In-One Short Drama Streaming Portal &bull; Anichin Gateway</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ==============================================
+       CINEMA THEATER MODAL / VIDEO PLAYER OVERLAY
+       ============================================== -->
+  <div id="theaterModal" class="theater-modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="theater-window">
+      <!-- Theater Header -->
+      <div class="theater-topbar">
+        <div class="theater-header-left">
+          <span class="theater-provider-badge" id="theaterSourceBadge">DRAMAWAVE</span>
+          <h2 class="theater-title-text" id="theaterDramaTitle">Judul Drama</h2>
+          <span class="theater-ep-indicator" id="theaterEpisodeIndicator">Ep 1</span>
+        </div>
+        <button class="theater-close-btn" onclick="closeTheater()" title="Tutup Theater">&times;</button>
+      </div>
+
+      <!-- Theater Content Split View -->
+      <div class="theater-content-grid">
+        <!-- Left Side: Player & Controls -->
+        <div class="theater-player-side">
+          <!-- Video Frame -->
+          <div class="video-container" id="videoContainer">
+            <video id="playerVideo" playsinline preload="auto" crossorigin="anonymous"></video>
+            
+            <!-- Video Poster / Big Play Overlay -->
+            <div class="player-big-play-overlay" id="bigPlayOverlay" onclick="togglePlay()">
+              <button class="big-play-button" aria-label="Putar">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </button>
+            </div>
+
+            <!-- Loading Spinner in Video -->
+            <div class="video-loader-overlay hidden" id="videoLoader">
+              <div class="spinner-ring"></div>
+            </div>
+          </div>
+
+          <!-- Video Controls Bar -->
+          <div class="player-controls-wrap">
+            <!-- Progress Bar -->
+            <input type="range" id="videoSeekBar" class="video-seek-bar" min="0" max="1000" step="1" value="0" aria-label="Seek">
+            
+            <div class="controls-action-row">
+              <div class="action-left">
+                <button class="btn-ctrl" id="btnPlay" onclick="togglePlay()" title="Play/Pause">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </button>
+                <span class="time-readout"><span id="timeCurrent">0:00</span> / <span id="timeDuration">0:00</span></span>
+                
+                <button class="btn-ctrl" id="btnMute" onclick="toggleMute()" title="Mute/Unmute">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>
+                </button>
+                <input type="range" id="volSlider" class="vol-slider" min="0" max="100" value="100" aria-label="Volume">
+              </div>
+
+              <div class="action-right">
+                <!-- Quality Switcher -->
+                <select id="qualitySelect" class="player-select" onchange="changeQuality(this.value)" title="Pilih Resolusi">
+                  <option value="auto">Auto HD</option>
+                </select>
+
+                <!-- Subtitle Switcher -->
+                <select id="subtitleSelect" class="player-select" onchange="changeSubtitle(this.value)" title="Pilih Subtitle">
+                  <option value="none">Subtitle: Mati</option>
+                </select>
+
+                <!-- Speed Switcher -->
+                <select id="speedSelect" class="player-select" onchange="changeSpeed(this.value)" title="Kecepatan">
+                  <option value="0.75">0.75x</option>
+                  <option value="1" selected>1.0x</option>
+                  <option value="1.25">1.25x</option>
+                  <option value="1.5">1.5x</option>
+                  <option value="2">2.0x</option>
+                </select>
+
+                <!-- Fullscreen Button -->
+                <button class="btn-ctrl" onclick="toggleFullscreen()" title="Layar Penuh">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Episode Navigation & Auto-Next Row -->
+          <div class="theater-nav-row">
+            <div class="ep-nav-buttons">
+              <button class="btn-ep-nav" id="btnPrevEp" onclick="navigateEpisode(-1)">
+                ⏮️ Episode Sebelumnya
+              </button>
+              <button class="btn-ep-nav primary" id="btnNextEp" onclick="navigateEpisode(1)">
+                Episode Berikutnya ⏭️
+              </button>
+            </div>
+
+            <label class="auto-next-toggle">
+              <input type="checkbox" id="chkAutoNext" checked>
+              <span>Auto Next Episode</span>
+            </label>
+          </div>
+
+          <!-- Drama Details Card -->
+          <div class="drama-synopsis-card">
+            <h3 class="synopsis-heading">Sinopsis Cerita:</h3>
+            <p class="synopsis-body" id="theaterSynopsisText">Memuat detail sinopsis...</p>
+            <div class="synopsis-tags" id="theaterTagsContainer"></div>
+          </div>
+        </div>
+
+        <!-- Right Side: Episodes Grid Drawer -->
+        <div class="theater-episodes-side">
+          <div class="episodes-drawer-head">
+            <div class="drawer-title-wrap">
+              <h3>Daftar Episode</h3>
+              <span class="badge-total-eps" id="theaterEpisodesTotal">0 Ep</span>
+            </div>
+          </div>
+          <div class="episodes-drawer-grid" id="theaterEpisodesGrid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

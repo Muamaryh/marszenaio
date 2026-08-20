@@ -1,0 +1,31 @@
+{
+  "name": "dracin-app",
+  "version": "1.0.0",
+  "description": "DracinHub - All-In-One (AIO) Short Drama Streaming Web Application",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  },
+  "keywords": [
+    "short-drama",
+    "dramabox",
+    "reelshort",
+    "shortmax",
+    "anichin",
+    "dracin",
+    "hls-player"
+  ],
+  "author": "Muamaryh",
+  "license": "MIT"
+}
