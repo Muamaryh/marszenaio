@@ -28,7 +28,10 @@ let wsReady = false;
 let reqCounter = 0;
 const pendingCallbacks = new Map();
 const memoryCache = new Map();
-const CACHE_TTL_MS = 3 * 60 * 1000;
+const CACHE_TTL_FEED_MS = 10 * 60 * 1000; // 10 menit
+const CACHE_TTL_DETAIL_MS = 30 * 60 * 1000; // 30 menit
+const CACHE_TTL_EPISODE_MS = 15 * 60 * 1000; // 15 menit
+const CACHE_TTL_SEARCH_MS = 5 * 60 * 1000; // 5 menit
 
 function getToken() {
   return process.env.ANICHIN_API_KEY || DEFAULT_TOKEN;
@@ -304,7 +307,7 @@ function getSources() {
 async function getFeed(source = 'dramawave', type = 'trending', page = 1) {
   const cacheKey = `feed_${source}_${type}_${page}`;
   const cached = memoryCache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_FEED_MS) {
     return cached.data;
   }
 
@@ -344,9 +347,17 @@ async function searchDramas(source = 'dramawave', query = '') {
     return { success: true, source, query: '', items: [] };
   }
 
+  const cacheKey = `search_${source}_${query.trim().toLowerCase()}`;
+  const cached = memoryCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_SEARCH_MS) {
+    return cached.data;
+  }
+
   const res = await sendWsRequest(source, 'search', { query: query.trim() });
   const items = normalizeDramaList(res.data);
-  return { success: true, source, query, items };
+  const result = { success: true, source, query, items };
+  memoryCache.set(cacheKey, { timestamp: Date.now(), data: result });
+  return result;
 }
 
 async function getDramaDetail(source = 'dramawave', id) {
@@ -354,7 +365,7 @@ async function getDramaDetail(source = 'dramawave', id) {
 
   const cacheKey = `detail_${source}_${id}`;
   const cached = memoryCache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < 10 * 60 * 1000) {
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_DETAIL_MS) {
     return cached.data;
   }
 
@@ -368,6 +379,12 @@ async function getDramaDetail(source = 'dramawave', id) {
 
 async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
   if (!id) throw new Error('ID drama tidak boleh kosong');
+
+  const cacheKey = `ep_${source}_${id}_${ep}`;
+  const cached = memoryCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_EPISODE_MS) {
+    return cached.data;
+  }
 
   let streamData;
 
@@ -417,7 +434,9 @@ async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
     }
   }
 
-  return { success: true, source, id, ...streamData };
+  const result = { success: true, source, id, ...streamData };
+  memoryCache.set(cacheKey, { timestamp: Date.now(), data: result });
+  return result;
 }
 
 module.exports = {
