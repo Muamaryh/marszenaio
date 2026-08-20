@@ -357,8 +357,42 @@ async function getDramaDetail(source = 'dramawave', id) {
 async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
   if (!id) throw new Error('ID drama tidak boleh kosong');
 
-  const res = await sendWsRequest(source, 'episode', { id: String(id), ep: String(ep) });
-  const streamData = normalizeEpisodeStream(res.data, source, id, ep);
+  let streamData;
+
+  if (source === 'dramabox') {
+    try {
+      const hlsUrl = `${ANICHIN_BASE_URL}/api/dramabox/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(ep)}&media=1`;
+      const res = await fetch(hlsUrl);
+      const text = await res.text();
+      const match = text.match(/https:\/\/[^\r\n]+/);
+      if (match) {
+        streamData = {
+          success: true,
+          episodeNumber: Number(ep),
+          videoUrl: match[0].trim(),
+          qualities: [{ label: '720p HD', url: match[0].trim(), isDefault: true }],
+          subtitles: []
+        };
+      }
+    } catch (e) {}
+  } else if (source === 'shortmax') {
+    streamData = {
+      success: true,
+      episodeNumber: Number(ep),
+      videoUrl: `${ANICHIN_BASE_URL}/api/shortmax/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(ep)}&q=720p`,
+      qualities: [
+        { label: '720p', url: `${ANICHIN_BASE_URL}/api/shortmax/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(ep)}&q=720p`, isDefault: true },
+        { label: '480p', url: `${ANICHIN_BASE_URL}/api/shortmax/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(ep)}&q=480p` }
+      ],
+      subtitles: []
+    };
+  }
+
+  if (!streamData) {
+    const res = await sendWsRequest(source, 'episode', { id: String(id), ep: String(ep) });
+    streamData = normalizeEpisodeStream(res.data, source, id, ep);
+  }
+
   return { success: true, source, id, ...streamData };
 }
 
