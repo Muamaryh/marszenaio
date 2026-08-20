@@ -52,6 +52,13 @@
         </div>
       </section>
 
+      <!-- Continue Watching Bar (Appears when history exists) -->
+      <section class="continue-watching-section hidden" id="continueWatchingSection">
+        <div class="continue-watching-card" id="continueWatchingCard">
+          <!-- Rendered dynamically -->
+        </div>
+      </section>
+
       <!-- Category Filter Tabs -->
       <section class="feed-tabs-section">
         <div class="feed-tabs-row">
@@ -68,11 +75,17 @@
             <button class="feed-tab-btn" data-type="recommended" onclick="setFeedType('recommended')">
               <span>💎</span> Rekomendasi
             </button>
+            <button class="feed-tab-btn" data-type="history" onclick="setFeedType('history')">
+              <span>🕒</span> Riwayat Nonton
+            </button>
           </div>
 
           <div class="feed-active-indicator">
             <span class="feed-label" id="currentFeedTitle">🔥 Trending Dramas</span>
             <span class="feed-count-badge" id="feedCountBadge">Memuat...</span>
+            <button class="btn-clear-history hidden" id="btnClearHistory" onclick="clearAllHistory()" title="Hapus Semua Riwayat">
+              🗑️ Hapus Riwayat
+            </button>
           </div>
         </div>
       </section>

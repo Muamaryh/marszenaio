@@ -41,11 +41,123 @@ function formatTime(seconds) {
   return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 }
 
+const STORAGE_KEY_HISTORY = 'dracin_watch_history_v1';
+let lastProgressSaveTime = 0;
+
+function getWatchHistory() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_HISTORY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveWatchProgress(drama, episode, currentTime = 0, duration = 0) {
+  if (!drama || !drama.id) return;
+  try {
+    let history = getWatchHistory();
+    const progress = (duration > 0) ? Math.min(100, Math.round((currentTime / duration) * 100)) : 0;
+
+    // Filter existing item
+    history = history.filter(item => !(item.id === drama.id && item.source === (appState.currentSource || item.source)));
+
+    const entry = {
+      id: drama.id,
+      source: appState.currentSource || 'dramawave',
+      title: drama.title || 'Drama',
+      cover: drama.cover || '',
+      lastEpisode: Number(episode || 1),
+      totalEpisodes: Number(drama.totalEpisodes || appState.totalEpisodes || 1),
+      currentTime: Math.floor(currentTime || 0),
+      duration: Math.floor(duration || 0),
+      progress: progress,
+      lastWatched: Date.now()
+    };
+
+    // Add to beginning (most recent)
+    history.unshift(entry);
+
+    // Keep max 50 items
+    if (history.length > 50) history = history.slice(0, 50);
+
+    localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(history));
+
+    // Update Continue Watching Banner if on home
+    renderContinueWatchingBanner();
+  } catch (e) {}
+}
+
+function removeFromHistory(dramaId, source, e) {
+  if (e) e.stopPropagation();
+  try {
+    let history = getWatchHistory();
+    history = history.filter(item => !(item.id === dramaId && item.source === source));
+    localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(history));
+
+    if (appState.currentFeedType === 'history') {
+      renderHistoryFeed();
+    }
+    renderContinueWatchingBanner();
+  } catch (e) {}
+}
+
+function clearAllHistory() {
+  if (confirm('Apakah Anda yakin ingin menghapus semua riwayat tontonan?')) {
+    localStorage.removeItem(STORAGE_KEY_HISTORY);
+    if (appState.currentFeedType === 'history') {
+      renderHistoryFeed();
+    }
+    renderContinueWatchingBanner();
+  }
+}
+
+function renderContinueWatchingBanner() {
+  const container = el('continueWatchingSection');
+  const card = el('continueWatchingCard');
+  if (!container || !card) return;
+
+  const history = getWatchHistory();
+  if (history.length === 0 || appState.currentFeedType === 'history') {
+    hide('continueWatchingSection');
+    return;
+  }
+
+  const latest = history[0];
+  show('continueWatchingSection');
+
+  card.innerHTML = `
+    <div class="cw-left">
+      <img src="${escapeHtml(latest.cover)}" alt="${escapeHtml(latest.title)}" class="cw-poster" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'54\\' height=\\'72\\' fill=\\'%2312131a\\'></svg>'"/>
+      <div class="cw-info">
+        <div class="cw-tag-row">
+          <span class="cw-label">Lanjutkan Menonton</span>
+          <span class="cw-source-badge">${escapeHtml(latest.source.toUpperCase())}</span>
+        </div>
+        <h4 class="cw-title" title="${escapeHtml(latest.title)}">${escapeHtml(latest.title)}</h4>
+        <div class="cw-progress-wrap">
+          <div class="cw-progress-track">
+            <div class="cw-progress-fill" style="width: ${latest.progress || 10}%"></div>
+          </div>
+          <span class="cw-ep-text">Episode ${latest.lastEpisode} / ${latest.totalEpisodes} (${latest.progress || 0}%)</span>
+        </div>
+      </div>
+    </div>
+    <div class="cw-right">
+      <button class="cw-play-btn" onclick="openDrama('${escapeHtml(latest.source)}', '${escapeHtml(latest.id)}', '${escapeHtml(latest.title)}', ${latest.lastEpisode})">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span>Lanjut Ep ${latest.lastEpisode}</span>
+      </button>
+    </div>
+  `;
+}
+
 // ===== 1. INITIALIZATION & SOURCES =====
 
 async function initApp() {
   await loadSources();
   await loadFeed();
+  renderContinueWatchingBanner();
   initSearch();
   initPlayerEventListeners();
 }
@@ -67,11 +179,10 @@ async function loadSources() {
       { key: 'dramawave', name: 'DramaWave', badge: 'HD & Subtitle', desc: 'Direct M3U8 streaming dengan 20+ subtitle multi-bahasa' },
       { key: 'freereels', name: 'FreeReels', badge: 'Gratis & Sub', desc: 'Direct stream cepat dengan subtitle Indonesia' },
       { key: 'netshort', name: 'NetShort', badge: 'Direct MP4', desc: 'Kualitas original MP4 dengan subtitle Indonesia' },
-      { key: 'dramanova', name: 'DramaNova', badge: 'Romance / 18+', desc: 'Drama romantis & dewasa' },
-      { key: 'starshort', name: 'StarShort', badge: 'M3U8 Fast', desc: 'Koleksi drama pendek terbaru' },
-      { key: 'melolo', name: 'Melolo', badge: 'Multi-Bitrate', desc: 'Pilihan resolusi 720p, 540p, 360p' },
       { key: 'dramabox', name: 'DramaBox', badge: 'Popular', desc: 'Provider drama box nomor 1 di Asia' },
-      { key: 'shortmax', name: 'ShortMax', badge: 'Trending', desc: 'Katalog ribuan drama pendek bertema CEO & Reinkarnasi' }
+      { key: 'shortmax', name: 'ShortMax', badge: 'Trending', desc: 'Katalog ribuan drama pendek bertema CEO & Reinkarnasi' },
+      { key: 'melolo', name: 'Melolo', badge: 'Multi-Bitrate', desc: 'Pilihan resolusi 720p, 540p, 360p' },
+      { key: 'dramanova', name: 'DramaNova', badge: 'Romance / 18+', desc: 'Drama romantis & dewasa' }
     ];
     renderSourcesPills();
   }
@@ -108,7 +219,11 @@ function selectSource(sourceKey, sourceName, sourceDesc = '') {
     b.classList.toggle('active', b.textContent.includes(sourceName));
   });
 
-  loadFeed();
+  if (appState.currentFeedType === 'history') {
+    setFeedType('trending');
+  } else {
+    loadFeed();
+  }
 }
 
 function setFeedType(type) {
@@ -127,16 +242,86 @@ function setFeedType(type) {
     trending: '🔥 Trending Dramas',
     foryou: '✨ Untuk Anda',
     hotrank: '🏆 Peringkat Populer',
-    recommended: '💎 Rekomendasi Pilihan'
+    recommended: '💎 Rekomendasi Pilihan',
+    history: '🕒 Riwayat Tontonan Anda'
   };
   if (el('currentFeedTitle')) el('currentFeedTitle').textContent = titles[type] || type;
 
-  loadFeed();
+  if (type === 'history') {
+    show('btnClearHistory');
+    hide('continueWatchingSection');
+    renderHistoryFeed();
+  } else {
+    hide('btnClearHistory');
+    renderContinueWatchingBanner();
+    loadFeed();
+  }
+}
+
+function renderHistoryFeed() {
+  hide('dramaCatalogLoader');
+  hide('dramaPagination');
+  const grid = el('dramaGridContainer');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const history = getWatchHistory();
+
+  if (history.length === 0) {
+    show('dramaEmptyState');
+    if (el('dramaEmptyState')) {
+      el('dramaEmptyState').innerHTML = `
+        <div class="empty-emoji">🕒</div>
+        <h3>Belum Ada Riwayat Tontonan</h3>
+        <p>Drama yang Anda tonton akan otomatis tersimpan di sini agar mudah dilanjutkan kapan saja.</p>
+      `;
+    }
+    if (el('feedCountBadge')) el('feedCountBadge').textContent = '0 drama';
+    return;
+  }
+
+  hide('dramaEmptyState');
+  if (el('feedCountBadge')) el('feedCountBadge').textContent = `${history.length} drama`;
+
+  history.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'drama-card history-card';
+
+    card.innerHTML = `
+      <div class="poster-wrap">
+        <img src="${escapeHtml(item.cover)}" alt="${escapeHtml(item.title)}" class="poster-img" loading="lazy" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'200\\' height=\\'280\\' fill=\\'%2312131a\\'><text x=\\'50%\\' y=\\'50%\\' fill=\\'%23666\\' font-size=\\'14\\' text-anchor=\\'middle\\'>Poster</text></svg>'"/>
+        <div class="poster-overlay-gradient"></div>
+        <span class="badge-episodes">Ep ${item.lastEpisode} / ${item.totalEpisodes}</span>
+        <button class="card-history-del-btn" onclick="removeFromHistory('${escapeHtml(item.id)}', '${escapeHtml(item.source)}', event)" title="Hapus dari riwayat">✕</button>
+        <div class="card-history-progress-bar">
+          <div class="card-history-progress-fill" style="width: ${item.progress || 5}%"></div>
+        </div>
+        <div class="play-hover-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </div>
+      </div>
+      <div class="card-content">
+        <h4 class="card-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</h4>
+        <div class="card-tags">
+          <span class="card-tag">${escapeHtml(item.source.toUpperCase())}</span>
+          <span class="card-tag" style="color:var(--accent-mint)">Lanjut: Ep ${item.lastEpisode}</span>
+        </div>
+      </div>
+    `;
+
+    card.onclick = () => openDrama(item.source, item.id, item.title, item.lastEpisode);
+    grid.appendChild(card);
+  });
 }
 
 // ===== 2. FEED & CATALOG =====
 
 async function loadFeed() {
+  if (appState.currentFeedType === 'history') {
+    renderHistoryFeed();
+    return;
+  }
+
   show('dramaCatalogLoader');
   hide('dramaEmptyState');
   hide('dramaPagination');
@@ -267,10 +452,21 @@ function changePage(delta) {
 
 let playbackSessionId = 0;
 
-async function openDrama(source, dramaId, fallbackTitle = '') {
+async function openDrama(source, dramaId, fallbackTitle = '', startEpisode = null) {
   const currentSession = ++playbackSessionId;
   show('theaterModal');
   hide('fullscreenEpDrawer');
+
+  // Cek riwayat tontonan jika startEpisode tidak ditentukan
+  let resumeEp = startEpisode;
+  if (!resumeEp) {
+    const history = getWatchHistory();
+    const existing = history.find(item => item.id === dramaId && item.source === source);
+    if (existing && existing.lastEpisode) {
+      resumeEp = existing.lastEpisode;
+    }
+  }
+  const initialEp = resumeEp || 1;
 
   // Hentikan video dan stream sebelumnya secara tuntas
   const video = el('playerVideo');
@@ -290,8 +486,8 @@ async function openDrama(source, dramaId, fallbackTitle = '') {
   if (el('fsDramaTitle')) el('fsDramaTitle').textContent = fallbackTitle || 'Memuat drama...';
   if (el('theaterSourceBadge')) el('theaterSourceBadge').textContent = source.toUpperCase();
   if (el('fsSourceBadge')) el('fsSourceBadge').textContent = source.toUpperCase();
-  if (el('theaterEpisodeIndicator')) el('theaterEpisodeIndicator').textContent = 'Memuat...';
-  if (el('fsEpCurrent')) el('fsEpCurrent').textContent = 'Ep 1';
+  if (el('theaterEpisodeIndicator')) el('theaterEpisodeIndicator').textContent = `Episode ${initialEp}`;
+  if (el('fsEpCurrent')) el('fsEpCurrent').textContent = `Ep ${initialEp}`;
   if (el('theaterSynopsisText')) el('theaterSynopsisText').textContent = 'Mengambil sinopsis drama...';
   if (el('theaterEpisodesGrid')) el('theaterEpisodesGrid').innerHTML = '<div style="color:#888;font-size:12px;padding:10px;">Memuat episode...</div>';
   if (el('fsEpisodesGrid')) el('fsEpisodesGrid').innerHTML = '<div style="color:#888;font-size:12px;padding:10px;">Memuat episode...</div>';
@@ -322,7 +518,7 @@ async function openDrama(source, dramaId, fallbackTitle = '') {
       }
 
       renderEpisodesDrawer();
-      playEpisode(source, dramaId, 1, currentSession);
+      playEpisode(source, dramaId, initialEp, currentSession);
     }
   } catch (err) {
     if (currentSession !== playbackSessionId) return;
@@ -395,6 +591,11 @@ async function playEpisode(source, dramaId, epNum, sessionId = null) {
 
   show('videoLoader');
   hide('bigPlayOverlay');
+
+  // Catat ke riwayat tontonan
+  if (appState.activeDrama) {
+    saveWatchProgress(appState.activeDrama, epNum, 0, 0);
+  }
 
   try {
     const res = await fetch(`/api/drama/episode?source=${encodeURIComponent(source)}&id=${encodeURIComponent(dramaId)}&ep=${epNum}`);
@@ -665,6 +866,13 @@ function initPlayerEventListeners() {
     if (el('timeDuration')) el('timeDuration').textContent = formatTime(dur);
     if (dur > 0 && el('videoSeekBar')) {
       el('videoSeekBar').value = (cur / dur) * 1000;
+    }
+
+    // Simpan progres ke riwayat tontonan setiap 3 detik
+    const now = Date.now();
+    if (now - lastProgressSaveTime > 3000 && appState.activeDrama && cur > 0) {
+      lastProgressSaveTime = now;
+      saveWatchProgress(appState.activeDrama, appState.currentEpisode, cur, dur);
     }
   });
 
