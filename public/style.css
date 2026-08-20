@@ -908,39 +908,6 @@ body {
   background: var(--primary);
 }
 
-.fs-quick-ep-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  pointer-events: auto;
-  margin-top: auto;
-  margin-bottom: 8px;
-}
-
-.fs-quick-btn {
-  background: rgba(23, 25, 34, 0.88);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: #fff;
-  font-size: 0.82rem;
-  font-weight: 800;
-  padding: 6px 16px;
-  border-radius: var(--radius-full);
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.fs-quick-btn:hover {
-  background: var(--bg-card-hover);
-  transform: translateY(-1px);
-}
-
-.fs-quick-btn.primary {
-  background: var(--primary);
-  border-color: var(--primary);
-}
-
 /* Fullscreen In-Video Episode Drawer Modal */
 .fs-episodes-drawer {
   position: absolute;

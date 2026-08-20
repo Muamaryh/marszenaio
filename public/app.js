@@ -392,8 +392,6 @@ async function playEpisode(source, dramaId, epNum, sessionId = null) {
 
   if (el('btnPrevEp')) el('btnPrevEp').disabled = (epNum <= 1);
   if (el('btnNextEp')) el('btnNextEp').disabled = (epNum >= appState.totalEpisodes);
-  if (el('fsBtnPrevEp')) el('fsBtnPrevEp').disabled = (epNum <= 1);
-  if (el('fsBtnNextEp')) el('fsBtnNextEp').disabled = (epNum >= appState.totalEpisodes);
 
   show('videoLoader');
   hide('bigPlayOverlay');
@@ -641,8 +639,7 @@ function initPlayerEventListeners() {
     // Jangan toggle jika klik di drawer episode, tombol controls, atau dropdown
     if (e.target.closest('.fs-episodes-drawer') || 
         e.target.closest('.btn-fs-ep-toggle') || 
-        e.target.closest('.btn-fs-close') ||
-        e.target.closest('.fs-quick-btn')) {
+        e.target.closest('.btn-fs-close')) {
       return;
     }
     togglePlay();
