@@ -265,18 +265,44 @@ function changePage(delta) {
 
 // ===== 3. CINEMA THEATER & VIDEO PLAYBACK =====
 
+let playbackSessionId = 0;
+
 async function openDrama(source, dramaId, fallbackTitle = '') {
+  const currentSession = ++playbackSessionId;
   show('theaterModal');
+  hide('fullscreenEpDrawer');
+
+  // Hentikan video dan stream sebelumnya secara tuntas
+  const video = el('playerVideo');
+  if (video) {
+    try { video.pause(); } catch {}
+    video.removeAttribute('src');
+    video.load();
+  }
+
+  if (appState.hlsPlayer) {
+    try { appState.hlsPlayer.destroy(); } catch {}
+    appState.hlsPlayer = null;
+  }
+
+  // Populate placeholder state
   if (el('theaterDramaTitle')) el('theaterDramaTitle').textContent = fallbackTitle || 'Memuat drama...';
+  if (el('fsDramaTitle')) el('fsDramaTitle').textContent = fallbackTitle || 'Memuat drama...';
   if (el('theaterSourceBadge')) el('theaterSourceBadge').textContent = source.toUpperCase();
+  if (el('fsSourceBadge')) el('fsSourceBadge').textContent = source.toUpperCase();
   if (el('theaterEpisodeIndicator')) el('theaterEpisodeIndicator').textContent = 'Memuat...';
+  if (el('fsEpCurrent')) el('fsEpCurrent').textContent = 'Ep 1';
   if (el('theaterSynopsisText')) el('theaterSynopsisText').textContent = 'Mengambil sinopsis drama...';
   if (el('theaterEpisodesGrid')) el('theaterEpisodesGrid').innerHTML = '<div style="color:#888;font-size:12px;padding:10px;">Memuat episode...</div>';
+  if (el('fsEpisodesGrid')) el('fsEpisodesGrid').innerHTML = '<div style="color:#888;font-size:12px;padding:10px;">Memuat episode...</div>';
   show('videoLoader');
 
   try {
     const res = await fetch(`/api/drama/detail?source=${encodeURIComponent(source)}&id=${encodeURIComponent(dramaId)}`);
     const data = await res.json();
+
+    // Jika user sudah ganti drama atau menutup modal, batalkan eksekusi
+    if (currentSession !== playbackSessionId) return;
 
     if (data.success && data.drama) {
       const d = data.drama;
@@ -285,8 +311,10 @@ async function openDrama(source, dramaId, fallbackTitle = '') {
       appState.episodesList = d.episodes || [];
 
       if (el('theaterDramaTitle')) el('theaterDramaTitle').textContent = d.title;
+      if (el('fsDramaTitle')) el('fsDramaTitle').textContent = d.title;
       if (el('theaterSynopsisText')) el('theaterSynopsisText').textContent = d.synopsis || 'Tidak ada sinopsis tersedia.';
       if (el('theaterEpisodesTotal')) el('theaterEpisodesTotal').textContent = `${appState.totalEpisodes} Ep`;
+      if (el('fsEpisodesTotal')) el('fsEpisodesTotal').textContent = `${appState.totalEpisodes}`;
 
       const tagsContainer = el('theaterTagsContainer');
       if (tagsContainer) {
@@ -294,9 +322,10 @@ async function openDrama(source, dramaId, fallbackTitle = '') {
       }
 
       renderEpisodesDrawer();
-      playEpisode(source, dramaId, 1);
+      playEpisode(source, dramaId, 1, currentSession);
     }
   } catch (err) {
+    if (currentSession !== playbackSessionId) return;
     hide('videoLoader');
     if (el('theaterSynopsisText')) el('theaterSynopsisText').textContent = 'Gagal memuat detail drama: ' + err.message;
   }
@@ -304,36 +333,67 @@ async function openDrama(source, dramaId, fallbackTitle = '') {
 
 function renderEpisodesDrawer() {
   const container = el('theaterEpisodesGrid');
-  if (!container) return;
-  container.innerHTML = '';
+  const fsContainer = el('fsEpisodesGrid');
+  if (container) container.innerHTML = '';
+  if (fsContainer) fsContainer.innerHTML = '';
 
   const total = appState.totalEpisodes || 30;
   for (let i = 1; i <= total; i++) {
-    const btn = document.createElement('button');
-    btn.className = 'ep-tile-btn' + (i === appState.currentEpisode ? ' active' : '');
-    btn.id = `tileEp_${i}`;
-    btn.textContent = `Ep ${i}`;
-    btn.onclick = () => {
-      playEpisode(appState.currentSource, appState.activeDrama?.id, i);
-    };
-    container.appendChild(btn);
+    // Regular Drawer Tile
+    if (container) {
+      const btn = document.createElement('button');
+      btn.className = 'ep-tile-btn' + (i === appState.currentEpisode ? ' active' : '');
+      btn.id = `tileEp_${i}`;
+      btn.textContent = `Ep ${i}`;
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        playEpisode(appState.currentSource, appState.activeDrama?.id, i);
+      };
+      container.appendChild(btn);
+    }
+
+    // Fullscreen In-Video Drawer Tile
+    if (fsContainer) {
+      const fsBtn = document.createElement('button');
+      fsBtn.className = 'ep-tile-btn' + (i === appState.currentEpisode ? ' active' : '');
+      fsBtn.id = `fsTileEp_${i}`;
+      fsBtn.textContent = `Ep ${i}`;
+      fsBtn.onclick = (e) => {
+        e.stopPropagation();
+        playEpisode(appState.currentSource, appState.activeDrama?.id, i);
+        hide('fullscreenEpDrawer');
+      };
+      fsContainer.appendChild(fsBtn);
+    }
   }
 }
 
-async function playEpisode(source, dramaId, epNum) {
+async function playEpisode(source, dramaId, epNum, sessionId = null) {
+  const currentSession = sessionId || playbackSessionId;
   appState.currentEpisode = epNum;
+  
   if (el('theaterEpisodeIndicator')) el('theaterEpisodeIndicator').textContent = `Episode ${epNum}`;
+  if (el('fsEpCurrent')) el('fsEpCurrent').textContent = `Ep ${epNum}`;
 
-  // Highlight tile
+  // Highlight tile di kedua drawer
   document.querySelectorAll('.ep-tile-btn').forEach(tile => tile.classList.remove('active'));
+  
   const currentTile = el(`tileEp_${epNum}`);
   if (currentTile) {
     currentTile.classList.add('active');
     currentTile.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
+  const currentFsTile = el(`fsTileEp_${epNum}`);
+  if (currentFsTile) {
+    currentFsTile.classList.add('active');
+    currentFsTile.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
   if (el('btnPrevEp')) el('btnPrevEp').disabled = (epNum <= 1);
   if (el('btnNextEp')) el('btnNextEp').disabled = (epNum >= appState.totalEpisodes);
+  if (el('fsBtnPrevEp')) el('fsBtnPrevEp').disabled = (epNum <= 1);
+  if (el('fsBtnNextEp')) el('fsBtnNextEp').disabled = (epNum >= appState.totalEpisodes);
 
   show('videoLoader');
   hide('bigPlayOverlay');
@@ -341,23 +401,26 @@ async function playEpisode(source, dramaId, epNum) {
   try {
     const res = await fetch(`/api/drama/episode?source=${encodeURIComponent(source)}&id=${encodeURIComponent(dramaId)}&ep=${epNum}`);
     const data = await res.json();
+
+    if (currentSession !== playbackSessionId) return; // Discard jika sudah berpindah drama / ditutup
     hide('videoLoader');
 
     if (data.success && data.videoUrl) {
       appState.currentVideoData = data;
-      setupVideoPlayer(data);
+      setupVideoPlayer(data, currentSession);
     } else {
       alert('Gagal memuat stream video episode ' + epNum);
     }
   } catch (err) {
+    if (currentSession !== playbackSessionId) return;
     hide('videoLoader');
     alert('Error episode: ' + err.message);
   }
 }
 
-function setupVideoPlayer(data) {
+function setupVideoPlayer(data, sessionId) {
   const video = el('playerVideo');
-  if (!video) return;
+  if (!video || sessionId !== playbackSessionId) return;
 
   let streamUrl = data.videoUrl;
 
@@ -381,7 +444,6 @@ function setupVideoPlayer(data) {
   const isM3u8 = streamUrl.includes('.m3u8') || streamUrl.includes('/hls');
 
   if (isM3u8 && window.Hls && Hls.isSupported()) {
-    // Route M3U8 melalui stream proxy untuk menghindari CORS block pada CDNs
     const proxiedM3u8Url = streamUrl.startsWith('/api/') 
       ? streamUrl 
       : `/api/stream/proxy?url=${encodeURIComponent(streamUrl)}`;
@@ -389,7 +451,7 @@ function setupVideoPlayer(data) {
     const hls = new Hls({
       maxBufferLength: 30,
       enableWorker: true,
-      xhrSetup: (xhr, url) => {
+      xhrSetup: (xhr) => {
         xhr.withCredentials = false;
       }
     });
@@ -399,6 +461,7 @@ function setupVideoPlayer(data) {
     hls.attachMedia(video);
 
     hls.on(Hls.Events.MANIFEST_PARSED, (event, manifestData) => {
+      if (sessionId !== playbackSessionId) return;
       hide('videoLoader');
       if (manifestData.levels && manifestData.levels.length > 1) {
         setupHlsQualities(manifestData.levels);
@@ -409,7 +472,7 @@ function setupVideoPlayer(data) {
     });
 
     hls.on(Hls.Events.ERROR, (event, errData) => {
-      console.warn('HLS Event Error:', errData);
+      if (sessionId !== playbackSessionId) return;
       if (errData.fatal) {
         switch (errData.type) {
           case Hls.ErrorTypes.NETWORK_ERROR:
@@ -420,7 +483,6 @@ function setupVideoPlayer(data) {
             break;
           default:
             hls.destroy();
-            // Fallback native play
             video.src = proxiedM3u8Url;
             video.load();
             video.play().catch(() => show('bigPlayOverlay'));
@@ -430,14 +492,13 @@ function setupVideoPlayer(data) {
     });
   } else {
     // Direct MP4 / Native Video
-    // Gunakan proxy jika URL tidak memiliki HTTPS atau rentan CORS
     const playUrl = (streamUrl.startsWith('http://') || streamUrl.includes('dramaboxdb.com') || streamUrl.includes('bytedrama.com') || streamUrl.includes('melolostatic.com'))
       ? `/api/stream/proxy?url=${encodeURIComponent(streamUrl)}`
       : streamUrl;
 
     video.onerror = () => {
+      if (sessionId !== playbackSessionId) return;
       if (!video.src.includes('/api/stream/proxy')) {
-        console.log('Direct MP4 error, switching to proxy...');
         video.src = `/api/stream/proxy?url=${encodeURIComponent(streamUrl)}`;
         video.load();
         video.play().catch(() => show('bigPlayOverlay'));
@@ -445,15 +506,18 @@ function setupVideoPlayer(data) {
     };
 
     video.onloadeddata = () => {
+      if (sessionId !== playbackSessionId) return;
       hide('videoLoader');
     };
 
     video.src = playUrl;
     video.load();
     video.play().then(() => {
+      if (sessionId !== playbackSessionId) return;
       hide('videoLoader');
       hide('bigPlayOverlay');
     }).catch(() => {
+      if (sessionId !== playbackSessionId) return;
       hide('videoLoader');
       show('bigPlayOverlay');
     });
@@ -562,25 +626,39 @@ function changeQuality(val) {
   } else if (val !== 'auto' && val.startsWith('http')) {
     const video = el('playerVideo');
     const curTime = video ? video.currentTime : 0;
-    setupVideoPlayer({ ...appState.currentVideoData, videoUrl: val });
+    setupVideoPlayer({ ...appState.currentVideoData, videoUrl: val }, playbackSessionId);
     if (video) video.currentTime = curTime;
   }
 }
 
 function initPlayerEventListeners() {
   const video = el('playerVideo');
-  if (!video) return;
+  const videoContainer = el('videoContainer');
+  if (!video || !videoContainer) return;
+
+  // Klik langsung pada video container untuk Play/Pause
+  videoContainer.addEventListener('click', (e) => {
+    // Jangan toggle jika klik di drawer episode, tombol controls, atau dropdown
+    if (e.target.closest('.fs-episodes-drawer') || 
+        e.target.closest('.btn-fs-ep-toggle') || 
+        e.target.closest('.btn-fs-close') ||
+        e.target.closest('.fs-quick-btn')) {
+      return;
+    }
+    togglePlay();
+  });
 
   video.addEventListener('play', () => {
     hide('bigPlayOverlay');
     const playBtn = el('btnPlay');
     if (playBtn) playBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+    triggerCenterFeedback('play');
   });
 
   video.addEventListener('pause', () => {
-    show('bigPlayOverlay');
     const playBtn = el('btnPlay');
     if (playBtn) playBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+    triggerCenterFeedback('pause');
   });
 
   video.addEventListener('timeupdate', () => {
@@ -629,16 +707,39 @@ function initPlayerEventListeners() {
       toggleFullscreen();
     } else if (e.code === 'KeyM') {
       toggleMute();
+    } else if (e.code === 'KeyE') {
+      toggleFullscreenEpisodes();
     } else if (e.code === 'Escape') {
-      closeTheater();
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      } else {
+        closeTheater();
+      }
     }
   });
+}
+
+function triggerCenterFeedback(type) {
+  const ripple = el('centerFeedback');
+  const icon = el('rippleIcon');
+  if (!ripple || !icon) return;
+
+  if (type === 'play') {
+    icon.innerHTML = '<svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+  } else {
+    icon.innerHTML = '<svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+  }
+
+  ripple.classList.remove('animate');
+  void ripple.offsetWidth; // Reflow
+  ripple.classList.add('animate');
+  setTimeout(() => ripple.classList.remove('animate'), 450);
 }
 
 function togglePlay() {
   const video = el('playerVideo');
   if (!video) return;
-  if (video.paused) video.play();
+  if (video.paused) video.play().catch(() => {});
   else video.pause();
 }
 
@@ -669,6 +770,30 @@ function toggleFullscreen() {
   }
 }
 
+function toggleFullscreenEpisodes(e) {
+  if (e) e.stopPropagation();
+  const drawer = el('fullscreenEpDrawer');
+  if (!drawer) return;
+
+  if (drawer.classList.contains('hidden')) {
+    show('fullscreenEpDrawer');
+    const currentFsTile = el(`fsTileEp_${appState.currentEpisode}`);
+    if (currentFsTile) {
+      currentFsTile.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  } else {
+    hide('fullscreenEpDrawer');
+  }
+}
+
+function exitFullscreenOrTheater() {
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(() => {});
+  } else {
+    closeTheater();
+  }
+}
+
 function navigateEpisode(delta) {
   const next = appState.currentEpisode + delta;
   if (next >= 1 && next <= appState.totalEpisodes) {
@@ -677,15 +802,23 @@ function navigateEpisode(delta) {
 }
 
 function closeTheater() {
+  playbackSessionId++; // Invalidate pending requests
+
   const video = el('playerVideo');
   if (video) {
-    video.pause();
-    video.src = '';
+    try { video.pause(); } catch {}
+    video.removeAttribute('src');
+    video.load();
   }
+
   if (appState.hlsPlayer) {
     try { appState.hlsPlayer.destroy(); } catch {}
     appState.hlsPlayer = null;
   }
+
+  appState.activeDrama = null;
+  appState.currentVideoData = null;
+  hide('fullscreenEpDrawer');
   hide('theaterModal');
 }
 

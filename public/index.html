@@ -131,15 +131,54 @@
       <div class="theater-content-grid">
         <!-- Left Side: Player & Controls -->
         <div class="theater-player-side">
-          <!-- Video Frame -->
+          <!-- Video Frame with Fullscreen Controls & Episode Drawer -->
           <div class="video-container" id="videoContainer">
             <video id="playerVideo" playsinline preload="auto"></video>
             
+            <!-- Central Play/Pause Animated Feedback Ripple -->
+            <div class="center-feedback-ripple" id="centerFeedback">
+              <div class="ripple-icon-wrap" id="rippleIcon"></div>
+            </div>
+
             <!-- Video Poster / Big Play Overlay -->
-            <div class="player-big-play-overlay" id="bigPlayOverlay" onclick="togglePlay()">
-              <button class="big-play-button" aria-label="Putar">
+            <div class="player-big-play-overlay" id="bigPlayOverlay">
+              <button class="big-play-button" id="bigPlayBtn" aria-label="Putar">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               </button>
+            </div>
+
+            <!-- In-Video Floating Header Bar (Visible on Fullscreen / Hover) -->
+            <div class="video-floating-overlay" id="videoFloatingOverlay">
+              <div class="fs-top-bar">
+                <div class="fs-info-wrap">
+                  <span class="fs-badge" id="fsSourceBadge">DRAMAWAVE</span>
+                  <span class="fs-drama-title" id="fsDramaTitle">Judul Drama</span>
+                  <span class="fs-ep-pill" id="fsEpCurrent">Ep 1</span>
+                </div>
+                <div class="fs-top-actions">
+                  <button class="btn-fs-ep-toggle" id="btnFsEpisodes" onclick="toggleFullscreenEpisodes(event)" title="Pilih Episode">
+                    <span>📋</span> Daftar Episode (<span id="fsEpisodesTotal">0</span>)
+                  </button>
+                  <button class="btn-fs-close" onclick="exitFullscreenOrTheater()" title="Tutup / Keluar Fullscreen">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quick Next / Prev Episode Floating Center Nav -->
+              <div class="fs-quick-ep-bar">
+                <button class="fs-quick-btn" id="fsBtnPrevEp" onclick="navigateEpisode(-1); event.stopPropagation();" title="Episode Sebelumnya">⏮️ Ep Prev</button>
+                <button class="fs-quick-btn primary" id="fsBtnNextEp" onclick="navigateEpisode(1); event.stopPropagation();" title="Episode Berikutnya">Ep Next ⏭️</button>
+              </div>
+            </div>
+
+            <!-- Fullscreen In-Video Slide-Out Episode Drawer -->
+            <div class="fs-episodes-drawer hidden" id="fullscreenEpDrawer" onclick="event.stopPropagation()">
+              <div class="fs-drawer-header">
+                <h4>Pilih Episode</h4>
+                <button class="fs-drawer-close" onclick="toggleFullscreenEpisodes()">&times;</button>
+              </div>
+              <div class="fs-episodes-grid" id="fsEpisodesGrid"></div>
             </div>
 
             <!-- Loading Spinner in Video -->
