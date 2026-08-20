@@ -138,59 +138,6 @@ body {
   transform: rotate(-2deg);
 }
 
-.header-search {
-  flex: 1;
-  max-width: 480px;
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.header-search svg {
-  position: absolute;
-  left: 14px;
-  color: var(--text-muted);
-  pointer-events: none;
-}
-
-.header-search input {
-  width: 100%;
-  background: #ffffff;
-  border: var(--border-thick);
-  box-shadow: var(--shadow-sm);
-  border-radius: var(--radius-full);
-  padding: 9px 38px 9px 40px;
-  color: var(--text-main);
-  font-size: 0.86rem;
-  font-weight: 700;
-  outline: none;
-  transition: var(--transition);
-}
-
-.header-search input:focus {
-  background: #ffffff;
-  border-color: var(--black);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
-}
-
-.search-clear-btn {
-  position: absolute;
-  right: 12px;
-  background: var(--black);
-  border: none;
-  color: #ffffff;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 900;
-  cursor: pointer;
-}
-
 .live-status {
   display: flex;
   align-items: center;
@@ -229,14 +176,14 @@ body {
 .main-content {
   max-width: 1360px;
   margin: 0 auto;
-  padding: 28px 20px 60px;
+  padding: 24px 20px 60px;
   width: 100%;
   flex: 1;
 }
 
 .hero-section {
   text-align: center;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
 .hero-badge {
@@ -251,12 +198,12 @@ body {
   font-size: 0.78rem;
   font-weight: 800;
   color: var(--black);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   transform: rotate(-1.5deg);
 }
 
 .hero-title {
-  font-size: clamp(1.8rem, 4.5vw, 2.5rem);
+  font-size: clamp(1.7rem, 4vw, 2.3rem);
   font-weight: 900;
   line-height: 1.2;
   letter-spacing: -0.03em;
@@ -277,7 +224,7 @@ body {
 
 .hero-sub {
   color: var(--text-muted);
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   font-weight: 600;
   max-width: 580px;
   margin: 0 auto;
@@ -292,7 +239,7 @@ body {
   box-shadow: var(--shadow-md);
   border-radius: var(--radius-lg);
   padding: 16px 20px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .section-header-compact {
@@ -300,7 +247,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   flex-wrap: wrap;
 }
 
@@ -421,7 +368,7 @@ body {
    CONTINUE WATCHING HERO BANNER
    ======================================================== */
 .continue-watching-section {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .continue-watching-card {
@@ -429,7 +376,7 @@ body {
   border: var(--border-thick);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
-  padding: 16px 20px;
+  padding: 14px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -453,8 +400,8 @@ body {
 }
 
 .cw-poster {
-  width: 54px;
-  height: 72px;
+  width: 50px;
+  height: 68px;
   border-radius: var(--radius-sm);
   border: var(--border-sm);
   box-shadow: var(--shadow-sm);
@@ -497,13 +444,13 @@ body {
 }
 
 .cw-title {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 900;
   color: var(--black);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 400px;
+  max-width: 380px;
 }
 
 .cw-progress-wrap {
@@ -514,8 +461,8 @@ body {
 }
 
 .cw-progress-track {
-  width: 140px;
-  height: 8px;
+  width: 130px;
+  height: 7px;
   background: var(--bg-canvas);
   border: 1.5px solid var(--black);
   border-radius: var(--radius-full);
@@ -529,7 +476,7 @@ body {
 }
 
 .cw-ep-text {
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   font-weight: 800;
   color: var(--text-muted);
 }
@@ -546,9 +493,9 @@ body {
   color: var(--black);
   border: var(--border-thick);
   box-shadow: var(--shadow-sm);
-  padding: 9px 20px;
+  padding: 8px 18px;
   border-radius: var(--radius-full);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 900;
   display: inline-flex;
   align-items: center;
@@ -564,20 +511,19 @@ body {
 }
 
 /* ========================================================
-   CATEGORY TABS SECTION
+   CATEGORY TABS & SEARCH SECTION
    ======================================================== */
 .feed-tabs-section {
-  margin-bottom: 22px;
+  margin-bottom: 20px;
 }
 
 .feed-tabs-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  justify-content: flex-start;
+  gap: 12px;
   flex-wrap: wrap;
-  border-bottom: var(--border-thick);
-  padding-bottom: 14px;
+  padding-bottom: 4px;
 }
 
 .feed-tabs {
@@ -614,14 +560,75 @@ body {
   transform: translate(-2px, -2px);
 }
 
+/* Integrated Search Box Below Category Tabs */
+.feed-search-wrap {
+  margin: 14px 0 14px;
+  width: 100%;
+}
+
+.feed-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.feed-search-box svg {
+  position: absolute;
+  left: 16px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.feed-search-box input {
+  width: 100%;
+  background: #ffffff;
+  border: var(--border-thick);
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-md);
+  padding: 12px 42px 12px 48px;
+  color: var(--text-main);
+  font-size: 0.9rem;
+  font-weight: 700;
+  outline: none;
+  transition: var(--transition);
+}
+
+.feed-search-box input:focus {
+  border-color: var(--black);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.feed-search-box .search-clear-btn {
+  position: absolute;
+  right: 14px;
+  background: var(--black);
+  border: none;
+  color: #ffffff;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
 .feed-active-indicator {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
+  border-bottom: var(--border-thick);
+  padding-bottom: 12px;
+  margin-top: 4px;
 }
 
 .feed-label {
-  font-size: 1.05rem;
+  font-size: 1.02rem;
   font-weight: 900;
   color: var(--black);
 }
@@ -661,7 +668,7 @@ body {
 .drama-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 20px;
+  gap: 18px;
 }
 
 .drama-card {
@@ -943,7 +950,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(24, 24, 27, 0.85);
+  background: rgba(24, 24, 27, 0.88);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   z-index: 99999;
@@ -977,10 +984,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 20px;
+  padding: 12px 18px;
   background: #27272a;
   border-bottom: 2px solid #3f3f46;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .theater-header-left {
@@ -988,7 +996,7 @@ body {
   align-items: center;
   gap: 10px;
   min-width: 0;
-  flex-wrap: wrap;
+  flex: 1;
 }
 
 .theater-provider-badge {
@@ -1000,10 +1008,11 @@ body {
   font-weight: 900;
   padding: 2px 8px;
   border-radius: var(--radius-sm);
+  flex-shrink: 0;
 }
 
 .theater-drama-title {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 900;
   color: #ffffff;
   white-space: nowrap;
@@ -1019,6 +1028,7 @@ body {
   border-radius: var(--radius-full);
   font-size: 0.76rem;
   font-weight: 800;
+  flex-shrink: 0;
 }
 
 .theater-close-btn {
@@ -1035,6 +1045,7 @@ body {
   justify-content: center;
   cursor: pointer;
   transition: var(--transition);
+  flex-shrink: 0;
 }
 
 .theater-close-btn:hover {
@@ -1052,7 +1063,7 @@ body {
 
 /* Left Column */
 .theater-player-side {
-  padding: 20px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -1064,7 +1075,6 @@ body {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  max-height: 480px;
   background: #000;
   border-radius: var(--radius-md);
   border: 2px solid #3f3f46;
@@ -1072,6 +1082,7 @@ body {
   box-shadow: 0 8px 24px rgba(0,0,0,0.5);
   cursor: pointer;
   user-select: none;
+  flex-shrink: 0;
 }
 
 #playerVideo {
@@ -1154,7 +1165,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 16px;
+  padding: 14px;
   opacity: 0;
   background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.7) 100%);
   pointer-events: none;
@@ -1194,7 +1205,7 @@ body {
 }
 
 .fs-drama-title {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 900;
   color: #fff;
   white-space: nowrap;
@@ -1222,9 +1233,9 @@ body {
   background: #27272a;
   border: 2px solid #52525b;
   color: #fff;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 800;
-  padding: 6px 14px;
+  padding: 6px 12px;
   border-radius: var(--radius-full);
   display: inline-flex;
   align-items: center;
@@ -1244,8 +1255,8 @@ body {
   border: 1.5px solid #52525b;
   color: #fff;
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1257,7 +1268,7 @@ body {
   background: #ff5e6a;
 }
 
-/* Fullscreen In-Video Episode Drawer Modal */
+/* Fullscreen In-Video Episode Drawer */
 .fs-episodes-drawer {
   position: absolute;
   top: 0;
@@ -1282,7 +1293,7 @@ body {
 }
 
 .fs-drawer-header {
-  padding: 16px 18px;
+  padding: 14px 16px;
   border-bottom: 2px solid #3f3f46;
   display: flex;
   align-items: center;
@@ -1290,7 +1301,7 @@ body {
 }
 
 .fs-drawer-header h4 {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 900;
   color: #fff;
 }
@@ -1311,7 +1322,7 @@ body {
 }
 
 .fs-episodes-grid {
-  padding: 16px;
+  padding: 14px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
   gap: 8px;
@@ -1373,7 +1384,7 @@ body {
 .action-left, .action-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .btn-ctrl {
@@ -1533,7 +1544,7 @@ body {
 }
 
 .episodes-drawer-head {
-  padding: 16px 20px;
+  padding: 14px 18px;
   background: #27272a;
   border-bottom: 2px solid #3f3f46;
 }
@@ -1545,7 +1556,7 @@ body {
 }
 
 .drawer-title-wrap h3 {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 900;
   color: #fff;
 }
@@ -1561,7 +1572,7 @@ body {
 }
 
 .episodes-drawer-grid {
-  padding: 16px;
+  padding: 14px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
   gap: 8px;
@@ -1629,7 +1640,7 @@ body {
 
 @media (max-width: 992px) {
   .theater-content-grid {
-    grid-template-columns: 1fr 300px;
+    grid-template-columns: 1fr 280px;
   }
   .drama-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -1639,9 +1650,6 @@ body {
 
 @media (max-width: 768px) {
   .nav-container {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
     padding: 10px 14px;
   }
 
@@ -1650,7 +1658,7 @@ body {
   }
 
   .main-content {
-    padding: 16px 12px 40px;
+    padding: 14px 12px 40px;
   }
 
   .sources-section {
@@ -1661,21 +1669,27 @@ body {
     display: none; /* Mobile uses natural touch swipe */
   }
 
-  .feed-tabs-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-  }
-
   .feed-tabs {
     overflow-x: auto;
     flex-wrap: nowrap;
     padding-bottom: 4px;
     -webkit-overflow-scrolling: touch;
+    width: 100%;
   }
 
   .feed-tab-btn {
     flex-shrink: 0;
+    font-size: 0.8rem;
+    padding: 7px 12px;
+  }
+
+  .feed-search-wrap {
+    margin: 10px 0 12px;
+  }
+
+  .feed-search-box input {
+    font-size: 0.84rem;
+    padding: 10px 36px 10px 42px;
   }
 
   .drama-grid {
@@ -1683,10 +1697,12 @@ body {
     gap: 10px;
   }
 
-  /* Fullscreen Mobile Theater Modal */
+  /* Fullscreen Mobile Theater Modal (App Style - No Clipping) */
   .theater-modal-overlay {
     padding: 0;
-    align-items: flex-end;
+    position: fixed;
+    inset: 0;
+    background: #18181b;
   }
 
   .theater-window {
@@ -1697,51 +1713,69 @@ body {
     max-height: 100dvh;
     border-radius: 0;
     border: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #18181b;
   }
 
   .theater-topbar {
-    padding: 10px 14px;
-    min-height: 48px;
-    padding-top: max(10px, env(safe-area-inset-top));
+    padding: 8px 12px;
+    min-height: 42px;
+    padding-top: max(8px, env(safe-area-inset-top));
+    background: #27272a;
+    border-bottom: 2px solid #3f3f46;
   }
 
   .theater-drama-title {
-    font-size: 0.88rem;
-    max-width: 190px;
+    font-size: 0.85rem;
+    max-width: calc(100vw - 160px);
   }
 
   .theater-content-grid {
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    flex: 1;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    flex: 1 !important;
+    min-height: 0 !important;
   }
 
   .theater-player-side {
     padding: 0;
     gap: 0;
+    background: #18181b;
+    overflow: visible;
   }
 
   .video-container {
-    border-radius: 0;
-    border: none;
-    aspect-ratio: 16 / 9;
-    max-height: 42vh;
-    position: sticky;
-    top: 0;
-    z-index: 40;
+    width: 100% !important;
+    aspect-ratio: 16 / 9 !important;
+    max-height: none !important;
+    height: auto !important;
+    border-radius: 0 !important;
+    border: none !important;
+    border-bottom: 2px solid #3f3f46 !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 50 !important;
   }
 
   .player-controls-wrap {
     border-radius: 0;
-    border-left: none;
-    border-right: none;
+    border: none;
+    border-bottom: 2px solid #3f3f46;
     padding: 10px 12px;
+    background: #27272a;
   }
 
   .vol-slider {
     display: none;
+  }
+
+  .player-select {
+    padding: 4px 6px;
+    font-size: 0.72rem;
   }
 
   .theater-nav-row {
@@ -1755,13 +1789,18 @@ body {
   .btn-ep-nav {
     flex: 1;
     text-align: center;
-    padding: 10px;
+    padding: 9px;
+  }
+
+  .drama-synopsis-card {
+    margin: 10px 12px;
+    padding: 12px;
   }
 
   .theater-episodes-side {
     border-left: none;
     border-top: 2px solid #3f3f46;
-    padding-bottom: max(20px, env(safe-area-inset-bottom));
+    padding-bottom: max(30px, env(safe-area-inset-bottom));
   }
 
   .episodes-drawer-grid {
@@ -1778,6 +1817,6 @@ body {
 
   .episodes-drawer-grid,
   .fs-episodes-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
 }
