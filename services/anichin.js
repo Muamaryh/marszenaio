@@ -33,9 +33,10 @@ const CACHE_TTL_MS = 3 * 60 * 1000;
 function getToken() {
   return process.env.ANICHIN_API_KEY || DEFAULT_TOKEN;
 }
+let authResolvers = [];
 
 function initWebSocket() {
-  if (ws && (ws.readyState === 0 || ws.readyState === 1)) {
+  if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) {
     return;
   }
 
@@ -43,7 +44,6 @@ function initWebSocket() {
     ws = new WebSocket(ANICHIN_WS_URL);
 
     ws.on('open', () => {
-      wsReady = true;
       console.log('✅ Connected to Anichin Official WebSocket Gateway');
       const token = getToken();
       ws.send(JSON.stringify({ type: 'auth', token }));
@@ -53,7 +53,10 @@ function initWebSocket() {
       try {
         const msg = JSON.parse(data.toString());
         if (msg.type === 'auth') {
+          wsReady = true;
           console.log(`🔐 Anichin Auth Status: ${msg.message || 'OK'}`);
+          authResolvers.forEach(fn => fn());
+          authResolvers = [];
         }
 
         if (msg.id && pendingCallbacks.has(msg.id)) {
@@ -74,32 +77,46 @@ function initWebSocket() {
       wsReady = false;
       for (const [id, item] of pendingCallbacks.entries()) {
         clearTimeout(item.timer);
-        item.reject(new Error('Koneksi WebSocket terputus, mencoba reconnecting...'));
+        item.reject(new Error('Koneksi WebSocket terputus'));
       }
       pendingCallbacks.clear();
-      setTimeout(initWebSocket, 3000);
+      setTimeout(initWebSocket, 2000);
     });
 
     ws.on('error', () => {
+      wsReady = false;
       try { ws.close(); } catch {}
     });
   } catch (e) {
-    setTimeout(initWebSocket, 4000);
+    setTimeout(initWebSocket, 3000);
   }
 }
 
 // Inisialisasi awal
 initWebSocket();
 
-function sendWsRequest(source, path, params = {}) {
+function waitForWsReady(timeoutMs = 12000) {
+  if (wsReady && ws && ws.readyState === WebSocket.OPEN) {
+    return Promise.resolve();
+  }
+  initWebSocket();
   return new Promise((resolve, reject) => {
-    if (!wsReady || !ws || ws.readyState !== 1) {
-      initWebSocket();
-      return setTimeout(() => {
-        if (!wsReady) return reject(new Error('Koneksi server drama sedang disiapkan, silakan coba 2 detik lagi.'));
-        executeDirect(source, path, params, resolve, reject);
-      }, 1200);
-    }
+    const timer = setTimeout(() => {
+      authResolvers = authResolvers.filter(f => f !== onReady);
+      reject(new Error('Server drama sedang sibuk, silakan coba sesaat lagi.'));
+    }, timeoutMs);
+
+    const onReady = () => {
+      clearTimeout(timer);
+      resolve();
+    };
+    authResolvers.push(onReady);
+  });
+}
+
+async function sendWsRequest(source, path, params = {}) {
+  await waitForWsReady();
+  return new Promise((resolve, reject) => {
     executeDirect(source, path, params, resolve, reject);
   });
 }

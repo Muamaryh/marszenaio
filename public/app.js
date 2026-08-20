@@ -58,13 +58,14 @@ function saveWatchProgress(drama, episode, currentTime = 0, duration = 0) {
   try {
     let history = getWatchHistory();
     const progress = (duration > 0) ? Math.min(100, Math.round((currentTime / duration) * 100)) : 0;
+    const currentSrc = drama.source || appState.currentSource || 'dramawave';
 
     // Filter existing item
-    history = history.filter(item => !(item.id === drama.id && item.source === (appState.currentSource || item.source)));
+    history = history.filter(item => !(item.id === drama.id && item.source === currentSrc));
 
     const entry = {
       id: drama.id,
-      source: appState.currentSource || 'dramawave',
+      source: currentSrc,
       title: drama.title || 'Drama',
       cover: drama.cover || '',
       lastEpisode: Number(episode || 1),
@@ -132,7 +133,7 @@ function renderContinueWatchingBanner() {
       <div class="cw-info">
         <div class="cw-tag-row">
           <span class="cw-label">Lanjutkan Menonton</span>
-          <span class="cw-source-badge">${escapeHtml(latest.source.toUpperCase())}</span>
+          <span class="cw-source-badge">${escapeHtml((latest.source || 'drama').toUpperCase())}</span>
         </div>
         <h4 class="cw-title" title="${escapeHtml(latest.title)}">${escapeHtml(latest.title)}</h4>
         <div class="cw-progress-wrap">
@@ -155,6 +156,11 @@ function renderContinueWatchingBanner() {
 // ===== 1. INITIALIZATION & SOURCES =====
 
 async function initApp() {
+  try {
+    const savedSource = localStorage.getItem('dracin_last_selected_source');
+    if (savedSource) appState.currentSource = savedSource;
+  } catch (e) {}
+
   await loadSources();
   await loadFeed();
   renderContinueWatchingBanner();
@@ -198,6 +204,7 @@ function renderSourcesPills() {
   appState.sources.forEach(src => {
     const btn = document.createElement('button');
     btn.className = 'source-btn' + (src.key === appState.currentSource ? ' active' : '');
+    btn.dataset.source = src.key;
     btn.innerHTML = `
       <span>${escapeHtml(src.name)}</span>
       ${src.badge ? `<span class="source-badge">${escapeHtml(src.badge)}</span>` : ''}
@@ -258,6 +265,8 @@ function initSourcesDrag() {
 
 function selectSource(sourceKey, sourceName, sourceDesc = '') {
   appState.currentSource = sourceKey;
+  try { localStorage.setItem('dracin_last_selected_source', sourceKey); } catch {}
+
   appState.currentPage = 1;
   appState.currentQuery = '';
   
@@ -267,7 +276,7 @@ function selectSource(sourceKey, sourceName, sourceDesc = '') {
   if (el('sourceDesc')) el('sourceDesc').textContent = sourceDesc || 'Streaming drama pilihan';
 
   document.querySelectorAll('.source-btn').forEach(b => {
-    b.classList.toggle('active', b.textContent.includes(sourceName));
+    b.classList.toggle('active', b.dataset.source === sourceKey || b.textContent.includes(sourceName));
   });
 
   if (appState.currentFeedType === 'history') {
@@ -508,6 +517,15 @@ async function openDrama(source, dramaId, fallbackTitle = '', startEpisode = nul
   show('theaterModal');
   hide('fullscreenEpDrawer');
 
+  // Sinkronkan active source ke provider drama yang dipilih
+  if (source) {
+    appState.currentSource = source;
+    try { localStorage.setItem('dracin_last_selected_source', source); } catch {}
+    document.querySelectorAll('.source-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.source === source || b.textContent.toLowerCase().includes(source.toLowerCase()));
+    });
+  }
+
   // Cek riwayat tontonan jika startEpisode tidak ditentukan
   let resumeEp = startEpisode;
   if (!resumeEp) {
@@ -528,7 +546,11 @@ async function openDrama(source, dramaId, fallbackTitle = '', startEpisode = nul
   }
 
   if (appState.hlsPlayer) {
-    try { appState.hlsPlayer.destroy(); } catch {}
+    try {
+      appState.hlsPlayer.stopLoad();
+      appState.hlsPlayer.detachMedia();
+      appState.hlsPlayer.destroy();
+    } catch {}
     appState.hlsPlayer = null;
   }
 
@@ -553,6 +575,7 @@ async function openDrama(source, dramaId, fallbackTitle = '', startEpisode = nul
 
     if (data.success && data.drama) {
       const d = data.drama;
+      d.source = source;
       appState.activeDrama = d;
       appState.totalEpisodes = d.totalEpisodes || (d.episodes?.length) || 1;
       appState.episodesList = d.episodes || [];
@@ -643,6 +666,23 @@ async function playEpisode(source, dramaId, epNum, sessionId = null) {
   show('videoLoader');
   hide('bigPlayOverlay');
 
+  // Bersihkan player sebelumnya sebelum memuat episode baru
+  if (appState.hlsPlayer) {
+    try {
+      appState.hlsPlayer.stopLoad();
+      appState.hlsPlayer.detachMedia();
+      appState.hlsPlayer.destroy();
+    } catch {}
+    appState.hlsPlayer = null;
+  }
+
+  const video = el('playerVideo');
+  if (video) {
+    try { video.pause(); } catch {}
+    video.removeAttribute('src');
+    video.load();
+  }
+
   // Catat ke riwayat tontonan
   if (appState.activeDrama) {
     saveWatchProgress(appState.activeDrama, epNum, 0, 0);
@@ -676,7 +716,11 @@ function setupVideoPlayer(data, sessionId) {
 
   // Hancurkan instance HLS lama jika ada
   if (appState.hlsPlayer) {
-    try { appState.hlsPlayer.destroy(); } catch {}
+    try {
+      appState.hlsPlayer.stopLoad();
+      appState.hlsPlayer.detachMedia();
+      appState.hlsPlayer.destroy();
+    } catch {}
     appState.hlsPlayer = null;
   }
 
@@ -699,7 +743,12 @@ function setupVideoPlayer(data, sessionId) {
       : `/api/stream/proxy?url=${encodeURIComponent(streamUrl)}`;
 
     const hls = new Hls({
-      maxBufferLength: 30,
+      maxBufferLength: 15,
+      maxMaxBufferLength: 30,
+      maxBufferSize: 30 * 1000 * 1000,
+      maxBufferHole: 0.5,
+      lowLatencyMode: true,
+      backBufferLength: 10, // Bersihkan segmen lama di RAM agar tidak lag / buffering bertumpuk
       enableWorker: true,
       xhrSetup: (xhr) => {
         xhr.withCredentials = false;

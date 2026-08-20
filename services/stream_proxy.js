@@ -4,6 +4,20 @@
  */
 
 const axios = require('axios');
+const http = require('http');
+const https = require('https');
+
+// Keep-Alive Connection Pool untuk streaming cepat tanpa socket exhaustion
+const httpAgent = new http.Agent({ keepAlive: true, maxSockets: 256, maxFreeSockets: 128, timeout: 60000 });
+const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 256, maxFreeSockets: 128, timeout: 60000, rejectUnauthorized: false });
+
+const apiClient = axios.create({
+  httpAgent,
+  httpsAgent,
+  timeout: 25000
+});
+
+const m3u8Cache = new Map();
 
 async function handleStreamProxy(req, res) {
   const { url } = req.query;
@@ -21,8 +35,15 @@ async function handleStreamProxy(req, res) {
     };
 
     if (isM3u8) {
-      const response = await axios.get(targetUrl, { headers, responseType: 'text', timeout: 15000 });
-      let m3u8Content = response.data;
+      let m3u8Content;
+      const cached = m3u8Cache.get(targetUrl);
+      if (cached && Date.now() - cached.timestamp < 10000) {
+        m3u8Content = cached.data;
+      } else {
+        const response = await apiClient.get(targetUrl, { headers, responseType: 'text', timeout: 15000 });
+        m3u8Content = response.data;
+        m3u8Cache.set(targetUrl, { timestamp: Date.now(), data: m3u8Content });
+      }
 
       // Base URL target untuk resolve relative path
       const urlObj = new URL(targetUrl);
@@ -65,7 +86,7 @@ async function handleStreamProxy(req, res) {
       const requestHeaders = { ...headers };
       if (range) requestHeaders.Range = range;
 
-      const response = await axios.get(targetUrl, {
+      const response = await apiClient.get(targetUrl, {
         headers: requestHeaders,
         responseType: 'stream',
         timeout: 30000
