@@ -14,11 +14,11 @@
 </head>
 <body>
   <div class="app-layout">
-    <!-- Navbar Header -->
+    <!-- Navbar Header (TrobosLink Neo-Brutalist Style) -->
     <header class="navbar">
       <div class="nav-container">
         <a href="/" class="brand-logo">
-          <span class="brand-icon">🎬</span>
+          <div class="brand-logo-wrap">🎬</div>
           <span class="brand-text">DRACIN<span class="brand-highlight">HUB</span></span>
           <span class="brand-badge">AIO STREAM</span>
         </a>
@@ -26,14 +26,14 @@
         <!-- Global Search Bar in Header -->
         <div class="header-search">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          <input type="text" id="headerSearchInput" placeholder="Cari judul drama, CEO, naga, reinkarnasi..." autocomplete="off">
+          <input type="text" id="headerSearchInput" placeholder="Cari judul drama, CEO, naga, billionaire..." autocomplete="off">
           <button class="search-clear-btn hidden" id="headerSearchClear">&times;</button>
         </div>
 
         <div class="header-right">
           <div class="live-status">
             <span class="live-pulse"></span>
-            <span class="live-text">16+ Provider Aktif</span>
+            <span class="live-text">16+ Sources Ready</span>
           </div>
         </div>
       </div>
@@ -41,14 +41,29 @@
 
     <!-- Main Container -->
     <main class="main-content">
-      <!-- Provider Selection Bar -->
+      <!-- Hero Intro Banner (TrobosLink Style) -->
+      <section class="hero-section">
+        <div class="hero-badge">⚡ AIO SHORT DRAMA STREAMING PORTAL</div>
+        <h1 class="hero-title">Nonton Drama Pendek <span class="grad-text">Tanpa Batas</span></h1>
+        <p class="hero-sub">Streaming ribuan episode drama pendek viral dari 14+ provider terbaik dengan kualitas HD dan Subtitle Indonesia.</p>
+      </section>
+
+      <!-- Provider Selection Bar with Drag & Nav Arrows -->
       <section class="sources-section">
         <div class="section-header-compact">
           <span class="section-title-sm">PILIH PROVIDER DRAMA:</span>
-          <span class="source-info-sub" id="sourceDesc">Direct M3U8 streaming dengan subtitle</span>
+          <span class="source-info-sub" id="sourceDesc">Provider drama box nomor 1 di Asia</span>
         </div>
-        <div class="sources-pill-scroll" id="sourcesPillsBar">
-          <!-- Dynamic sources will be rendered here -->
+        <div class="sources-scroll-wrapper">
+          <button class="sources-nav-btn prev" id="btnSourcesPrev" onclick="scrollSources(-1)" aria-label="Scroll Kiri">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div class="sources-pill-scroll" id="sourcesPillsBar">
+            <!-- Dynamic sources will be rendered here -->
+          </div>
+          <button class="sources-nav-btn next" id="btnSourcesNext" onclick="scrollSources(1)" aria-label="Scroll Kanan">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
         </div>
       </section>
 

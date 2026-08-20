@@ -159,6 +159,7 @@ async function initApp() {
   await loadFeed();
   renderContinueWatchingBanner();
   initSearch();
+  initSourcesDrag();
   initPlayerEventListeners();
 }
 
@@ -182,7 +183,8 @@ async function loadSources() {
       { key: 'dramabox', name: 'DramaBox', badge: 'Popular', desc: 'Provider drama box nomor 1 di Asia' },
       { key: 'shortmax', name: 'ShortMax', badge: 'Trending', desc: 'Katalog ribuan drama pendek bertema CEO & Reinkarnasi' },
       { key: 'melolo', name: 'Melolo', badge: 'Multi-Bitrate', desc: 'Pilihan resolusi 720p, 540p, 360p' },
-      { key: 'dramanova', name: 'DramaNova', badge: 'Romance / 18+', desc: 'Drama romantis & dewasa' }
+      { key: 'dramanova', name: 'DramaNova', badge: 'Romance / 18+', desc: 'Drama romantis & dewasa' },
+      { key: 'reelshort', name: 'ReelShort', badge: 'Hot', desc: 'Drama pendek billionaire & werewolf viral' }
     ];
     renderSourcesPills();
   }
@@ -203,6 +205,55 @@ function renderSourcesPills() {
     btn.onclick = () => selectSource(src.key, src.name, src.desc);
     container.appendChild(btn);
   });
+}
+
+function scrollSources(direction) {
+  const container = el('sourcesPillsBar');
+  if (!container) return;
+  const scrollAmount = 260 * direction;
+  container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+}
+
+function initSourcesDrag() {
+  const slider = el('sourcesPillsBar');
+  if (!slider) return;
+
+  let isDown = false;
+  let startX;
+  let scrollLeft;
+
+  slider.addEventListener('mousedown', (e) => {
+    isDown = true;
+    slider.classList.add('dragging');
+    startX = e.pageX - slider.offsetLeft;
+    scrollLeft = slider.scrollLeft;
+  });
+
+  slider.addEventListener('mouseleave', () => {
+    isDown = false;
+    slider.classList.remove('dragging');
+  });
+
+  slider.addEventListener('mouseup', () => {
+    isDown = false;
+    slider.classList.remove('dragging');
+  });
+
+  slider.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - slider.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    slider.scrollLeft = scrollLeft - walk;
+  });
+
+  // Mouse wheel horizontal scroll support
+  slider.addEventListener('wheel', (e) => {
+    if (e.deltaY !== 0) {
+      e.preventDefault();
+      slider.scrollLeft += e.deltaY;
+    }
+  }, { passive: false });
 }
 
 function selectSource(sourceKey, sourceName, sourceDesc = '') {

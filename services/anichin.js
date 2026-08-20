@@ -18,14 +18,9 @@ const SOURCES = {
   melolo:     { name: 'Melolo',     id: '7522723499182394385', badge: 'Multi-Bitrate', desc: 'Pilihan resolusi 720p, 540p, 360p' },
   dramanova:  { name: 'DramaNova',  id: '102062', badge: 'Romance / 18+', desc: 'Drama romantis & dewasa' },
   reelshort:  { name: 'ReelShort',  id: '699d1eefa3a7262cff05534b', badge: 'Hot', desc: 'Drama pendek romantis dan billionaire viral' },
-  shortmax:   { name: 'ShortMax',   id: '18854', badge: 'Trending', desc: 'Katalog ribuan drama pendek bertema CEO & Reinkarnasi' },
   goodshort:  { name: 'GoodShort',  id: '31001188126', badge: 'Recom', desc: 'Drama pilihan terfavorit penonton' },
   flickreels: { name: 'FlickReels', id: '5672', badge: 'Top Rank', desc: 'Serial drama rating tinggi' },
-  stardusttv: { name: 'StardustTV', id: '146', badge: 'Top', desc: 'Koleksi drama sci-fi dan modern' },
-  idrama:     { name: 'iDrama',     id: '160000641712', badge: 'Hot', desc: 'Drama asia pilihan' },
-  dramabite:  { name: 'DramaBite',  id: '15384', badge: 'Latest', desc: 'Drama bite-sized untuk tontonan kilat' },
-  moboreels:  { name: 'MoboReels',  id: '41896322', badge: 'Trending', desc: 'Drama mobile reel' },
-  flareflow:  { name: 'FlareFlow',  id: '746751', badge: 'New', desc: 'Platform drama generasi baru' }
+  stardusttv: { name: 'StardustTV', id: '146', badge: 'Top', desc: 'Koleksi drama sci-fi dan modern' }
 };
 
 let ws = null;
