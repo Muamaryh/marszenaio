@@ -1084,6 +1084,10 @@ function hideControls() {
   const drawer = el('fullscreenEpDrawer');
   if (drawer && !drawer.classList.contains('hidden')) return;
   container.classList.add('controls-hidden');
+  if (controlsHideTimeout) {
+    clearTimeout(controlsHideTimeout);
+    controlsHideTimeout = null;
+  }
 }
 
 function toggleControlsVisibility() {
@@ -1130,22 +1134,22 @@ function initPlayerEventListeners() {
 
   // Area Sentuh Instan Khusus Layar (0ms respon untuk HP & Desktop)
   const tapArea = el('videoTapArea') || videoContainer;
+  const overlay = el('videoFloatingOverlay');
   
   let lastTapTimestamp = 0;
   const handleScreenTap = (e) => {
-    // Abaikan jika klik di kontrol, tombol, select, atau drawer
-    if (e.target.closest('.fs-top-bar') || 
-        e.target.closest('.fs-bottom-bar') || 
-        e.target.closest('.fs-center-controls') || 
-        e.target.closest('.fs-episodes-drawer') || 
+    // Abaikan jika klik di kontrol, tombol, select, slider, atau drawer
+    if (e.target.closest('.fs-bottom-bar') || 
         e.target.closest('.btn-fs-ep-toggle') || 
-        e.target.closest('.btn-fs-close') ||
+        e.target.closest('.btn-fs-close') || 
+        e.target.closest('.fs-skip-btn') || 
+        e.target.closest('.fs-episodes-drawer') || 
         e.target.closest('.player-big-play-overlay')) {
       return;
     }
 
     const now = Date.now();
-    if (now - lastTapTimestamp < 220) return; // Debounce multi-event
+    if (now - lastTapTimestamp < 180) return; // Debounce multi-event
     lastTapTimestamp = now;
 
     toggleControlsVisibility();
@@ -1153,6 +1157,10 @@ function initPlayerEventListeners() {
 
   tapArea.addEventListener('click', handleScreenTap);
   tapArea.addEventListener('touchend', handleScreenTap, { passive: true });
+  if (overlay) {
+    overlay.addEventListener('click', handleScreenTap);
+    overlay.addEventListener('touchend', handleScreenTap, { passive: true });
+  }
 
   // Double Click di Desktop untuk Play / Pause
   tapArea.addEventListener('dblclick', (e) => {

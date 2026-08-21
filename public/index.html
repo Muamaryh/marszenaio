@@ -147,15 +147,8 @@
        ============================================== -->
   <div id="theaterModal" class="theater-modal-overlay hidden" role="dialog" aria-modal="true">
     <div class="theater-window">
-      <!-- Theater Header -->
-      <div class="theater-topbar">
-        <div class="theater-header-left">
-          <span class="theater-provider-badge" id="theaterSourceBadge">DRAMAWAVE</span>
-          <h2 class="theater-title-text" id="theaterDramaTitle">Judul Drama</h2>
-          <span class="theater-ep-indicator" id="theaterEpisodeIndicator">Ep 1</span>
-        </div>
-        <button class="theater-close-btn" onclick="closeTheater()" title="Tutup Theater">&times;</button>
-      </div>
+      <!-- Floating Close Button on Top Right -->
+      <button class="theater-close-btn" onclick="closeTheater()" title="Tutup Theater">&times;</button>
 
       <!-- Theater Content Split View -->
       <div class="theater-content-grid">
@@ -301,6 +294,11 @@
 
           <!-- Drama Details Card -->
           <div class="drama-synopsis-card">
+            <div class="theater-header-left">
+              <span class="theater-provider-badge" id="theaterSourceBadge">DRAMAWAVE</span>
+              <h2 class="theater-title-text" id="theaterDramaTitle">Judul Drama</h2>
+              <span class="theater-ep-indicator" id="theaterEpisodeIndicator">Ep 1</span>
+            </div>
             <h3 class="synopsis-heading">Sinopsis Cerita:</h3>
             <p class="synopsis-body" id="theaterSynopsisText">Memuat detail sinopsis...</p>
             <div class="synopsis-tags" id="theaterTagsContainer"></div>

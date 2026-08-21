@@ -1018,23 +1018,13 @@ body {
   color: #ffffff;
 }
 
-.theater-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 18px;
-  background: #27272a;
-  border-bottom: 2px solid #3f3f46;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
 .theater-header-left {
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 0;
-  flex: 1;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
 }
 
 .theater-provider-badge {
@@ -1049,14 +1039,11 @@ body {
   flex-shrink: 0;
 }
 
-.theater-drama-title {
-  font-size: 0.95rem;
+.theater-title-text {
+  font-size: 1.05rem;
   font-weight: 900;
   color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 480px;
+  line-height: 1.3;
 }
 
 .theater-ep-indicator {
@@ -1070,25 +1057,32 @@ body {
 }
 
 .theater-close-btn {
-  background: #3f3f46;
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(39, 39, 42, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1.5px solid #52525b;
   color: #fff;
-  border-radius: var(--radius-sm);
-  width: 34px;
-  height: 34px;
-  font-size: 1.4rem;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 1.3rem;
   font-weight: 900;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: var(--transition);
-  flex-shrink: 0;
+  z-index: 30;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.6);
 }
 
 .theater-close-btn:hover {
   background: #ff5e6a;
   border-color: #ff5e6a;
+  transform: scale(1.08);
 }
 
 .theater-content-grid {
