@@ -1294,14 +1294,54 @@ function changeSpeed(rate) {
   if (video) video.playbackRate = parseFloat(rate);
 }
 
+function isCurrentlyFullscreen() {
+  const container = el('videoContainer');
+  return Boolean(
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement ||
+    container?.classList.contains('is-fullscreen')
+  );
+}
+
 function toggleFullscreen() {
   const container = el('videoContainer');
   if (!container) return;
-  if (!document.fullscreenElement) {
-    container.requestFullscreen().catch(() => {});
+
+  const isFs = isCurrentlyFullscreen();
+
+  if (!isFs) {
+    // Masuk mode Layar Penuh
+    if (container.requestFullscreen) {
+      container.requestFullscreen().catch(() => {
+        container.classList.add('is-fullscreen');
+      });
+    } else if (container.webkitRequestFullscreen) {
+      container.webkitRequestFullscreen();
+    } else if (container.mozRequestFullScreen) {
+      container.mozRequestFullScreen();
+    } else if (container.msRequestFullscreen) {
+      container.msRequestFullscreen();
+    } else {
+      container.classList.add('is-fullscreen');
+    }
+    container.classList.add('is-fullscreen');
   } else {
-    document.exitFullscreen().catch(() => {});
+    // Keluar mode Layar Penuh
+    if (document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+    container.classList.remove('is-fullscreen');
+    hide('fullscreenEpDrawer');
   }
+  showControls(4000);
 }
 
 function toggleFullscreenEpisodes(e) {
@@ -1321,8 +1361,15 @@ function toggleFullscreenEpisodes(e) {
 }
 
 function exitFullscreenOrTheater() {
-  if (document.fullscreenElement) {
-    document.exitFullscreen().catch(() => {});
+  const container = el('videoContainer');
+  if (isCurrentlyFullscreen()) {
+    if (document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    }
+    container?.classList.remove('is-fullscreen');
+    hide('fullscreenEpDrawer');
   } else {
     closeTheater();
   }
