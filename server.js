@@ -18,6 +18,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // 1. Get Sources List (Gabungan Anichin + NunoDrama)
 app.get('/api/drama/sources', (req, res) => {
   try {
+    res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400');
     const anichinSources = getAnichinSources();
     const nunoSources = getNunoSources();
     const sources = [...anichinSources, ...nunoSources];
@@ -31,6 +32,7 @@ app.get('/api/drama/sources', (req, res) => {
 app.get('/api/drama/feed', async (req, res) => {
   const { source = 'dramawave', type = 'trending', page = 1 } = req.query;
   try {
+    res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=1800, stale-while-revalidate=3600');
     let feed;
     if (isNunoSource(source)) {
       feed = await getNunoFeed(source, type, Number(page));
@@ -47,6 +49,7 @@ app.get('/api/drama/feed', async (req, res) => {
 app.get('/api/drama/search', async (req, res) => {
   const { source = 'dramawave', query = '' } = req.query;
   try {
+    res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=1800, stale-while-revalidate=3600');
     let results;
     if (isNunoSource(source)) {
       results = await searchNunoDramas(source, query);
@@ -64,6 +67,7 @@ app.get('/api/drama/detail', async (req, res) => {
   const { source = 'dramawave', id } = req.query;
   if (!id) return res.status(400).json({ success: false, error: 'ID drama diperlukan' });
   try {
+    res.setHeader('Cache-Control', 'public, max-age=600, s-maxage=3600, stale-while-revalidate=7200');
     let detail;
     if (isNunoSource(source)) {
       detail = await getNunoDramaDetail(source, id);
@@ -81,6 +85,7 @@ app.get('/api/drama/episode', async (req, res) => {
   const { source = 'dramawave', id, ep = 1 } = req.query;
   if (!id) return res.status(400).json({ success: false, error: 'ID drama diperlukan' });
   try {
+    res.setHeader('Cache-Control', 'public, max-age=600, s-maxage=3600, stale-while-revalidate=7200');
     let episode;
     if (isNunoSource(source)) {
       episode = await getNunoDramaEpisode(source, id, Number(ep));

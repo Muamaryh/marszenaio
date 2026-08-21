@@ -44,6 +44,42 @@ function formatTime(seconds) {
 const STORAGE_KEY_HISTORY = 'dracin_watch_history_v1';
 let lastProgressSaveTime = 0;
 
+const clientMemoryCache = new Map();
+
+async function fetchWithClientCache(url, ttlMs = 15 * 60 * 1000) {
+  // 1. Cek in-memory RAM cache
+  const mem = clientMemoryCache.get(url);
+  if (mem && Date.now() - mem.timestamp < ttlMs) {
+    return mem.data;
+  }
+
+  // 2. Cek sessionStorage browser
+  try {
+    const raw = sessionStorage.getItem('dracin_cache_' + url);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Date.now() - parsed.timestamp < ttlMs) {
+        clientMemoryCache.set(url, parsed);
+        return parsed.data;
+      }
+    }
+  } catch (e) {}
+
+  // 3. Ambil dari server
+  const res = await fetch(url);
+  const data = await res.json();
+
+  if (data && data.success !== false) {
+    const cacheObj = { timestamp: Date.now(), data };
+    clientMemoryCache.set(url, cacheObj);
+    try {
+      sessionStorage.setItem('dracin_cache_' + url, JSON.stringify(cacheObj));
+    } catch (e) {}
+  }
+
+  return data;
+}
+
 function getWatchHistory() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_HISTORY);
@@ -174,8 +210,7 @@ async function loadSources() {
   if (!container) return;
 
   try {
-    const res = await fetch('/api/drama/sources');
-    const data = await res.json();
+    const data = await fetchWithClientCache('/api/drama/sources', 3600000);
     if (data.success && data.sources) {
       appState.sources = data.sources;
       renderSourcesPills();
@@ -432,8 +467,7 @@ async function loadFeed() {
 
   try {
     const url = `/api/drama/feed?source=${encodeURIComponent(appState.currentSource)}&type=${encodeURIComponent(appState.currentFeedType)}&page=${appState.currentPage}`;
-    const res = await fetch(url);
-    const data = await res.json();
+    const data = await fetchWithClientCache(url, 10 * 60 * 1000);
     hide('dramaCatalogLoader');
 
     if (data.success && data.items && data.items.length > 0) {
@@ -525,8 +559,7 @@ async function performSearch(query) {
 
   try {
     const url = `/api/drama/search?source=${encodeURIComponent(appState.currentSource)}&query=${encodeURIComponent(query)}`;
-    const res = await fetch(url);
-    const data = await res.json();
+    const data = await fetchWithClientCache(url, 5 * 60 * 1000);
     hide('dramaCatalogLoader');
 
     if (data.success && data.items && data.items.length > 0) {
@@ -608,8 +641,7 @@ async function openDrama(source, dramaId, fallbackTitle = '', startEpisode = nul
   show('videoLoader');
 
   try {
-    const res = await fetch(`/api/drama/detail?source=${encodeURIComponent(source)}&id=${encodeURIComponent(dramaId)}`);
-    const data = await res.json();
+    const data = await fetchWithClientCache(`/api/drama/detail?source=${encodeURIComponent(source)}&id=${encodeURIComponent(dramaId)}`, 30 * 60 * 1000);
 
     // Jika user sudah ganti drama atau menutup modal, batalkan eksekusi
     if (currentSession !== playbackSessionId) return;
@@ -730,8 +762,22 @@ async function playEpisode(source, dramaId, epNum, sessionId = null) {
   }
 
   try {
-    const res = await fetch(`/api/drama/episode?source=${encodeURIComponent(source)}&id=${encodeURIComponent(dramaId)}&ep=${epNum}`);
-    const data = await res.json();
+    let data = null;
+    const epObj = appState.episodesList?.[Number(epNum) - 1];
+    if (epObj && epObj.videoUrl) {
+      data = {
+        success: true,
+        source,
+        id: dramaId,
+        episodeNumber: Number(epNum),
+        videoUrl: epObj.videoUrl,
+        qualities: [{ label: 'HD Auto', url: epObj.videoUrl, isDefault: true }],
+        subtitles: []
+      };
+    } else {
+      const url = `/api/drama/episode?source=${encodeURIComponent(source)}&id=${encodeURIComponent(dramaId)}&ep=${epNum}`;
+      data = await fetchWithClientCache(url, 30 * 60 * 1000);
+    }
 
     if (currentSession !== playbackSessionId) return; // Discard jika sudah berpindah drama / ditutup
     hide('videoLoader');
