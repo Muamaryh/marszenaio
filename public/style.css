@@ -1120,7 +1120,27 @@ body {
   box-shadow: 0 8px 24px rgba(0,0,0,0.5);
   cursor: pointer;
   user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  outline: none !important;
   flex-shrink: 0;
+}
+
+.video-container:focus,
+.video-container:focus-visible,
+.video-container:active {
+  outline: none !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+}
+
+.video-container * {
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none !important;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 #playerVideo {
@@ -1202,7 +1222,20 @@ body {
   z-index: 4;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
   touch-action: manipulation;
+  outline: none !important;
+}
+
+.video-tap-area:focus,
+.video-tap-area:active,
+.video-tap-area:focus-visible {
+  outline: none !important;
+  background: transparent !important;
 }
 
 /* In-Video Floating Overlay */
