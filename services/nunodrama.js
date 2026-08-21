@@ -270,19 +270,20 @@ async function getNunoDramaEpisode(source, id, ep = 1) {
   let subtitles = [];
 
   try {
+    const params = (source === 'dramabox')
+      ? { book_id: String(id), episode_num: String(ep) }
+      : {
+          id: String(id),
+          book_id: String(id),
+          drama_id: String(id),
+          ep: String(ep),
+          episode_num: String(ep),
+          chapter_id: String(ep)
+        };
+
     const res = await nunoClient.get(`/api/${source}/stream`, {
-      params: {
-        id,
-        book_id: id,
-        drama_id: id,
-        ep: String(ep),
-        episode_num: String(ep),
-        chapter_id: String(ep),
-        episode: String(ep),
-        episode_id: String(ep),
-        chapter_index: String(ep)
-      },
-      timeout: 10000
+      params,
+      timeout: 12000
     });
 
     const d = res.data?.data || res.data || {};
