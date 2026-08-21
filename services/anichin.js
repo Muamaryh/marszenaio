@@ -362,13 +362,13 @@ async function searchDramas(source = 'dramawave', query = '') {
 }
 
 function resolveActualSource(id, requestedSource) {
-  if (!id) return requestedSource;
+  if (requestedSource && requestedSource !== 'all') return requestedSource;
+  if (!id) return 'dramawave';
   const str = String(id).trim();
-  if (/^[A-Za-z0-9]{10}$/.test(str) && !/^\d+$/.test(str)) return 'dramawave';
   if (/^420\d{8}$/.test(str)) return 'dramabox';
   if (/^\d{19}$/.test(str)) return 'netshort';
   if (/^[0-9a-f]{24}$/i.test(str)) return 'reelshort';
-  return requestedSource;
+  return 'dramawave';
 }
 
 async function getDramaDetail(source = 'dramawave', id) {

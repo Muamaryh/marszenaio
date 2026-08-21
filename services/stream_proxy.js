@@ -50,12 +50,21 @@ async function handleStreamProxy(req, res) {
         return `${baseUrl}${rawUri}`;
       };
 
-      // Rewrite relative URLs di dalam playlist agar melalui proxy
+      // Rewrite relative URLs di dalam playlist agar melalui proxy & pastikan audio aktif
+      let hasEnabledAudio = false;
       const rewritten = m3u8Content.split('\n').map(line => {
-        const trimmed = line.trim();
+        let trimmed = line.trim();
         if (!trimmed) return line;
 
-        // Handle #EXT-X-MAP:URI="..." or #EXT-X-KEY:URI="..."
+        // Pastikan track audio Indonesia / pertama diaktifkan (DEFAULT=YES)
+        if (trimmed.includes('TYPE=AUDIO')) {
+          if ((trimmed.includes('NAME="id-ID"') || trimmed.includes('LANGUAGE="id"') || !hasEnabledAudio) && trimmed.includes('DEFAULT=NO')) {
+            trimmed = trimmed.replace('DEFAULT=NO', 'DEFAULT=YES').replace('AUTOSELECT=NO', 'AUTOSELECT=YES');
+            hasEnabledAudio = true;
+          }
+        }
+
+        // Handle #EXT-X-MAP:URI="..." or #EXT-X-KEY:URI="..." or #EXT-X-MEDIA:URI="..."
         if (trimmed.includes('URI="')) {
           return trimmed.replace(/URI="([^"]+)"/g, (match, uri) => {
             const abs = resolveAbsolute(uri);
@@ -63,7 +72,7 @@ async function handleStreamProxy(req, res) {
           });
         }
 
-        if (trimmed.startsWith('#')) return line;
+        if (trimmed.startsWith('#')) return trimmed;
 
         const absoluteLineUrl = resolveAbsolute(trimmed);
         return `/api/stream/proxy?url=${encodeURIComponent(absoluteLineUrl)}`;

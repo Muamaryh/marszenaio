@@ -88,13 +88,13 @@ async function fetchWithClientCache(url, ttlMs = 15 * 60 * 1000) {
 }
 
 function resolveActualSource(id, requestedSource) {
-  if (!id) return requestedSource || 'dramawave';
+  if (requestedSource && requestedSource !== 'all') return requestedSource;
+  if (!id) return 'dramawave';
   const str = String(id).trim();
-  if (/^[A-Za-z0-9]{10}$/.test(str) && !/^\d+$/.test(str)) return 'dramawave';
   if (/^420\d{8}$/.test(str)) return 'dramabox';
   if (/^\d{19}$/.test(str)) return 'netshort';
   if (/^[0-9a-f]{24}$/i.test(str)) return 'reelshort';
-  return requestedSource || 'dramawave';
+  return 'dramawave';
 }
 
 function getWatchHistory() {
@@ -111,7 +111,10 @@ function saveWatchProgress(drama, episode, currentTime = 0, duration = 0) {
   try {
     let history = getWatchHistory();
     const progress = (duration > 0) ? Math.min(100, Math.round((currentTime / duration) * 100)) : 0;
-    const currentSrc = resolveActualSource(drama.id, drama.source || appState.currentSource || 'dramawave');
+    const currentSrc = drama.source || appState.currentSource || 'dramawave';
+    const dramaTitle = drama.title && drama.title !== 'Short Drama' && drama.title !== 'Drama'
+      ? drama.title
+      : (appState.activeDrama?.title || el('theaterDramaTitle')?.textContent || 'Short Drama');
 
     // Filter existing item
     history = history.filter(item => !(item.id === drama.id));
@@ -119,8 +122,8 @@ function saveWatchProgress(drama, episode, currentTime = 0, duration = 0) {
     const entry = {
       id: drama.id,
       source: currentSrc,
-      title: drama.title || 'Drama',
-      cover: drama.cover || '',
+      title: dramaTitle,
+      cover: drama.cover || appState.activeDrama?.cover || '',
       lastEpisode: Number(episode || 1),
       totalEpisodes: Number(drama.totalEpisodes || appState.totalEpisodes || 1),
       currentTime: Math.floor(currentTime || 0),
@@ -864,10 +867,16 @@ function setupVideoPlayer(data, sessionId) {
           (t.name || t.lang || '').toLowerCase().includes('id') || 
           (t.name || t.lang || '').toLowerCase().includes('indo')
         );
-        if (indoIdx !== -1) {
-          hls.audioTrack = indoIdx;
-        }
+        hls.audioTrack = (indoIdx !== -1) ? indoIdx : 0;
       }
+      video.muted = false;
+      video.volume = 1;
+    });
+
+    hls.on(Hls.Events.AUDIO_TRACK_LOADED, () => {
+      if (sessionId !== playbackSessionId) return;
+      video.muted = false;
+      video.volume = 1;
     });
 
     hls.on(Hls.Events.ERROR, (event, errData) => {
