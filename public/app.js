@@ -196,6 +196,45 @@ async function loadSources() {
   }
 }
 
+function getProviderBrandLogo(src) {
+  const customIcons = {
+    dramawave: 'https://video-v6.mydramawave.com/favicon.ico',
+    dramabox: 'https://dramaboxdb.com/favicon.ico',
+    shortmax: 'https://akamai-static.shorttv.live/favicon.ico',
+    reelshort: 'https://www.reelshort.com/favicon.ico',
+    reelshortv2: 'https://www.reelshort.com/favicon.ico',
+    netshort: 'https://netshort.com/favicon.ico',
+    freereels: 'https://freereels.com/favicon.ico',
+    melolo: 'https://melolo.com/favicon.ico',
+    dramanova: 'https://dramanova.com/favicon.ico',
+    goodshort: 'https://goodshort.com/favicon.ico',
+    flickreels: 'https://flickreels.com/favicon.ico',
+    stardusttv: 'https://stardust.tv/favicon.ico',
+    snackshort: 'https://bs.kjcdn.com/favicon.ico',
+    dotdrama: 'https://dotdrama.com/favicon.ico',
+    flextv: 'https://flextv.cc/favicon.ico',
+    dramabite: 'https://dramabite.com/favicon.ico',
+    anyreel: 'https://anyreel.tv/favicon.ico',
+    soreel: 'https://soreel.tv/favicon.ico',
+    stareel: 'https://stareel.tv/favicon.ico',
+    kalostv: 'https://kalostv.com/favicon.ico',
+    radreels: 'https://radreels.com/favicon.ico',
+    donghuaqueen: 'https://donghuaqueen.org/favicon.ico',
+    samehadaku: 'https://samehadaku.email/favicon.ico',
+    animex: 'https://animex.ninja/favicon.ico',
+    bstation: 'https://www.bilibili.tv/favicon.ico',
+    drakorid: 'https://drakor.id/favicon.ico',
+    lookseries: 'https://lookseries.com/favicon.ico',
+    dramaqueen: 'https://dramaqueen.org/favicon.ico'
+  };
+
+  const iconUrl = src.icon || customIcons[src.key];
+  if (iconUrl) {
+    return `<img src="${escapeHtml(iconUrl)}" alt="${escapeHtml(src.name)}" class="source-logo-img" onerror="this.style.display='none'"/>`;
+  }
+  return `<span class="source-fallback-dot"></span>`;
+}
+
 function renderSourcesPills() {
   const container = el('sourcesPillsBar');
   if (!container) return;
@@ -205,8 +244,10 @@ function renderSourcesPills() {
     const btn = document.createElement('button');
     btn.className = 'source-btn' + (src.key === appState.currentSource ? ' active' : '');
     btn.dataset.source = src.key;
+    const logoHtml = getProviderBrandLogo(src);
     btn.innerHTML = `
-      <span>${escapeHtml(src.name)}</span>
+      ${logoHtml}
+      <span class="source-name-text">${escapeHtml(src.name)}</span>
       ${src.badge ? `<span class="source-badge">${escapeHtml(src.badge)}</span>` : ''}
     `;
     btn.onclick = () => selectSource(src.key, src.name, src.desc);

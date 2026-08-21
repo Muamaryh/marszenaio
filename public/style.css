@@ -326,7 +326,7 @@ body {
   border: var(--border-thick);
   box-shadow: var(--shadow-sm);
   border-radius: var(--radius-full);
-  padding: 8px 16px;
+  padding: 6px 14px 6px 8px;
   color: var(--black);
   font-size: 0.85rem;
   font-weight: 800;
@@ -334,6 +334,30 @@ body {
   white-space: nowrap;
   transition: var(--transition);
   flex-shrink: 0;
+}
+
+.source-logo-img {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid rgba(24, 24, 27, 0.2);
+  background: #ffffff;
+}
+
+.source-fallback-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-mint);
+  border: 1px solid var(--black);
+  flex-shrink: 0;
+}
+
+.source-name-text {
+  font-size: 0.84rem;
+  font-weight: 800;
 }
 
 .source-btn:hover {

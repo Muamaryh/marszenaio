@@ -7,20 +7,20 @@ const WebSocket = require('ws');
 
 const ANICHIN_WS_URL = 'wss://miniapp.anichin.bio/ws';
 const ANICHIN_BASE_URL = 'https://miniapp.anichin.bio';
-const DEFAULT_TOKEN = 'TRIAL-ANICHIN-2026';
+const DEFAULT_TOKEN = 'ANICHIN-A5A16A417FC3EBA15BE691F2B9AA6DA1';
 
 const SOURCES = {
-  dramawave:  { name: 'DramaWave',  id: 'LeMYdgoXZM', badge: 'HD & Subtitle', desc: 'Direct M3U8 streaming dengan 20+ subtitle multi-bahasa' },
-  freereels:  { name: 'FreeReels',  id: '51bAUXzvfP', badge: 'Gratis & Sub', desc: 'Direct stream cepat dengan subtitle Indonesia' },
-  netshort:   { name: 'NetShort',   id: '2034157133506805762', badge: 'Direct MP4', desc: 'Kualitas original MP4 dengan subtitle Indonesia' },
-  dramabox:   { name: 'DramaBox',   id: '42000007806', badge: 'Popular', desc: 'Provider drama box nomor 1 di Asia' },
-  shortmax:   { name: 'ShortMax',   id: '18854', badge: 'Trending', desc: 'Katalog ribuan drama pendek bertema CEO & Reinkarnasi' },
-  melolo:     { name: 'Melolo',     id: '7522723499182394385', badge: 'Multi-Bitrate', desc: 'Pilihan resolusi 720p, 540p, 360p' },
-  dramanova:  { name: 'DramaNova',  id: '102062', badge: 'Romance / 18+', desc: 'Drama romantis & dewasa' },
-  reelshort:  { name: 'ReelShort',  id: '699d1eefa3a7262cff05534b', badge: 'Hot', desc: 'Drama pendek romantis dan billionaire viral' },
-  goodshort:  { name: 'GoodShort',  id: '31001188126', badge: 'Recom', desc: 'Drama pilihan terfavorit penonton' },
-  flickreels: { name: 'FlickReels', id: '5672', badge: 'Top Rank', desc: 'Serial drama rating tinggi' },
-  stardusttv: { name: 'StardustTV', id: '146', badge: 'Top', desc: 'Koleksi drama sci-fi dan modern' }
+  dramawave:  { name: 'DramaWave',  id: 'LeMYdgoXZM', badge: 'HD & Subtitle', desc: 'Direct M3U8 streaming dengan 20+ subtitle multi-bahasa', icon: 'https://video-v6.mydramawave.com/favicon.ico' },
+  freereels:  { name: 'FreeReels',  id: '51bAUXzvfP', badge: 'Gratis & Sub', desc: 'Direct stream cepat dengan subtitle Indonesia', icon: 'https://freereels.com/favicon.ico' },
+  netshort:   { name: 'NetShort',   id: '2034157133506805762', badge: 'Direct MP4', desc: 'Kualitas original MP4 dengan subtitle Indonesia', icon: 'https://netshort.com/favicon.ico' },
+  dramabox:   { name: 'DramaBox',   id: '42000007806', badge: 'Popular', desc: 'Provider drama box nomor 1 di Asia', icon: 'https://dramaboxdb.com/favicon.ico' },
+  shortmax:   { name: 'ShortMax',   id: '18854', badge: 'Trending', desc: 'Katalog ribuan drama pendek bertema CEO & Reinkarnasi', icon: 'https://akamai-static.shorttv.live/favicon.ico' },
+  melolo:     { name: 'Melolo',     id: '7522723499182394385', badge: 'Multi-Bitrate', desc: 'Pilihan resolusi 720p, 540p, 360p', icon: 'https://melolo.com/favicon.ico' },
+  dramanova:  { name: 'DramaNova',  id: '102062', badge: 'Romance / 18+', desc: 'Drama romantis & dewasa', icon: 'https://dramanova.com/favicon.ico' },
+  reelshort:  { name: 'ReelShort',  id: '699d1eefa3a7262cff05534b', badge: 'Hot', desc: 'Drama pendek romantis dan billionaire viral', icon: 'https://www.reelshort.com/favicon.ico' },
+  goodshort:  { name: 'GoodShort',  id: '31001188126', badge: 'Recom', desc: 'Drama pilihan terfavorit penonton', icon: 'https://goodshort.com/favicon.ico' },
+  flickreels: { name: 'FlickReels', id: '5672', badge: 'Top Rank', desc: 'Serial drama rating tinggi', icon: 'https://flickreels.com/favicon.ico' },
+  stardusttv: { name: 'StardustTV', id: '146', badge: 'Top', desc: 'Koleksi drama sci-fi dan modern', icon: 'https://stardust.tv/favicon.ico' }
 };
 
 let ws = null;
@@ -300,7 +300,8 @@ function getSources() {
     key,
     name: val.name,
     badge: val.badge,
-    desc: val.desc
+    desc: val.desc,
+    icon: val.icon || ''
   }));
 }
 
