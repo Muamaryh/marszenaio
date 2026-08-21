@@ -241,43 +241,77 @@ async function loadSources() {
   }
 }
 
+const PROVIDER_BRANDS = {
+  dramawave:    { bg: '#06b6d4', text: '#ffffff', symbol: '🌊', icon: 'https://video-v6.mydramawave.com/favicon.ico' },
+  dramabox:     { bg: '#ff4500', text: '#ffffff', symbol: '📦', icon: 'https://dramaboxdb.com/favicon.ico' },
+  shortmax:     { bg: '#0284c7', text: '#ffffff', symbol: '⚡', icon: 'https://akamai-static.shorttv.live/favicon.ico' },
+  reelshort:    { bg: '#e11d48', text: '#ffffff', symbol: '🎬', icon: 'https://www.reelshort.com/favicon.ico' },
+  reelshortv2:  { bg: '#e11d48', text: '#ffffff', symbol: '🎬', icon: 'https://www.reelshort.com/favicon.ico' },
+  netshort:     { bg: '#ef4444', text: '#ffffff', symbol: '▶',  icon: 'https://netshort.com/favicon.ico' },
+  freereels:    { bg: '#8b5cf6', text: '#ffffff', symbol: '🎞️', icon: 'https://freereels.com/favicon.ico' },
+  melolo:       { bg: '#eab308', text: '#000000', symbol: '😊', icon: 'https://melolo.com/favicon.ico' },
+  dramanova:    { bg: '#ec4899', text: '#ffffff', symbol: '💎', icon: 'https://dramanova.com/favicon.ico' },
+  goodshort:    { bg: '#2563eb', text: '#ffffff', symbol: '⭐', icon: 'https://goodshort.com/favicon.ico' },
+  flickreels:   { bg: '#f97316', text: '#ffffff', symbol: '🎥', icon: 'https://flickreels.com/favicon.ico' },
+  stardusttv:   { bg: '#a855f7', text: '#ffffff', symbol: '✨', icon: 'https://stardust.tv/favicon.ico' },
+  snackshort:   { bg: '#f59e0b', text: '#000000', symbol: '🍿', icon: 'https://bs.kjcdn.com/favicon.ico' },
+  dotdrama:     { bg: '#6366f1', text: '#ffffff', symbol: '🟣', icon: 'https://dotdrama.com/favicon.ico' },
+  flextv:       { bg: '#8b5cf6', text: '#ffffff', symbol: '🌐', icon: 'https://flextv.cc/favicon.ico' },
+  dramabite:    { bg: '#f43f5e', text: '#ffffff', symbol: '🍎', icon: 'https://dramabite.com/favicon.ico' },
+  anyreel:      { bg: '#14b8a6', text: '#ffffff', symbol: '🎞️', icon: 'https://anyreel.tv/favicon.ico' },
+  soreel:       { bg: '#fb7185', text: '#ffffff', symbol: '🔥', icon: 'https://soreel.tv/favicon.ico' },
+  stareel:      { bg: '#facc15', text: '#000000', symbol: '🌟', icon: 'https://stareel.tv/favicon.ico' },
+  kalostv:      { bg: '#10b981', text: '#ffffff', symbol: '🟢', icon: 'https://kalostv.com/favicon.ico' },
+  radreels:     { bg: '#38bdf8', text: '#000000', symbol: '⚡', icon: 'https://radreels.com/favicon.ico' },
+  freeshort:    { bg: '#22c55e', text: '#ffffff', symbol: '🎁', icon: 'https://freeshort.tv/favicon.ico' },
+  nunodrama:    { bg: '#f97316', text: '#ffffff', symbol: '🪐', icon: 'https://redmi.nunodrama.my.id/favicon.ico' },
+  meloshort:    { bg: '#f472b6', text: '#ffffff', symbol: '💖', icon: 'https://meloshort.com/favicon.ico' },
+  shortswave:   { bg: '#06b6d4', text: '#ffffff', symbol: '〰️', icon: 'https://shortswave.com/favicon.ico' },
+  sodareels:    { bg: '#84cc16', text: '#000000', symbol: '🥤', icon: 'https://sodareels.com/favicon.ico' },
+  vibeshort:    { bg: '#a855f7', text: '#ffffff', symbol: '🎵', icon: 'https://vibeshort.com/favicon.ico' },
+  dramarush:    { bg: '#ef4444', text: '#ffffff', symbol: '🚀', icon: 'https://dramarush.com/favicon.ico' },
+  cubetv:       { bg: '#3b82f6', text: '#ffffff', symbol: '🧊', icon: 'https://cubetv.sg/favicon.ico' },
+  lupacine:     { bg: '#64748b', text: '#ffffff', symbol: '📽️', icon: 'https://lupacine.com/favicon.ico' },
+  idrama:       { bg: '#0284c7', text: '#ffffff', symbol: '🏮', icon: 'https://idrama.tv/favicon.ico' },
+  happyshort:   { bg: '#facc15', text: '#000000', symbol: '😄', icon: 'https://happyshort.tv/favicon.ico' },
+  momeshort:    { bg: '#fb923c', text: '#ffffff', symbol: '🌸', icon: 'https://momeshort.com/favicon.ico' },
+  moreshort:    { bg: '#0ea5e9', text: '#ffffff', symbol: '📚', icon: 'https://moreshort.tv/favicon.ico' },
+  storygo:      { bg: '#6366f1', text: '#ffffff', symbol: '📖', icon: 'https://storygo.tv/favicon.ico' },
+  minishort:    { bg: '#ef4444', text: '#ffffff', symbol: '💊', icon: 'https://minishort.com/favicon.ico' },
+  shorten:      { bg: '#06b6d4', text: '#ffffff', symbol: '🔄', icon: 'https://shorten.tv/favicon.ico' },
+  mydrama:      { bg: '#eab308', text: '#000000', symbol: '👑', icon: 'https://mydrama.tv/favicon.ico' },
+  huangdou:     { bg: '#f59e0b', text: '#000000', symbol: '🫘', icon: 'https://huangdou.com/favicon.ico' },
+  ansflix:      { bg: '#dc2626', text: '#ffffff', symbol: '🍿', icon: 'https://ansflix.com/favicon.ico' },
+  bibishort:    { bg: '#ec4899', text: '#ffffff', symbol: '🦄', icon: 'https://bibishort.tv/favicon.ico' },
+  fundrama:     { bg: '#f43f5e', text: '#ffffff', symbol: '🎭', icon: 'https://fundrama.tv/favicon.ico' },
+  zeroshort:    { bg: '#475569', text: '#ffffff', symbol: '♾️', icon: 'https://zeroshort.tv/favicon.ico' },
+  dramaora:     { bg: '#f59e0b', text: '#000000', symbol: '🌅', icon: 'https://dramaora.com/favicon.ico' },
+  bumpit:       { bg: '#3b82f6', text: '#ffffff', symbol: '💥', icon: 'https://bumpit.tv/favicon.ico' },
+  nunomix:      { bg: '#a855f7', text: '#ffffff', symbol: '🎨', icon: 'https://nunomix.com/favicon.ico' },
+  donghuaqueen: { bg: '#10b981', text: '#ffffff', symbol: '🐉', icon: 'https://donghuaqueen.org/favicon.ico' },
+  samehadaku:   { bg: '#ef4444', text: '#ffffff', symbol: '🥷', icon: 'https://samehadaku.email/favicon.ico' },
+  animex:       { bg: '#e11d48', text: '#ffffff', symbol: '⚔️', icon: 'https://animex.ninja/favicon.ico' },
+  bstation:     { bg: '#00aeec', text: '#ffffff', symbol: '📺', icon: 'https://www.bilibili.tv/favicon.ico' },
+  toonshort:    { bg: '#f97316', text: '#ffffff', symbol: '💬', icon: 'https://toonshort.tv/favicon.ico' },
+  drakorid:     { bg: '#ec4899', text: '#ffffff', symbol: '🫰', icon: 'https://drakor.id/favicon.ico' },
+  lookseries:   { bg: '#475569', text: '#ffffff', symbol: '🎬', icon: 'https://lookseries.com/favicon.ico' },
+  dramaqueen:   { bg: '#a855f7', text: '#ffffff', symbol: '👸', icon: 'https://dramaqueen.org/favicon.ico' }
+};
+
 function getProviderBrandLogo(src) {
-  const customIcons = {
-    dramawave: 'https://video-v6.mydramawave.com/favicon.ico',
-    dramabox: 'https://dramaboxdb.com/favicon.ico',
-    shortmax: 'https://akamai-static.shorttv.live/favicon.ico',
-    reelshort: 'https://www.reelshort.com/favicon.ico',
-    reelshortv2: 'https://www.reelshort.com/favicon.ico',
-    netshort: 'https://netshort.com/favicon.ico',
-    freereels: 'https://freereels.com/favicon.ico',
-    melolo: 'https://melolo.com/favicon.ico',
-    dramanova: 'https://dramanova.com/favicon.ico',
-    goodshort: 'https://goodshort.com/favicon.ico',
-    flickreels: 'https://flickreels.com/favicon.ico',
-    stardusttv: 'https://stardust.tv/favicon.ico',
-    snackshort: 'https://bs.kjcdn.com/favicon.ico',
-    dotdrama: 'https://dotdrama.com/favicon.ico',
-    flextv: 'https://flextv.cc/favicon.ico',
-    dramabite: 'https://dramabite.com/favicon.ico',
-    anyreel: 'https://anyreel.tv/favicon.ico',
-    soreel: 'https://soreel.tv/favicon.ico',
-    stareel: 'https://stareel.tv/favicon.ico',
-    kalostv: 'https://kalostv.com/favicon.ico',
-    radreels: 'https://radreels.com/favicon.ico',
-    donghuaqueen: 'https://donghuaqueen.org/favicon.ico',
-    samehadaku: 'https://samehadaku.email/favicon.ico',
-    animex: 'https://animex.ninja/favicon.ico',
-    bstation: 'https://www.bilibili.tv/favicon.ico',
-    drakorid: 'https://drakor.id/favicon.ico',
-    lookseries: 'https://lookseries.com/favicon.ico',
-    dramaqueen: 'https://dramaqueen.org/favicon.ico'
+  const brand = PROVIDER_BRANDS[src.key] || {
+    bg: '#3f3f46',
+    text: '#ffffff',
+    symbol: '🎬'
   };
 
-  const iconUrl = src.icon || customIcons[src.key];
+  const iconUrl = src.icon || brand.icon;
+  const fallbackHtml = `<span class="source-logo-badge" style="background:${brand.bg};color:${brand.text}">${brand.symbol}</span>`;
+
   if (iconUrl) {
-    return `<img src="${escapeHtml(iconUrl)}" alt="${escapeHtml(src.name)}" class="source-logo-img" onerror="this.style.display='none'"/>`;
+    return `<img src="${escapeHtml(iconUrl)}" alt="${escapeHtml(src.name)}" class="source-logo-img" onerror="this.outerHTML='${fallbackHtml.replace(/'/g, "\\'")}'"/>`;
   }
-  return `<span class="source-fallback-dot"></span>`;
+  return fallbackHtml;
 }
 
 function renderSourcesPills() {
