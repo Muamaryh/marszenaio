@@ -109,6 +109,25 @@ app.get('/api/stream/proxy', handleStreamProxy);
 // 7. Subtitle Proxy (SRT -> VTT)
 app.get('/api/stream/subtitle', handleSubtitleProxy);
 
+// Debug route
+app.get('/api/debug/stream', async (req, res) => {
+  const { id = '42000002888', ep = '65' } = req.query;
+  const axios = require('axios');
+  const details = {};
+  try {
+    const t0 = Date.now();
+    const resp = await axios.get('https://redmi.nunodrama.my.id/api/dramabox/stream', {
+      params: { book_id: String(id), episode_num: String(ep) },
+      timeout: 12000,
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+    });
+    details.nunoDirect = { status: resp.status, time: Date.now() - t0, data: resp.data };
+  } catch (e) {
+    details.nunoDirect = { error: e.message, status: e.response?.status, data: e.response?.data };
+  }
+  res.json(details);
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({
