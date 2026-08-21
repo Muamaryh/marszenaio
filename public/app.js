@@ -1128,8 +1128,11 @@ function initPlayerEventListeners() {
   videoContainer.addEventListener('mousemove', () => showControls(3500));
   videoContainer.addEventListener('mouseenter', () => showControls(3500));
 
-  // 1x Klik / Sentuh Layar: Langsung tampilkan/sembunyikan kontrol (TIDAK PAUSE)
-  videoContainer.addEventListener('click', (e) => {
+  // Area Sentuh Instan Khusus Layar (0ms respon untuk HP & Desktop)
+  const tapArea = el('videoTapArea') || videoContainer;
+  
+  let lastTapTimestamp = 0;
+  const handleScreenTap = (e) => {
     // Abaikan jika klik di kontrol, tombol, select, atau drawer
     if (e.target.closest('.fs-top-bar') || 
         e.target.closest('.fs-bottom-bar') || 
@@ -1140,16 +1143,19 @@ function initPlayerEventListeners() {
         e.target.closest('.player-big-play-overlay')) {
       return;
     }
+
+    const now = Date.now();
+    if (now - lastTapTimestamp < 220) return; // Debounce multi-event
+    lastTapTimestamp = now;
+
     toggleControlsVisibility();
-  });
+  };
+
+  tapArea.addEventListener('click', handleScreenTap);
+  tapArea.addEventListener('touchend', handleScreenTap, { passive: true });
 
   // Double Click di Desktop untuk Play / Pause
-  videoContainer.addEventListener('dblclick', (e) => {
-    if (e.target.closest('.fs-top-bar') || 
-        e.target.closest('.fs-bottom-bar') || 
-        e.target.closest('.fs-episodes-drawer')) {
-      return;
-    }
+  tapArea.addEventListener('dblclick', (e) => {
     togglePlay();
   });
 

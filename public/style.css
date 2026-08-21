@@ -1196,6 +1196,15 @@ body {
   transform: scale(1.1);
 }
 
+.video-tap-area {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
 /* In-Video Floating Overlay */
 .video-floating-overlay {
   position: absolute;
