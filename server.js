@@ -87,7 +87,12 @@ app.get('/api/drama/episode', async (req, res) => {
   try {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     let episode;
-    if (isNunoSource(source)) {
+    if (source === 'dramabox') {
+      episode = await getNunoDramaEpisode('dramabox', id, Number(ep));
+      if (!episode || !episode.videoUrl) {
+        episode = await getAnichinEpisode(source, id, Number(ep));
+      }
+    } else if (isNunoSource(source)) {
       episode = await getNunoDramaEpisode(source, id, Number(ep));
     } else {
       episode = await getAnichinEpisode(source, id, Number(ep));
