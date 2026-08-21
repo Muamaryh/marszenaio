@@ -9,13 +9,8 @@ const https = require('https');
 
 const NUNO_BASE_URL = 'https://redmi.nunodrama.my.id';
 
-const httpAgent = new http.Agent({ keepAlive: true, maxSockets: 128, timeout: 60000 });
-const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 128, timeout: 60000, rejectUnauthorized: false });
-
 const nunoClient = axios.create({
   baseURL: NUNO_BASE_URL,
-  httpAgent,
-  httpsAgent,
   timeout: 15000,
   headers: {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',

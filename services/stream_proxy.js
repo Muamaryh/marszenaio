@@ -7,13 +7,7 @@ const axios = require('axios');
 const http = require('http');
 const https = require('https');
 
-// Keep-Alive Connection Pool untuk streaming cepat tanpa socket exhaustion
-const httpAgent = new http.Agent({ keepAlive: true, maxSockets: 256, maxFreeSockets: 128, timeout: 60000 });
-const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 256, maxFreeSockets: 128, timeout: 60000, rejectUnauthorized: false });
-
 const apiClient = axios.create({
-  httpAgent,
-  httpsAgent,
   timeout: 25000
 });
 
