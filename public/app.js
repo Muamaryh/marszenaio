@@ -80,6 +80,16 @@ async function fetchWithClientCache(url, ttlMs = 15 * 60 * 1000) {
   return data;
 }
 
+function resolveActualSource(id, requestedSource) {
+  if (!id) return requestedSource || 'dramawave';
+  const str = String(id).trim();
+  if (/^[A-Za-z0-9]{10}$/.test(str) && !/^\d+$/.test(str)) return 'dramawave';
+  if (/^420\d{8}$/.test(str)) return 'dramabox';
+  if (/^\d{19}$/.test(str)) return 'netshort';
+  if (/^[0-9a-f]{24}$/i.test(str)) return 'reelshort';
+  return requestedSource || 'dramawave';
+}
+
 function getWatchHistory() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_HISTORY);
@@ -94,10 +104,10 @@ function saveWatchProgress(drama, episode, currentTime = 0, duration = 0) {
   try {
     let history = getWatchHistory();
     const progress = (duration > 0) ? Math.min(100, Math.round((currentTime / duration) * 100)) : 0;
-    const currentSrc = drama.source || appState.currentSource || 'dramawave';
+    const currentSrc = resolveActualSource(drama.id, drama.source || appState.currentSource || 'dramawave');
 
     // Filter existing item
-    history = history.filter(item => !(item.id === drama.id && item.source === currentSrc));
+    history = history.filter(item => !(item.id === drama.id));
 
     const entry = {
       id: drama.id,
@@ -587,6 +597,7 @@ function changePage(delta) {
 let playbackSessionId = 0;
 
 async function openDrama(source, dramaId, fallbackTitle = '', startEpisode = null) {
+  source = resolveActualSource(dramaId, source);
   const currentSession = ++playbackSessionId;
   show('theaterModal');
   hide('fullscreenEpDrawer');
@@ -604,7 +615,7 @@ async function openDrama(source, dramaId, fallbackTitle = '', startEpisode = nul
   let resumeEp = startEpisode;
   if (!resumeEp) {
     const history = getWatchHistory();
-    const existing = history.find(item => item.id === dramaId && item.source === source);
+    const existing = history.find(item => item.id === dramaId);
     if (existing && existing.lastEpisode) {
       resumeEp = existing.lastEpisode;
     }

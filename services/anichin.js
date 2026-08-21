@@ -361,8 +361,19 @@ async function searchDramas(source = 'dramawave', query = '') {
   return result;
 }
 
+function resolveActualSource(id, requestedSource) {
+  if (!id) return requestedSource;
+  const str = String(id).trim();
+  if (/^[A-Za-z0-9]{10}$/.test(str) && !/^\d+$/.test(str)) return 'dramawave';
+  if (/^420\d{8}$/.test(str)) return 'dramabox';
+  if (/^\d{19}$/.test(str)) return 'netshort';
+  if (/^[0-9a-f]{24}$/i.test(str)) return 'reelshort';
+  return requestedSource;
+}
+
 async function getDramaDetail(source = 'dramawave', id) {
   if (!id) throw new Error('ID drama tidak boleh kosong');
+  source = resolveActualSource(id, source);
 
   const cacheKey = `detail_${source}_${id}`;
   const cached = memoryCache.get(cacheKey);
@@ -380,6 +391,7 @@ async function getDramaDetail(source = 'dramawave', id) {
 
 async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
   if (!id) throw new Error('ID drama tidak boleh kosong');
+  source = resolveActualSource(id, source);
 
   const cacheKey = `ep_${source}_${id}_${ep}`;
   const cached = memoryCache.get(cacheKey);
