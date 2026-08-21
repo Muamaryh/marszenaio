@@ -1697,12 +1697,12 @@ body {
     gap: 10px;
   }
 
-  /* Fullscreen Mobile Theater Modal (App Style - No Clipping) */
+  /* Fullscreen Mobile Theater Modal (App Style - No Clipping & 9:16 Vertical Video Optimized) */
   .theater-modal-overlay {
     padding: 0;
     position: fixed;
     inset: 0;
-    background: #18181b;
+    background: #121215;
   }
 
   .theater-window {
@@ -1716,20 +1716,62 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background: #18181b;
+    background: #121215;
   }
 
   .theater-topbar {
-    padding: 8px 12px;
-    min-height: 42px;
-    padding-top: max(8px, env(safe-area-inset-top));
-    background: #27272a;
-    border-bottom: 2px solid #3f3f46;
+    padding: 6px 12px;
+    min-height: 44px;
+    padding-top: max(6px, env(safe-area-inset-top));
+    background: #18181b;
+    border-bottom: 1.5px solid #27272a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .theater-header-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .theater-provider-badge {
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    border-radius: 4px;
   }
 
   .theater-drama-title {
-    font-size: 0.85rem;
-    max-width: calc(100vw - 160px);
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: calc(100vw - 150px);
+  }
+
+  .theater-ep-indicator {
+    font-size: 0.7rem;
+    padding: 2px 7px;
+    background: #27272a;
+  }
+
+  .theater-close-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #27272a;
+    border: 1px solid #3f3f46;
+    font-size: 1.2rem;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .theater-content-grid {
@@ -1739,73 +1781,170 @@ body {
     -webkit-overflow-scrolling: touch !important;
     flex: 1 !important;
     min-height: 0 !important;
+    background: #121215;
   }
 
   .theater-player-side {
-    padding: 0;
-    gap: 0;
-    background: #18181b;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    background: #121215 !important;
     overflow: visible;
   }
 
+  /* Optimized Vertical 9:16 Video Player Container */
   .video-container {
     width: 100% !important;
-    aspect-ratio: 16 / 9 !important;
-    max-height: none !important;
-    height: auto !important;
+    height: 52vh !important;
+    min-height: 280px !important;
+    max-height: 480px !important;
+    aspect-ratio: auto !important;
+    background: #000000 !important;
     border-radius: 0 !important;
     border: none !important;
-    border-bottom: 2px solid #3f3f46 !important;
+    border-bottom: 2px solid #27272a !important;
     position: sticky !important;
     top: 0 !important;
     z-index: 50 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7) !important;
+  }
+
+  #playerVideo {
+    height: 100% !important;
+    width: auto !important;
+    max-width: 100% !important;
+    object-fit: contain !important;
   }
 
   .player-controls-wrap {
     border-radius: 0;
     border: none;
-    border-bottom: 2px solid #3f3f46;
-    padding: 10px 12px;
-    background: #27272a;
+    border-bottom: 1.5px solid #27272a;
+    padding: 8px 12px;
+    background: #18181b;
+    gap: 6px;
+  }
+
+  .video-seek-bar {
+    height: 5px;
+  }
+
+  .controls-action-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+
+  .action-left {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .time-readout {
+    font-size: 0.72rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: #a1a1aa;
   }
 
   .vol-slider {
     display: none;
   }
 
+  .action-right {
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
   .player-select {
     padding: 4px 6px;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
+    background: #27272a;
+    border: 1px solid #3f3f46;
+    border-radius: 6px;
+    color: #ffffff;
+    max-width: 85px;
   }
 
   .theater-nav-row {
-    padding: 10px 12px;
+    padding: 10px 12px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: #121215;
   }
 
   .ep-nav-buttons {
+    display: flex;
+    gap: 8px;
     width: 100%;
   }
 
   .btn-ep-nav {
     flex: 1;
     text-align: center;
-    padding: 9px;
+    padding: 9px 8px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    border-radius: var(--radius-sm);
   }
 
-  .drama-synopsis-card {
-    margin: 10px 12px;
-    padding: 12px;
+  .auto-next-toggle {
+    font-size: 0.76rem;
+    color: #a1a1aa;
   }
 
+  /* Episode Drawer First on Mobile */
   .theater-episodes-side {
+    order: 3;
     border-left: none;
-    border-top: 2px solid #3f3f46;
-    padding-bottom: max(30px, env(safe-area-inset-bottom));
+    border-top: 1.5px solid #27272a;
+    padding: 12px 12px 16px;
+    background: #18181b;
+  }
+
+  .episodes-drawer-head {
+    padding: 0 0 10px 0;
+    border-bottom: none;
   }
 
   .episodes-drawer-grid {
-    grid-template-columns: repeat(5, 1fr);
-    gap: 6px;
+    grid-template-columns: repeat(6, 1fr) !important;
+    gap: 6px !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .ep-tile-btn {
+    padding: 8px 3px;
+    font-size: 0.72rem;
+    border-radius: 6px;
+  }
+
+  /* Synopsis at the bottom of mobile view */
+  .drama-synopsis-card {
+    order: 4;
+    margin: 8px 12px 40px;
+    padding: 12px;
+    background: #18181b;
+    border: 1px solid #27272a;
+    border-radius: 8px;
+  }
+
+  .synopsis-heading {
+    font-size: 0.82rem;
+    margin-bottom: 6px;
+  }
+
+  .synopsis-body {
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: #a1a1aa;
   }
 }
 
@@ -1817,6 +1956,6 @@ body {
 
   .episodes-drawer-grid,
   .fs-episodes-grid {
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(5, 1fr) !important;
   }
 }
