@@ -281,9 +281,13 @@ async function getNunoDramaEpisode(source, id, ep = 1) {
           chapter_id: String(ep)
         };
 
-    const res = await nunoClient.get(`/api/${source}/stream`, {
+    const res = await axios.get(`${NUNO_BASE_URL}/api/${source}/stream`, {
       params,
-      timeout: 12000
+      timeout: 15000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/plain, */*'
+      }
     });
 
     const d = res.data?.data || res.data || {};
