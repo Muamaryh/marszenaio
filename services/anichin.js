@@ -403,28 +403,10 @@ async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
 
   if (source === 'dramabox') {
     try {
-      const axios = require('axios');
-      const res = await axios.get('https://redmi.nunodrama.my.id/api/dramabox/stream', {
-        params: { book_id: String(id), episode_num: String(ep) },
-        timeout: 8000
-      });
-      const d = res.data?.data || res.data || {};
-      const current = d.current || d.raw?.current || {};
-      const videoUrl = current.streamUrl || d.url || d.playUrl || d.streamUrl || '';
-      const qualities = (current.videoInfoList || []).map(v => ({
-        label: v.quality || 'HD',
-        url: v.videoPath || v.url,
-        isDefault: v.quality === '720p'
-      }));
-
-      if (videoUrl || qualities.length > 0) {
-        streamData = {
-          success: true,
-          episodeNumber: Number(ep),
-          videoUrl: qualities.find(q => q.isDefault)?.url || videoUrl,
-          qualities: qualities.length > 0 ? qualities : [{ label: '720p HD', url: videoUrl, isDefault: true }],
-          subtitles: []
-        };
+      const { getNunoDramaEpisode } = require('./nunodrama');
+      const nunoEp = await getNunoDramaEpisode('dramabox', id, ep);
+      if (nunoEp && nunoEp.success && nunoEp.videoUrl) {
+        streamData = nunoEp;
       }
     } catch (e) {}
   } else if (source === 'shortmax') {

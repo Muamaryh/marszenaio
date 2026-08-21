@@ -281,6 +281,7 @@ async function getNunoDramaEpisode(source, id, ep = 1) {
         book_id: id,
         drama_id: id,
         ep: String(ep),
+        episode_num: String(ep),
         chapter_id: String(ep),
         episode: String(ep),
         episode_id: String(ep),
@@ -290,9 +291,23 @@ async function getNunoDramaEpisode(source, id, ep = 1) {
     });
 
     const d = res.data?.data || res.data || {};
-    videoUrl = d.stream || d.videoUrl || d.url || d.m3u8 || d.play_url || d.link || d.playUrl || '';
+    const current = d.current || d.raw?.current || {};
 
-    if (Array.isArray(d.qualities || d.qualityList)) {
+    if (Array.isArray(current.videoInfoList) && current.videoInfoList.length > 0) {
+      qualities = current.videoInfoList.map(v => ({
+        label: v.quality || 'HD',
+        url: v.videoPath || v.url,
+        isDefault: v.quality === '720p'
+      }));
+      const def = qualities.find(q => q.isDefault) || qualities[0];
+      videoUrl = def?.url || '';
+    }
+
+    if (!videoUrl) {
+      videoUrl = current.streamUrl || d.stream || d.videoUrl || d.url || d.m3u8 || d.play_url || d.link || d.playUrl || d.streamUrl || '';
+    }
+
+    if (qualities.length === 0 && Array.isArray(d.qualities || d.qualityList)) {
       qualities = (d.qualities || d.qualityList).map(q => ({
         label: q.label || `${q.quality || q.name || 'HD'}`,
         url: q.url || q.stream,

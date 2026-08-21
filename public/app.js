@@ -921,10 +921,13 @@ function setupVideoPlayer(data, sessionId) {
       hide('videoLoader');
     };
 
+    video.muted = false;
+    video.volume = 1;
     video.src = playUrl;
     video.load();
     video.play().then(() => {
       if (sessionId !== playbackSessionId) return;
+      video.muted = false;
       hide('videoLoader');
       hide('bigPlayOverlay');
     }).catch(() => {
