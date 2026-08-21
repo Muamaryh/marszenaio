@@ -1045,20 +1045,67 @@ function changeQuality(val) {
   }
 }
 
+let controlsHideTimeout = null;
+
+function resetControlsHideTimer() {
+  const container = el('videoContainer');
+  const video = el('playerVideo');
+  if (!container || !video) return;
+
+  container.classList.remove('controls-hidden');
+
+  if (controlsHideTimeout) {
+    clearTimeout(controlsHideTimeout);
+    controlsHideTimeout = null;
+  }
+
+  // Sembunyikan kontrol secara otomatis setelah 3.2 detik jika video sedang play
+  if (!video.paused && !video.ended) {
+    controlsHideTimeout = setTimeout(() => {
+      const drawer = el('fullscreenEpDrawer');
+      if (drawer && !drawer.classList.contains('hidden')) return;
+      container.classList.add('controls-hidden');
+    }, 3200);
+  }
+}
+
+function skipTime(sec) {
+  const video = el('playerVideo');
+  if (!video) return;
+  const dur = video.duration || 0;
+  video.currentTime = Math.max(0, Math.min(dur, (video.currentTime || 0) + sec));
+  triggerCenterFeedback(sec > 0 ? 'forward' : 'rewind');
+  resetControlsHideTimer();
+}
+
 function initPlayerEventListeners() {
   const video = el('playerVideo');
   const videoContainer = el('videoContainer');
   if (!video || !videoContainer) return;
 
+  // Interaksi Mouse & Touch untuk Auto-Hide
+  videoContainer.addEventListener('mousemove', resetControlsHideTimer);
+  videoContainer.addEventListener('mouseenter', resetControlsHideTimer);
+  videoContainer.addEventListener('touchstart', resetControlsHideTimer, { passive: true });
+
   // Klik langsung pada video container untuk Play/Pause
   videoContainer.addEventListener('click', (e) => {
-    // Jangan toggle jika klik di drawer episode, tombol controls, atau dropdown
-    if (e.target.closest('.fs-episodes-drawer') || 
+    // Jangan toggle jika klik di bar kontrol, tombol kontrol, atau drawer episode
+    if (e.target.closest('.fs-top-bar') || 
+        e.target.closest('.fs-bottom-bar') || 
+        e.target.closest('.fs-center-controls') || 
+        e.target.closest('.fs-episodes-drawer') || 
         e.target.closest('.btn-fs-ep-toggle') || 
-        e.target.closest('.btn-fs-close')) {
+        e.target.closest('.btn-fs-close') ||
+        e.target.closest('.player-big-play-overlay')) {
       return;
     }
-    togglePlay();
+
+    if (videoContainer.classList.contains('controls-hidden')) {
+      resetControlsHideTimer();
+    } else {
+      togglePlay();
+    }
   });
 
   video.addEventListener('play', () => {
@@ -1066,12 +1113,14 @@ function initPlayerEventListeners() {
     const playBtn = el('btnPlay');
     if (playBtn) playBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
     triggerCenterFeedback('play');
+    resetControlsHideTimer();
   });
 
   video.addEventListener('pause', () => {
     const playBtn = el('btnPlay');
     if (playBtn) playBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
     triggerCenterFeedback('pause');
+    resetControlsHideTimer();
   });
 
   video.addEventListener('timeupdate', () => {
@@ -1093,6 +1142,7 @@ function initPlayerEventListeners() {
 
   // Auto-next saat video selesai
   video.addEventListener('ended', () => {
+    resetControlsHideTimer();
     const isAutoNext = el('chkAutoNext')?.checked;
     if (isAutoNext && appState.currentEpisode < appState.totalEpisodes) {
       navigateEpisode(1);
@@ -1104,11 +1154,13 @@ function initPlayerEventListeners() {
     if (dur > 0) {
       video.currentTime = (e.target.value / 1000) * dur;
     }
+    resetControlsHideTimer();
   });
 
   el('volSlider')?.addEventListener('input', (e) => {
     video.volume = e.target.value / 100;
     video.muted = false;
+    resetControlsHideTimer();
   });
 
   // Keyboard Shortcuts
@@ -1120,9 +1172,9 @@ function initPlayerEventListeners() {
       e.preventDefault();
       togglePlay();
     } else if (e.code === 'ArrowRight') {
-      video.currentTime = Math.min(video.duration || 0, video.currentTime + 5);
+      skipTime(5);
     } else if (e.code === 'ArrowLeft') {
-      video.currentTime = Math.max(0, video.currentTime - 5);
+      skipTime(-5);
     } else if (e.code === 'KeyF') {
       toggleFullscreen();
     } else if (e.code === 'KeyM') {
@@ -1146,8 +1198,12 @@ function triggerCenterFeedback(type) {
 
   if (type === 'play') {
     icon.innerHTML = '<svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
-  } else {
+  } else if (type === 'pause') {
     icon.innerHTML = '<svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+  } else if (type === 'forward') {
+    icon.innerHTML = '<span style="font-size:1.1rem;font-weight:900;">+10s ⏩</span>';
+  } else if (type === 'rewind') {
+    icon.innerHTML = '<span style="font-size:1.1rem;font-weight:900;">⏪ -10s</span>';
   }
 
   ripple.classList.remove('animate');

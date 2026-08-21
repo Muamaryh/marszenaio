@@ -162,7 +162,7 @@
         <!-- Left Side: Player & Controls -->
         <div class="theater-player-side">
           <!-- Video Frame with Fullscreen Controls & Episode Drawer -->
-          <div class="video-container" id="videoContainer">
+          <div class="video-container" id="videoContainer" tabindex="0">
             <video id="playerVideo" playsinline preload="auto"></video>
             
             <!-- Central Play/Pause Animated Feedback Ripple -->
@@ -177,21 +177,89 @@
               </button>
             </div>
 
-            <!-- In-Video Floating Header Bar (Visible on Fullscreen / Hover) -->
+            <!-- In-Video Floating Controls Overlay (Visible in Normal & Fullscreen) -->
             <div class="video-floating-overlay" id="videoFloatingOverlay">
-              <div class="fs-top-bar">
+              <!-- Top Header Bar -->
+              <div class="fs-top-bar" onclick="event.stopPropagation()">
                 <div class="fs-info-wrap">
-                  <span class="fs-badge" id="fsSourceBadge">DRAMAWAVE</span>
+                  <span class="fs-badge" id="fsSourceBadge">DRAMABOX</span>
                   <span class="fs-drama-title" id="fsDramaTitle">Judul Drama</span>
                   <span class="fs-ep-pill" id="fsEpCurrent">Ep 1</span>
                 </div>
                 <div class="fs-top-actions">
-                  <button class="btn-fs-ep-toggle" id="btnFsEpisodes" onclick="toggleFullscreenEpisodes(event)" title="Pilih Episode">
+                  <button class="btn-fs-ep-toggle" id="btnFsEpisodes" onclick="toggleFullscreenEpisodes(event)" title="Daftar Episode">
                     <span>📋</span> Daftar Episode (<span id="fsEpisodesTotal">0</span>)
                   </button>
                   <button class="btn-fs-close" onclick="exitFullscreenOrTheater()" title="Tutup / Keluar Fullscreen">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                   </button>
+                </div>
+              </div>
+
+              <!-- Center Tap Actions (Quick Skip -10s / +10s) -->
+              <div class="fs-center-controls">
+                <button class="fs-skip-btn" onclick="event.stopPropagation(); skipTime(-10)" title="Mundur 10 Detik">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                  <span>-10s</span>
+                </button>
+                <button class="fs-skip-btn" onclick="event.stopPropagation(); skipTime(10)" title="Maju 10 Detik">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                  <span>+10s</span>
+                </button>
+              </div>
+
+              <!-- Bottom Controls Bar (SeekBar, Duration, Speed, Quality, Subtitle, Fullscreen) -->
+              <div class="fs-bottom-bar" onclick="event.stopPropagation()">
+                <!-- Seek Bar -->
+                <div class="fs-seek-container">
+                  <input type="range" id="videoSeekBar" class="video-seek-bar" min="0" max="1000" step="1" value="0" aria-label="Seek">
+                </div>
+
+                <!-- Action Controls Row -->
+                <div class="fs-controls-action-row">
+                  <div class="fs-action-left">
+                    <button class="btn-ctrl" id="btnPlay" onclick="togglePlay()" title="Play/Pause">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    </button>
+                    <button class="btn-ctrl" id="btnPrevEpMini" onclick="navigateEpisode(-1)" title="Episode Sebelumnya">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="3"/></svg>
+                    </button>
+                    <button class="btn-ctrl" id="btnNextEpMini" onclick="navigateEpisode(1)" title="Episode Berikutnya">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="3"/></svg>
+                    </button>
+                    <span class="time-readout"><span id="timeCurrent">0:00</span> / <span id="timeDuration">0:00</span></span>
+                    
+                    <button class="btn-ctrl" id="btnMute" onclick="toggleMute()" title="Mute/Unmute">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>
+                    </button>
+                    <input type="range" id="volSlider" class="vol-slider" min="0" max="100" value="100" aria-label="Volume">
+                  </div>
+
+                  <div class="fs-action-right">
+                    <!-- Quality Switcher -->
+                    <select id="qualitySelect" class="player-select" onchange="changeQuality(this.value)" title="Pilih Resolusi">
+                      <option value="auto">Auto HD</option>
+                    </select>
+
+                    <!-- Subtitle Switcher -->
+                    <select id="subtitleSelect" class="player-select" onchange="changeSubtitle(this.value)" title="Pilih Subtitle">
+                      <option value="none">Sub: Mati</option>
+                    </select>
+
+                    <!-- Speed Switcher -->
+                    <select id="speedSelect" class="player-select" onchange="changeSpeed(this.value)" title="Kecepatan">
+                      <option value="0.75">0.75x</option>
+                      <option value="1" selected>1.0x</option>
+                      <option value="1.25">1.25x</option>
+                      <option value="1.5">1.5x</option>
+                      <option value="2">2.0x</option>
+                    </select>
+
+                    <!-- Fullscreen Button -->
+                    <button class="btn-ctrl" id="btnFsToggle" onclick="toggleFullscreen()" title="Layar Penuh">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -208,52 +276,6 @@
             <!-- Loading Spinner in Video -->
             <div class="video-loader-overlay hidden" id="videoLoader">
               <div class="spinner-ring"></div>
-            </div>
-          </div>
-
-          <!-- Video Controls Bar -->
-          <div class="player-controls-wrap">
-            <!-- Progress Bar -->
-            <input type="range" id="videoSeekBar" class="video-seek-bar" min="0" max="1000" step="1" value="0" aria-label="Seek">
-            
-            <div class="controls-action-row">
-              <div class="action-left">
-                <button class="btn-ctrl" id="btnPlay" onclick="togglePlay()" title="Play/Pause">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                </button>
-                <span class="time-readout"><span id="timeCurrent">0:00</span> / <span id="timeDuration">0:00</span></span>
-                
-                <button class="btn-ctrl" id="btnMute" onclick="toggleMute()" title="Mute/Unmute">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>
-                </button>
-                <input type="range" id="volSlider" class="vol-slider" min="0" max="100" value="100" aria-label="Volume">
-              </div>
-
-              <div class="action-right">
-                <!-- Quality Switcher -->
-                <select id="qualitySelect" class="player-select" onchange="changeQuality(this.value)" title="Pilih Resolusi">
-                  <option value="auto">Auto HD</option>
-                </select>
-
-                <!-- Subtitle Switcher -->
-                <select id="subtitleSelect" class="player-select" onchange="changeSubtitle(this.value)" title="Pilih Subtitle">
-                  <option value="none">Subtitle: Mati</option>
-                </select>
-
-                <!-- Speed Switcher -->
-                <select id="speedSelect" class="player-select" onchange="changeSpeed(this.value)" title="Kecepatan">
-                  <option value="0.75">0.75x</option>
-                  <option value="1" selected>1.0x</option>
-                  <option value="1.25">1.25x</option>
-                  <option value="1.5">1.5x</option>
-                  <option value="2">2.0x</option>
-                </select>
-
-                <!-- Fullscreen Button -->
-                <button class="btn-ctrl" onclick="toggleFullscreen()" title="Layar Penuh">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
-                </button>
-              </div>
             </div>
           </div>
 
