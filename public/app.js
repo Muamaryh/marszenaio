@@ -16,7 +16,11 @@ let appState = {
   currentVideoData: null,
   hlsPlayer: null,
   searchTimeout: null,
-  activeSubTrack: null
+  activeSubTrack: null,
+  isLoadingMore: false,
+  hasMorePages: true,
+  loadedDramaIds: new Set(),
+  totalLoadedItems: 0
 };
 
 // DOM Helper
@@ -221,6 +225,7 @@ async function initApp() {
   await loadFeed();
   renderContinueWatchingBanner();
   initSearch();
+  initInfiniteScroll();
   initSourcesDrag();
   initPlayerEventListeners();
 
@@ -449,39 +454,85 @@ function renderHistoryFeed() {
   });
 }
 
-// ===== 2. FEED & CATALOG =====
+// ===== 2. FEED & CATALOG (WITH INFINITE SCROLL) =====
 
-async function loadFeed() {
+async function loadFeed(isAppend = false) {
   if (appState.currentFeedType === 'history') {
     renderHistoryFeed();
     return;
   }
 
-  show('dramaCatalogLoader');
-  hide('dramaEmptyState');
-  hide('dramaPagination');
-  const grid = el('dramaGridContainer');
-  if (grid) grid.innerHTML = '';
-  if (el('feedCountBadge')) el('feedCountBadge').textContent = 'Memuat...';
+  if (isAppend) {
+    if (appState.isLoadingMore || !appState.hasMorePages) return;
+    appState.isLoadingMore = true;
+    show('infiniteScrollLoader');
+    hide('infiniteScrollEnded');
+  } else {
+    appState.currentPage = 1;
+    appState.hasMorePages = true;
+    appState.loadedDramaIds = new Set();
+    appState.totalLoadedItems = 0;
+    show('dramaCatalogLoader');
+    hide('dramaEmptyState');
+    hide('infiniteScrollLoader');
+    hide('infiniteScrollEnded');
+    const grid = el('dramaGridContainer');
+    if (grid) grid.innerHTML = '';
+    if (el('feedCountBadge')) el('feedCountBadge').textContent = 'Memuat...';
+  }
 
   try {
     const url = `/api/drama/feed?source=${encodeURIComponent(appState.currentSource)}&type=${encodeURIComponent(appState.currentFeedType)}&page=${appState.currentPage}`;
     const data = await fetchWithClientCache(url, 10 * 60 * 1000);
+    
     hide('dramaCatalogLoader');
+    hide('infiniteScrollLoader');
+    appState.isLoadingMore = false;
 
     if (data.success && data.items && data.items.length > 0) {
-      renderGrid(data.items);
-      if (el('feedCountBadge')) el('feedCountBadge').textContent = `${data.items.length} drama`;
-      show('dramaPagination');
-      if (el('pageCurrentDisplay')) el('pageCurrentDisplay').textContent = `Halaman ${appState.currentPage}`;
-      if (el('btnPrevPage')) el('btnPrevPage').disabled = (appState.currentPage <= 1);
+      // Filter duplicate items
+      const newItems = data.items.filter(item => {
+        if (!item || !item.id) return false;
+        if (appState.loadedDramaIds.has(item.id)) return false;
+        appState.loadedDramaIds.add(item.id);
+        return true;
+      });
+
+      if (newItems.length > 0) {
+        appendGrid(newItems);
+        appState.totalLoadedItems += newItems.length;
+        if (el('feedCountBadge')) el('feedCountBadge').textContent = `${appState.totalLoadedItems} drama dimuat`;
+
+        // Jika item baru yang dimuat kurang dari 6, kemungkinan halaman terakhir
+        if (data.items.length < 6) {
+          appState.hasMorePages = false;
+          if (appState.currentPage > 1 || appState.totalLoadedItems > 6) {
+            show('infiniteScrollEnded');
+          }
+        }
+      } else {
+        // Semua item halaman ini sudah pernah dimuat
+        appState.hasMorePages = false;
+        if (appState.currentPage > 1) {
+          show('infiniteScrollEnded');
+        }
+      }
     } else {
-      show('dramaEmptyState');
-      if (el('feedCountBadge')) el('feedCountBadge').textContent = '0 drama';
+      appState.hasMorePages = false;
+      if (!isAppend) {
+        show('dramaEmptyState');
+        if (el('feedCountBadge')) el('feedCountBadge').textContent = '0 drama';
+      } else {
+        show('infiniteScrollEnded');
+      }
     }
   } catch (err) {
     hide('dramaCatalogLoader');
-    show('dramaEmptyState');
+    hide('infiniteScrollLoader');
+    appState.isLoadingMore = false;
+    if (!isAppend) {
+      show('dramaEmptyState');
+    }
   }
 }
 
@@ -489,6 +540,12 @@ function renderGrid(dramas) {
   const grid = el('dramaGridContainer');
   if (!grid) return;
   grid.innerHTML = '';
+  appendGrid(dramas);
+}
+
+function appendGrid(dramas) {
+  const grid = el('dramaGridContainer');
+  if (!grid) return;
 
   dramas.forEach(d => {
     const card = document.createElement('div');
@@ -497,6 +554,7 @@ function renderGrid(dramas) {
     const epBadge = d.episodes > 0 ? `<span class="badge-episodes">${d.episodes} Ep</span>` : '';
     const statusBadge = d.isCompleted ? `<span class="badge-status">Tamat</span>` : '';
     const tagsHtml = (d.tags || []).slice(0, 2).map(t => `<span class="card-tag">${escapeHtml(t)}</span>`).join('');
+    const sourceBadge = d.source ? `<span class="card-tag" style="background:rgba(250,204,21,0.15);color:var(--primary);">${escapeHtml(d.source.toUpperCase())}</span>` : '';
 
     card.innerHTML = `
       <div class="poster-wrap">
@@ -510,13 +568,43 @@ function renderGrid(dramas) {
       </div>
       <div class="card-content">
         <h4 class="card-title" title="${escapeHtml(d.title)}">${escapeHtml(d.title)}</h4>
-        ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
+        <div class="card-tags">
+          ${sourceBadge}
+          ${tagsHtml}
+        </div>
       </div>
     `;
 
-    card.onclick = () => openDrama(appState.currentSource, d.id, d.title);
+    const actualSrc = d.source || appState.currentSource;
+    card.onclick = () => openDrama(actualSrc, d.id, d.title);
     grid.appendChild(card);
   });
+}
+
+function initInfiniteScroll() {
+  if ('IntersectionObserver' in window) {
+    const sentinel = el('infiniteScrollSentinel');
+    if (sentinel) {
+      const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && !appState.isLoadingMore && appState.hasMorePages && !appState.currentQuery && appState.currentFeedType !== 'history') {
+          appState.currentPage++;
+          loadFeed(true);
+        }
+      }, { rootMargin: '500px' });
+      observer.observe(sentinel);
+    }
+  }
+
+  // Window scroll fallback
+  window.addEventListener('scroll', () => {
+    if (appState.isLoadingMore || !appState.hasMorePages || appState.currentQuery || appState.currentFeedType === 'history') return;
+    const scrollPosition = window.innerHeight + window.scrollY;
+    const threshold = document.body.offsetHeight - 600;
+    if (scrollPosition >= threshold) {
+      appState.currentPage++;
+      loadFeed(true);
+    }
+  }, { passive: true });
 }
 
 function initSearch() {
@@ -535,9 +623,10 @@ function initSearch() {
         appState.currentQuery = q;
         performSearch(q);
       } else {
+        appState.currentQuery = '';
         loadFeed();
       }
-    }, 400);
+    }, 350);
   });
 
   clearBtn?.addEventListener('click', () => {
@@ -551,7 +640,8 @@ function initSearch() {
 async function performSearch(query) {
   show('dramaCatalogLoader');
   hide('dramaEmptyState');
-  hide('dramaPagination');
+  hide('infiniteScrollLoader');
+  hide('infiniteScrollEnded');
   const grid = el('dramaGridContainer');
   if (grid) grid.innerHTML = '';
   if (el('feedCountBadge')) el('feedCountBadge').textContent = `Mencari "${query}"...`;
@@ -563,7 +653,7 @@ async function performSearch(query) {
 
     if (data.success && data.items && data.items.length > 0) {
       renderGrid(data.items);
-      if (el('feedCountBadge')) el('feedCountBadge').textContent = `${data.items.length} hasil`;
+      if (el('feedCountBadge')) el('feedCountBadge').textContent = `${data.items.length} drama ditemukan`;
     } else {
       show('dramaEmptyState');
       if (el('feedCountBadge')) el('feedCountBadge').textContent = '0 hasil';

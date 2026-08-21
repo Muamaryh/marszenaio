@@ -125,12 +125,17 @@
           <p>Coba pilih provider lain di atas atau gunakan kata kunci pencarian berbeda.</p>
         </div>
 
-        <!-- Pagination -->
-        <div id="dramaPagination" class="pagination-bar hidden">
-          <button class="page-nav-btn" id="btnPrevPage" onclick="changePage(-1)">← Sebelumnya</button>
-          <span class="page-current-tag" id="pageCurrentDisplay">Halaman 1</span>
-          <button class="page-nav-btn" id="btnNextPage" onclick="changePage(1)">Berikutnya →</button>
+        <!-- Infinite Scroll Sentinel & Loader -->
+        <div id="infiniteScrollLoader" class="infinite-scroll-loader hidden">
+          <div class="spinner-ring-small"></div>
+          <span>Memuat drama lainnya...</span>
         </div>
+
+        <div id="infiniteScrollEnded" class="infinite-scroll-ended hidden">
+          <span>✓ Semua drama telah dimuat</span>
+        </div>
+
+        <div id="infiniteScrollSentinel" class="infinite-scroll-sentinel"></div>
       </section>
     </main>
 

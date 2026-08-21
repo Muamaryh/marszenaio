@@ -348,15 +348,47 @@ async function searchDramas(source = 'dramawave', query = '') {
     return { success: true, source, query: '', items: [] };
   }
 
-  const cacheKey = `search_${source}_${query.trim().toLowerCase()}`;
+  const q = query.trim().toLowerCase();
+  const cacheKey = `search_${source}_${q}`;
   const cached = memoryCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL_SEARCH_MS) {
     return cached.data;
   }
 
-  const res = await sendWsRequest(source, 'search', { query: query.trim() });
-  const items = normalizeDramaList(res.data);
-  const result = { success: true, source, query, items };
+  let items = [];
+  try {
+    const res = await sendWsRequest(source, 'search', { query: query.trim() });
+    items = normalizeDramaList(res.data);
+  } catch (err) {}
+
+  // Multi-provider fallback search jika pencarian di provider terpilih kosong
+  if (items.length === 0) {
+    const fallbackSources = ['dramawave', 'dramabox', 'netshort', 'reelshort', 'shortmax'].filter(s => s !== source);
+    const searchPromises = fallbackSources.map(s => 
+      sendWsRequest(s, 'search', { query: query.trim() })
+        .then(r => normalizeDramaList(r.data).map(item => ({ ...item, source: s })))
+        .catch(() => [])
+    );
+
+    const fallbackResults = await Promise.allSettled(searchPromises);
+    fallbackResults.forEach(r => {
+      if (r.status === 'fulfilled' && Array.isArray(r.value)) {
+        items.push(...r.value);
+      }
+    });
+  }
+
+  // Deduplicate items
+  const seen = new Set();
+  const dedupedItems = items.filter(it => {
+    const key = (it.title || '').toLowerCase().trim();
+    if (!key || seen.has(key) || seen.has(it.id)) return false;
+    seen.add(key);
+    seen.add(it.id);
+    return true;
+  });
+
+  const result = { success: true, source, query, items: dedupedItems };
   memoryCache.set(cacheKey, { timestamp: Date.now(), data: result });
   return result;
 }
@@ -401,14 +433,54 @@ async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
 
   let streamData;
 
-  if (source === 'dramabox') {
+  if (source === 'dramabox' || /^\d{11}$/.test(String(id))) {
     try {
-      const { getNunoDramaEpisode } = require('./nunodrama');
-      const nunoEp = await getNunoDramaEpisode('dramabox', id, ep);
-      if (nunoEp && nunoEp.success && nunoEp.videoUrl) {
-        streamData = nunoEp;
+      const axios = require('axios');
+      const token = getToken();
+      const masterUrl = `${ANICHIN_BASE_URL}/api/dramabox/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(ep)}&token=${token}`;
+      const masterRes = await axios.get(masterUrl, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: 10000 });
+      const lines = masterRes.data.split('\n');
+      const qualities = [];
+
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].includes('#EXT-X-STREAM-INF')) {
+          const qMatch = lines[i].match(/NAME="([^"]+)"/);
+          const qLabel = qMatch ? qMatch[1] : 'HD';
+          let nextLine = lines[i + 1] ? lines[i + 1].trim() : '';
+          if (nextLine) {
+            nextLine = nextLine.replace(/api_key=[^&]+/, `api_key=${token}`);
+            const subUrl = nextLine.startsWith('http') ? nextLine : `${ANICHIN_BASE_URL}${nextLine}`;
+            try {
+              const subRes = await axios.get(subUrl, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: 8000 });
+              const subLines = subRes.data.split('\n');
+              const directMediaUrl = subLines.find(l => l.startsWith('http'));
+              if (directMediaUrl) {
+                qualities.push({
+                  label: qLabel,
+                  url: directMediaUrl.trim(),
+                  isDefault: qLabel.includes('720')
+                });
+              }
+            } catch (e) {}
+          }
+        }
       }
-    } catch (e) {}
+
+      const def = qualities.find(q => q.isDefault) || qualities[0];
+      if (def && def.url) {
+        streamData = {
+          success: true,
+          source: 'dramabox',
+          id,
+          episodeNumber: Number(ep),
+          videoUrl: def.url,
+          qualities: qualities.length > 0 ? qualities : [{ label: '720p HD', url: def.url, isDefault: true }],
+          subtitles: []
+        };
+      }
+    } catch (err) {
+      console.error('Dramabox stream extraction error:', err.message);
+    }
   } else if (source === 'shortmax') {
     streamData = {
       success: true,
