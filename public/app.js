@@ -45,6 +45,25 @@ function formatTime(seconds) {
   return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 }
 
+function getFallbackPosterSvg(title = 'Drama') {
+  const safeTitle = escapeHtml(String(title).slice(0, 20));
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="420" viewBox="0 0 300 420">
+    <defs>
+      <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#18181b"/>
+        <stop offset="50%" stop-color="#121215"/>
+        <stop offset="100%" stop-color="#09090b"/>
+      </linearGradient>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#g)"/>
+    <circle cx="150" cy="160" r="50" fill="#facc15" fill-opacity="0.12"/>
+    <text x="150" y="176" font-size="42" text-anchor="middle">🎬</text>
+    <text x="150" y="250" fill="#facc15" font-size="13" font-weight="900" font-family="system-ui, sans-serif" text-anchor="middle" letter-spacing="1.5">DRACINHUB</text>
+    <text x="150" y="278" fill="#a1a1aa" font-size="12" font-weight="700" font-family="system-ui, sans-serif" text-anchor="middle">${safeTitle}</text>
+  </svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
 const STORAGE_KEY_HISTORY = 'dracin_watch_history_v1';
 let lastProgressSaveTime = 0;
 
@@ -427,9 +446,12 @@ function renderHistoryFeed() {
     const card = document.createElement('div');
     card.className = 'drama-card history-card';
 
+    const fallbackCover = getFallbackPosterSvg(item.title);
+    const posterSrc = item.cover || fallbackCover;
+
     card.innerHTML = `
       <div class="poster-wrap">
-        <img src="${escapeHtml(item.cover)}" alt="${escapeHtml(item.title)}" class="poster-img" loading="lazy" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'200\\' height=\\'280\\' fill=\\'%2312131a\\'><text x=\\'50%\\' y=\\'50%\\' fill=\\'%23666\\' font-size=\\'14\\' text-anchor=\\'middle\\'>Poster</text></svg>'"/>
+        <img src="${escapeHtml(posterSrc)}" alt="${escapeHtml(item.title)}" class="poster-img" loading="lazy" onerror="this.onerror=null; this.src='${fallbackCover}'"/>
         <div class="poster-overlay-gradient"></div>
         <span class="badge-episodes">Ep ${item.lastEpisode} / ${item.totalEpisodes}</span>
         <button class="card-history-del-btn" onclick="removeFromHistory('${escapeHtml(item.id)}', '${escapeHtml(item.source)}', event)" title="Hapus dari riwayat">✕</button>
@@ -556,9 +578,12 @@ function appendGrid(dramas) {
     const tagsHtml = (d.tags || []).slice(0, 2).map(t => `<span class="card-tag">${escapeHtml(t)}</span>`).join('');
     const sourceBadge = d.source ? `<span class="card-tag" style="background:rgba(250,204,21,0.15);color:var(--primary);">${escapeHtml(d.source.toUpperCase())}</span>` : '';
 
+    const fallbackCover = getFallbackPosterSvg(d.title);
+    const posterSrc = d.cover || fallbackCover;
+
     card.innerHTML = `
       <div class="poster-wrap">
-        <img src="${escapeHtml(d.cover)}" alt="${escapeHtml(d.title)}" class="poster-img" loading="lazy" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'200\\' height=\\'280\\' fill=\\'%2312131a\\'><text x=\\'50%\\' y=\\'50%\\' fill=\\'%23666\\' font-size=\\'14\\' text-anchor=\\'middle\\'>Poster Drama</text></svg>'"/>
+        <img src="${escapeHtml(posterSrc)}" alt="${escapeHtml(d.title)}" class="poster-img" loading="lazy" onerror="this.onerror=null; this.src='${fallbackCover}'"/>
         <div class="poster-overlay-gradient"></div>
         ${epBadge}
         ${statusBadge}

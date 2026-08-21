@@ -176,7 +176,7 @@ function normalizeDramaList(raw) {
   return items.map(item => {
     const id = String(item.id || item.dramaId || item.drama_id || item.book_id || item.bookId || item.album_id || item.content_id || item.albumId || '');
     const title = item.title || item.name || item.book_name || item.drama_name || item.dramaName || 'Short Drama';
-    const cover = item.cover || item.poster || item.cover_url || item.posterImg || item.thumb || item.image || item.horizontal_cover || '';
+    const cover = item.cover || item.poster || item.cover_url || item.cover_image_url || item.cover_image || item.vertical_cover || item.posterImg || item.thumb || item.thumb_url || item.thumbnail || item.image || item.image_url || item.pic || item.horizontal_cover || item.cover_path || item.banner || '';
     const synopsis = item.synopsis || item.description || item.desc || item.intro || item.summary || '';
     const episodes = Number(item.episodes || item.total_episodes || item.total_episode || item.chapter_count || item.total_count || item.total_chapter || (item.episode_list?.length) || 0);
     const tags = Array.isArray(item.tags) ? item.tags : (item.categoryNames || item.categories || item.genres || []);
@@ -202,7 +202,7 @@ function normalizeDramaDetail(raw, dramaId) {
 
   const id = String(dramaObj.id || dramaObj.dramaId || dramaObj.book_id || dramaId || '');
   const title = dramaObj.title || dramaObj.name || dramaObj.book_name || dramaObj.drama_name || 'Short Drama';
-  const cover = dramaObj.cover || dramaObj.poster || dramaObj.cover_url || dramaObj.posterImg || '';
+  const cover = dramaObj.cover || dramaObj.poster || dramaObj.cover_url || dramaObj.cover_image_url || dramaObj.cover_image || dramaObj.vertical_cover || dramaObj.posterImg || dramaObj.thumb || dramaObj.image || '';
   const synopsis = dramaObj.synopsis || dramaObj.description || dramaObj.desc || dramaObj.intro || '';
   const tags = Array.isArray(dramaObj.tags) ? dramaObj.tags : (dramaObj.categoryNames || dramaObj.categories || []);
 
