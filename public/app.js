@@ -1047,10 +1047,10 @@ function changeQuality(val) {
 
 let controlsHideTimeout = null;
 
-function resetControlsHideTimer() {
+function showControls(autoHideDelay = 4000) {
   const container = el('videoContainer');
   const video = el('playerVideo');
-  if (!container || !video) return;
+  if (!container) return;
 
   container.classList.remove('controls-hidden');
 
@@ -1059,13 +1059,31 @@ function resetControlsHideTimer() {
     controlsHideTimeout = null;
   }
 
-  // Sembunyikan kontrol secara otomatis setelah 3.2 detik jika video sedang play
-  if (!video.paused && !video.ended) {
+  // Sembunyikan kontrol otomatis setelah delay jika video sedang playing
+  if (video && !video.paused && !video.ended && autoHideDelay > 0) {
     controlsHideTimeout = setTimeout(() => {
       const drawer = el('fullscreenEpDrawer');
       if (drawer && !drawer.classList.contains('hidden')) return;
       container.classList.add('controls-hidden');
-    }, 3200);
+    }, autoHideDelay);
+  }
+}
+
+function hideControls() {
+  const container = el('videoContainer');
+  if (!container) return;
+  const drawer = el('fullscreenEpDrawer');
+  if (drawer && !drawer.classList.contains('hidden')) return;
+  container.classList.add('controls-hidden');
+}
+
+function toggleControlsVisibility() {
+  const container = el('videoContainer');
+  if (!container) return;
+  if (container.classList.contains('controls-hidden')) {
+    showControls(4000);
+  } else {
+    hideControls();
   }
 }
 
@@ -1075,7 +1093,7 @@ function skipTime(sec) {
   const dur = video.duration || 0;
   video.currentTime = Math.max(0, Math.min(dur, (video.currentTime || 0) + sec));
   triggerCenterFeedback(sec > 0 ? 'forward' : 'rewind');
-  resetControlsHideTimer();
+  showControls(4000);
 }
 
 function initPlayerEventListeners() {
@@ -1092,19 +1110,18 @@ function initPlayerEventListeners() {
       videoContainer.classList.remove('is-fullscreen');
       hide('fullscreenEpDrawer');
     }
-    resetControlsHideTimer();
+    showControls(4000);
   };
   document.addEventListener('fullscreenchange', handleFsChange);
   document.addEventListener('webkitfullscreenchange', handleFsChange);
 
-  // Interaksi Mouse & Touch untuk Auto-Hide
-  videoContainer.addEventListener('mousemove', resetControlsHideTimer);
-  videoContainer.addEventListener('mouseenter', resetControlsHideTimer);
-  videoContainer.addEventListener('touchstart', resetControlsHideTimer, { passive: true });
+  // Desktop mouse movement untuk menampilkan bar kontrol
+  videoContainer.addEventListener('mousemove', () => showControls(3500));
+  videoContainer.addEventListener('mouseenter', () => showControls(3500));
 
-  // Single Click: Hanya menampilkan/menyembunyikan bar kontrol (TIDAK PAUSE)
+  // 1x Klik / Sentuh Layar: Langsung tampilkan/sembunyikan kontrol (TIDAK PAUSE)
   videoContainer.addEventListener('click', (e) => {
-    // Jangan lakukan apa-apa jika klik di bar kontrol, tombol, dropdown, atau drawer
+    // Abaikan jika klik di kontrol, tombol, select, atau drawer
     if (e.target.closest('.fs-top-bar') || 
         e.target.closest('.fs-bottom-bar') || 
         e.target.closest('.fs-center-controls') || 
@@ -1114,13 +1131,7 @@ function initPlayerEventListeners() {
         e.target.closest('.player-big-play-overlay')) {
       return;
     }
-
-    if (videoContainer.classList.contains('controls-hidden')) {
-      resetControlsHideTimer();
-    } else {
-      // Sembunyikan kontrol jika sudah muncul
-      videoContainer.classList.add('controls-hidden');
-    }
+    toggleControlsVisibility();
   });
 
   // Double Click di Desktop untuk Play / Pause
@@ -1133,40 +1144,32 @@ function initPlayerEventListeners() {
     togglePlay();
   });
 
-  // Double Tap di Layar Sentuh / HP untuk Play / Pause
-  let lastTouchTapTime = 0;
-  videoContainer.addEventListener('touchend', (e) => {
-    if (e.target.closest('.fs-top-bar') || 
-        e.target.closest('.fs-bottom-bar') || 
-        e.target.closest('.fs-episodes-drawer') ||
-        e.target.closest('.btn-fs-ep-toggle') ||
-        e.target.closest('.btn-fs-close') ||
-        e.target.closest('.player-big-play-overlay')) {
-      return;
-    }
-
-    const now = Date.now();
-    const diff = now - lastTouchTapTime;
-    if (diff < 300 && diff > 0) {
-      e.preventDefault();
-      togglePlay();
-    }
-    lastTouchTapTime = now;
-  });
+  // Tahan bar kontrol tetap terbuka saat user berinteraksi dengan kontrol
+  const bottomBar = document.querySelector('.fs-bottom-bar');
+  if (bottomBar) {
+    bottomBar.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showControls(5000);
+    });
+    bottomBar.addEventListener('touchstart', (e) => {
+      e.stopPropagation();
+      showControls(5000);
+    }, { passive: true });
+  }
 
   video.addEventListener('play', () => {
     hide('bigPlayOverlay');
     const playBtn = el('btnPlay');
     if (playBtn) playBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
     triggerCenterFeedback('play');
-    resetControlsHideTimer();
+    showControls(4000);
   });
 
   video.addEventListener('pause', () => {
     const playBtn = el('btnPlay');
     if (playBtn) playBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
     triggerCenterFeedback('pause');
-    resetControlsHideTimer();
+    showControls(0); // Tetap biarkan kontrol terbuka saat video di-pause
   });
 
   video.addEventListener('timeupdate', () => {
