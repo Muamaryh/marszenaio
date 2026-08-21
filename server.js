@@ -2,7 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { getSources, getFeed, searchDramas, getDramaDetail, getDramaEpisode } = require('./services/anichin');
+const { getSources: getAnichinSources, getFeed: getAnichinFeed, searchDramas: searchAnichinDramas, getDramaDetail: getAnichinDetail, getDramaEpisode: getAnichinEpisode } = require('./services/anichin');
+const { getNunoSources, isNunoSource, getNunoFeed, searchNunoDramas, getNunoDramaDetail, getNunoDramaEpisode } = require('./services/nunodrama');
 const { handleStreamProxy, handleSubtitleProxy } = require('./services/stream_proxy');
 
 const app = express();
@@ -14,10 +15,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ===== API ROUTES =====
 
-// 1. Get Sources List
+// 1. Get Sources List (Gabungan Anichin + NunoDrama)
 app.get('/api/drama/sources', (req, res) => {
   try {
-    const sources = getSources();
+    const anichinSources = getAnichinSources();
+    const nunoSources = getNunoSources();
+    const sources = [...anichinSources, ...nunoSources];
     res.json({ success: true, sources });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -28,7 +31,12 @@ app.get('/api/drama/sources', (req, res) => {
 app.get('/api/drama/feed', async (req, res) => {
   const { source = 'dramawave', type = 'trending', page = 1 } = req.query;
   try {
-    const feed = await getFeed(source, type, Number(page));
+    let feed;
+    if (isNunoSource(source)) {
+      feed = await getNunoFeed(source, type, Number(page));
+    } else {
+      feed = await getAnichinFeed(source, type, Number(page));
+    }
     res.json(feed);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -39,7 +47,12 @@ app.get('/api/drama/feed', async (req, res) => {
 app.get('/api/drama/search', async (req, res) => {
   const { source = 'dramawave', query = '' } = req.query;
   try {
-    const results = await searchDramas(source, query);
+    let results;
+    if (isNunoSource(source)) {
+      results = await searchNunoDramas(source, query);
+    } else {
+      results = await searchAnichinDramas(source, query);
+    }
     res.json(results);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -51,7 +64,12 @@ app.get('/api/drama/detail', async (req, res) => {
   const { source = 'dramawave', id } = req.query;
   if (!id) return res.status(400).json({ success: false, error: 'ID drama diperlukan' });
   try {
-    const detail = await getDramaDetail(source, id);
+    let detail;
+    if (isNunoSource(source)) {
+      detail = await getNunoDramaDetail(source, id);
+    } else {
+      detail = await getAnichinDetail(source, id);
+    }
     res.json(detail);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -63,7 +81,12 @@ app.get('/api/drama/episode', async (req, res) => {
   const { source = 'dramawave', id, ep = 1 } = req.query;
   if (!id) return res.status(400).json({ success: false, error: 'ID drama diperlukan' });
   try {
-    const episode = await getDramaEpisode(source, id, Number(ep));
+    let episode;
+    if (isNunoSource(source)) {
+      episode = await getNunoDramaEpisode(source, id, Number(ep));
+    } else {
+      episode = await getAnichinEpisode(source, id, Number(ep));
+    }
     res.json(episode);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
