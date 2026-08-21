@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="grad_dramawave" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#0369a1"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="84" height="84" rx="22" fill="url(#grad_dramawave)"/><path d="M22 50 Q36 28 50 50 T78 50" fill="none" stroke="#38bdf8" stroke-width="7" stroke-linecap="round"/><polygon points="46,38 66,50 46,62" fill="#ffffff"/>
+</svg>

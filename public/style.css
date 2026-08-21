@@ -340,10 +340,11 @@ body {
   width: 22px;
   height: 22px;
   border-radius: 6px;
-  object-fit: cover;
+  object-fit: contain;
   flex-shrink: 0;
-  border: 1px solid rgba(24, 24, 27, 0.2);
-  background: #ffffff;
+  box-shadow: 1px 1px 0px var(--black);
+  border: 1px solid var(--black);
+  background: transparent;
 }
 
 .source-logo-badge {
