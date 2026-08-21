@@ -50,7 +50,9 @@ async function fetchWithClientCache(url, ttlMs = 15 * 60 * 1000) {
   // 1. Cek in-memory RAM cache
   const mem = clientMemoryCache.get(url);
   if (mem && Date.now() - mem.timestamp < ttlMs) {
-    return mem.data;
+    if (!url.includes('/episode') || (mem.data && mem.data.videoUrl)) {
+      return mem.data;
+    }
   }
 
   // 2. Cek sessionStorage browser
@@ -59,8 +61,10 @@ async function fetchWithClientCache(url, ttlMs = 15 * 60 * 1000) {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && Date.now() - parsed.timestamp < ttlMs) {
-        clientMemoryCache.set(url, parsed);
-        return parsed.data;
+        if (!url.includes('/episode') || (parsed.data && parsed.data.videoUrl)) {
+          clientMemoryCache.set(url, parsed);
+          return parsed.data;
+        }
       }
     }
   } catch (e) {}
@@ -70,11 +74,14 @@ async function fetchWithClientCache(url, ttlMs = 15 * 60 * 1000) {
   const data = await res.json();
 
   if (data && data.success !== false) {
-    const cacheObj = { timestamp: Date.now(), data };
-    clientMemoryCache.set(url, cacheObj);
-    try {
-      sessionStorage.setItem('dracin_cache_' + url, JSON.stringify(cacheObj));
-    } catch (e) {}
+    // Jangan cache jika episode tidak memiliki videoUrl
+    if (!url.includes('/episode') || Boolean(data.videoUrl)) {
+      const cacheObj = { timestamp: Date.now(), data };
+      clientMemoryCache.set(url, cacheObj);
+      try {
+        sessionStorage.setItem('dracin_cache_' + url, JSON.stringify(cacheObj));
+      } catch (e) {}
+    }
   }
 
   return data;
@@ -870,7 +877,19 @@ function setupVideoPlayer(data, sessionId) {
     });
   } else {
     // Direct MP4 / Native Video
-    const playUrl = (streamUrl.startsWith('http://') || streamUrl.includes('dramaboxdb.com') || streamUrl.includes('bytedrama.com') || streamUrl.includes('melolostatic.com'))
+    const shouldProxy = (
+      streamUrl.startsWith('http://') ||
+      streamUrl.includes('dramahue.com') ||
+      streamUrl.includes('dramaboxdb.com') ||
+      streamUrl.includes('bytedrama.com') ||
+      streamUrl.includes('melolostatic.com') ||
+      streamUrl.includes('kwcdn.com') ||
+      streamUrl.includes('kjcdn.com') ||
+      streamUrl.includes('alicdn.com') ||
+      streamUrl.includes('txmfvideo')
+    );
+
+    const playUrl = shouldProxy
       ? `/api/stream/proxy?url=${encodeURIComponent(streamUrl)}`
       : streamUrl;
 
