@@ -1195,6 +1195,27 @@ function initPlayerEventListeners() {
     showControls(0); // Tetap biarkan kontrol terbuka saat video di-pause
   });
 
+  let autoNextTriggered = false;
+
+  const triggerAutoNext = () => {
+    if (autoNextTriggered) return;
+    const isAutoNext = el('chkAutoNext')?.checked ?? true;
+    if (isAutoNext && appState.currentEpisode < appState.totalEpisodes) {
+      autoNextTriggered = true;
+      showControls(4000);
+      setTimeout(() => {
+        navigateEpisode(1);
+        autoNextTriggered = false;
+      }, 500);
+    }
+  };
+
+  // Auto-next saat video selesai (native ended)
+  video.addEventListener('ended', () => {
+    showControls(4000);
+    triggerAutoNext();
+  });
+
   video.addEventListener('timeupdate', () => {
     const cur = video.currentTime || 0;
     const dur = video.duration || 0;
@@ -1202,6 +1223,11 @@ function initPlayerEventListeners() {
     if (el('timeDuration')) el('timeDuration').textContent = formatTime(dur);
     if (dur > 0 && el('videoSeekBar')) {
       el('videoSeekBar').value = (cur / dur) * 1000;
+    }
+
+    // Auto-next backup trigger saat video mencapai akhir playlist (<0.4s tersisa)
+    if (dur > 2 && cur > 0 && cur >= (dur - 0.45) && !video.paused) {
+      triggerAutoNext();
     }
 
     // Simpan progres ke riwayat tontonan setiap 3 detik
@@ -1212,27 +1238,18 @@ function initPlayerEventListeners() {
     }
   });
 
-  // Auto-next saat video selesai
-  video.addEventListener('ended', () => {
-    resetControlsHideTimer();
-    const isAutoNext = el('chkAutoNext')?.checked;
-    if (isAutoNext && appState.currentEpisode < appState.totalEpisodes) {
-      navigateEpisode(1);
-    }
-  });
-
   el('videoSeekBar')?.addEventListener('input', (e) => {
     const dur = video.duration || 0;
     if (dur > 0) {
       video.currentTime = (e.target.value / 1000) * dur;
     }
-    resetControlsHideTimer();
+    showControls(4000);
   });
 
   el('volSlider')?.addEventListener('input', (e) => {
     video.volume = e.target.value / 100;
     video.muted = false;
-    resetControlsHideTimer();
+    showControls(4000);
   });
 
   // Keyboard Shortcuts
