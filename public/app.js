@@ -748,7 +748,7 @@ async function playEpisode(source, dramaId, epNum, sessionId = null) {
   try {
     let data = null;
     const epObj = appState.episodesList?.[Number(epNum) - 1];
-    if (epObj && epObj.videoUrl) {
+    if (epObj && epObj.videoUrl && !epObj.videoUrl.includes('miniapp.anichin.bio/api/dramabox/hls')) {
       data = {
         success: true,
         source,
@@ -759,8 +759,9 @@ async function playEpisode(source, dramaId, epNum, sessionId = null) {
         subtitles: []
       };
     } else {
-      const url = `/api/drama/episode?source=${encodeURIComponent(source)}&id=${encodeURIComponent(dramaId)}&ep=${epNum}`;
-      data = await fetchWithClientCache(url, 30 * 60 * 1000);
+      const url = `/api/drama/episode?source=${encodeURIComponent(source)}&id=${encodeURIComponent(dramaId)}&ep=${epNum}&_v=${Date.now()}`;
+      const res = await fetch(url);
+      data = await res.json();
     }
 
     if (currentSession !== playbackSessionId) return; // Discard jika sudah berpindah drama / ditutup

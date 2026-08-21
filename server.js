@@ -85,7 +85,7 @@ app.get('/api/drama/episode', async (req, res) => {
   const { source = 'dramawave', id, ep = 1 } = req.query;
   if (!id) return res.status(400).json({ success: false, error: 'ID drama diperlukan' });
   try {
-    res.setHeader('Cache-Control', 'public, max-age=600, s-maxage=3600, stale-while-revalidate=7200');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     let episode;
     if (isNunoSource(source)) {
       episode = await getNunoDramaEpisode(source, id, Number(ep));
