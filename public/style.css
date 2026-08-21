@@ -1060,23 +1060,23 @@ body {
   position: absolute;
   top: 14px;
   right: 14px;
-  background: rgba(39, 39, 42, 0.92);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1.5px solid #52525b;
-  color: #fff;
+  background: rgba(24, 24, 27, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   font-size: 1.3rem;
   font-weight: 900;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: var(--transition);
-  z-index: 30;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+  transition: all 0.2s ease;
+  z-index: 9999;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
 }
 
 .theater-close-btn:hover {
@@ -1908,59 +1908,26 @@ body {
     background: #121215;
   }
 
-  .theater-topbar {
-    padding: 6px 12px;
-    min-height: 44px;
-    padding-top: max(6px, env(safe-area-inset-top));
-    background: #18181b;
-    border-bottom: 1.5px solid #27272a;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-  }
-
-  .theater-header-left {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .theater-provider-badge {
-    font-size: 0.68rem;
-    padding: 2px 6px;
-    border-radius: 4px;
-  }
-
-  .theater-drama-title {
-    font-size: 0.88rem;
-    font-weight: 800;
-    color: #ffffff;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: calc(100vw - 150px);
-  }
-
-  .theater-ep-indicator {
-    font-size: 0.7rem;
-    padding: 2px 7px;
-    background: #27272a;
-  }
-
   .theater-close-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #27272a;
-    border: 1px solid #3f3f46;
-    font-size: 1.2rem;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: fixed !important;
+    top: max(12px, env(safe-area-inset-top, 12px)) !important;
+    right: 14px !important;
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 50% !important;
+    background: rgba(24, 24, 27, 0.92) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.3) !important;
+    font-size: 1.4rem !important;
+    font-weight: 900 !important;
+    color: #ffffff !important;
+    z-index: 9999999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.8) !important;
+    cursor: pointer !important;
   }
 
   .theater-content-grid {
