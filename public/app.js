@@ -1083,14 +1083,28 @@ function initPlayerEventListeners() {
   const videoContainer = el('videoContainer');
   if (!video || !videoContainer) return;
 
+  // Sync Fullscreen state
+  const handleFsChange = () => {
+    const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+    if (isFs) {
+      videoContainer.classList.add('is-fullscreen');
+    } else {
+      videoContainer.classList.remove('is-fullscreen');
+      hide('fullscreenEpDrawer');
+    }
+    resetControlsHideTimer();
+  };
+  document.addEventListener('fullscreenchange', handleFsChange);
+  document.addEventListener('webkitfullscreenchange', handleFsChange);
+
   // Interaksi Mouse & Touch untuk Auto-Hide
   videoContainer.addEventListener('mousemove', resetControlsHideTimer);
   videoContainer.addEventListener('mouseenter', resetControlsHideTimer);
   videoContainer.addEventListener('touchstart', resetControlsHideTimer, { passive: true });
 
-  // Klik langsung pada video container untuk Play/Pause
+  // Single Click: Hanya menampilkan/menyembunyikan bar kontrol (TIDAK PAUSE)
   videoContainer.addEventListener('click', (e) => {
-    // Jangan toggle jika klik di bar kontrol, tombol kontrol, atau drawer episode
+    // Jangan lakukan apa-apa jika klik di bar kontrol, tombol, dropdown, atau drawer
     if (e.target.closest('.fs-top-bar') || 
         e.target.closest('.fs-bottom-bar') || 
         e.target.closest('.fs-center-controls') || 
@@ -1104,8 +1118,40 @@ function initPlayerEventListeners() {
     if (videoContainer.classList.contains('controls-hidden')) {
       resetControlsHideTimer();
     } else {
+      // Sembunyikan kontrol jika sudah muncul
+      videoContainer.classList.add('controls-hidden');
+    }
+  });
+
+  // Double Click di Desktop untuk Play / Pause
+  videoContainer.addEventListener('dblclick', (e) => {
+    if (e.target.closest('.fs-top-bar') || 
+        e.target.closest('.fs-bottom-bar') || 
+        e.target.closest('.fs-episodes-drawer')) {
+      return;
+    }
+    togglePlay();
+  });
+
+  // Double Tap di Layar Sentuh / HP untuk Play / Pause
+  let lastTouchTapTime = 0;
+  videoContainer.addEventListener('touchend', (e) => {
+    if (e.target.closest('.fs-top-bar') || 
+        e.target.closest('.fs-bottom-bar') || 
+        e.target.closest('.fs-episodes-drawer') ||
+        e.target.closest('.btn-fs-ep-toggle') ||
+        e.target.closest('.btn-fs-close') ||
+        e.target.closest('.player-big-play-overlay')) {
+      return;
+    }
+
+    const now = Date.now();
+    const diff = now - lastTouchTapTime;
+    if (diff < 300 && diff > 0) {
+      e.preventDefault();
       togglePlay();
     }
+    lastTouchTapTime = now;
   });
 
   video.addEventListener('play', () => {

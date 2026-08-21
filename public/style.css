@@ -1221,12 +1221,19 @@ body {
   cursor: none;
 }
 
+/* In-Video Floating Header Bar: Only visible in Fullscreen */
 .fs-top-bar {
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   pointer-events: auto;
+}
+
+.video-container:fullscreen .fs-top-bar,
+.video-container:-webkit-full-screen .fs-top-bar,
+.video-container.is-fullscreen .fs-top-bar {
+  display: flex;
 }
 
 .fs-info-wrap {
@@ -1310,13 +1317,19 @@ body {
   background: #ff5e6a;
 }
 
-/* Center Quick Skip Buttons */
+/* Center Quick Skip Buttons: Only visible in Fullscreen */
 .fs-center-controls {
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: space-around;
   width: 100%;
   pointer-events: none;
+}
+
+.video-container:fullscreen .fs-center-controls,
+.video-container:-webkit-full-screen .fs-center-controls,
+.video-container.is-fullscreen .fs-center-controls {
+  display: flex;
 }
 
 .fs-skip-btn {
