@@ -220,6 +220,19 @@ async function initApp() {
   initSearch();
   initSourcesDrag();
   initPlayerEventListeners();
+
+  // Handle URL deep-link (e.g. ?source=dramawave&id=QCJvQG2LLD&ep=26)
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const pSrc = urlParams.get('source');
+    const pId = urlParams.get('id');
+    const pEp = urlParams.get('ep');
+    if (pId) {
+      setTimeout(() => {
+        openDrama(pSrc || 'dramawave', pId, 'Memuat Drama...', pEp ? Number(pEp) : 1);
+      }, 400);
+    }
+  } catch (e) {}
 }
 
 async function loadSources() {
