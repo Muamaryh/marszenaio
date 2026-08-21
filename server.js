@@ -87,15 +87,54 @@ app.get('/api/drama/episode', async (req, res) => {
   try {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     let episode;
+
     if (source === 'dramabox' || /^\d{11}$/.test(String(id))) {
-      episode = await getNunoDramaEpisode('dramabox', id, Number(ep));
-      if (!episode || !episode.videoUrl) {
+      try {
+        const axios = require('axios');
+        const resp = await axios.get('https://redmi.nunodrama.my.id/api/dramabox/stream', {
+          params: { book_id: String(id), episode_num: String(ep) },
+          timeout: 12000,
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+        });
+        const d = resp.data?.data || resp.data || {};
+        const current = d.current || d.raw?.current || {};
+        let videoUrl = '';
+        let qualities = [];
+
+        if (Array.isArray(current.videoInfoList) && current.videoInfoList.length > 0) {
+          qualities = current.videoInfoList.map(v => ({
+            label: v.quality || 'HD',
+            url: v.videoPath || v.url,
+            isDefault: v.quality === '720p'
+          }));
+          const def = qualities.find(q => q.isDefault) || qualities[0];
+          videoUrl = def?.url || '';
+        }
+
+        if (!videoUrl) {
+          videoUrl = current.streamUrl || d.url || d.playUrl || d.streamUrl || '';
+        }
+
+        if (videoUrl) {
+          episode = {
+            success: true,
+            source: 'dramabox',
+            id,
+            episodeNumber: Number(ep),
+            videoUrl,
+            qualities: qualities.length > 0 ? qualities : [{ label: '720p HD', url: videoUrl, isDefault: true }],
+            subtitles: []
+          };
+        }
+      } catch (e) {}
+    }
+
+    if (!episode || !episode.videoUrl) {
+      if (isNunoSource(source)) {
+        episode = await getNunoDramaEpisode(source, id, Number(ep));
+      } else {
         episode = await getAnichinEpisode(source, id, Number(ep));
       }
-    } else if (isNunoSource(source)) {
-      episode = await getNunoDramaEpisode(source, id, Number(ep));
-    } else {
-      episode = await getAnichinEpisode(source, id, Number(ep));
     }
     res.json(episode);
   } catch (err) {
