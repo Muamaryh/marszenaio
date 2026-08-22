@@ -6,7 +6,7 @@
 let appState = {
   sources: [],
   currentSource: 'dramawave',
-  currentFeedType: 'trending',
+  currentFeedType: 'foryou',
   currentPage: 1,
   currentQuery: '',
   activeDrama: null,
@@ -723,7 +723,7 @@ function selectSource(sourceKey, sourceName, sourceDesc = '') {
   closeProviderModal();
 
   if (appState.currentFeedType === 'history' || appState.currentFeedType === 'favorites') {
-    setFeedType('trending');
+    setFeedType('foryou');
   } else {
     loadFeed();
   }
