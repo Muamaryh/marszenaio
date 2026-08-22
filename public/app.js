@@ -711,6 +711,15 @@ async function performSearch(query) {
       if (el('feedCountBadge')) el('feedCountBadge').textContent = `${data.items.length} drama ditemukan`;
     } else {
       show('dramaEmptyState');
+      if (el('dramaEmptyState')) {
+        const srcObj = appState.sources.find(s => s.key === appState.currentSource);
+        const srcName = srcObj ? srcObj.name : appState.currentSource.toUpperCase();
+        el('dramaEmptyState').innerHTML = `
+          <div class="empty-emoji">🔍</div>
+          <h3>Tidak Ada Drama Ditemukan</h3>
+          <p>Tidak ditemukan drama dengan kata kunci <strong>"${escapeHtml(query)}"</strong> di provider <strong>${escapeHtml(srcName)}</strong>.</p>
+        `;
+      }
       if (el('feedCountBadge')) el('feedCountBadge').textContent = '0 hasil';
     }
   } catch (err) {

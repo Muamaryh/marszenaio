@@ -358,15 +358,11 @@ async function searchDramas(source = 'dramawave', query = '') {
   }
 
   let items = [];
-  try {
-    const res = await sendWsRequest(source, 'search', { query: query.trim() });
-    items = normalizeDramaList(res.data).map(item => ({ ...item, source: resolveActualSource(item.id, source) }));
-  } catch (err) {}
 
-  // Multi-provider fallback search jika pencarian di provider terpilih kosong
-  if (items.length === 0) {
-    const fallbackSources = ['dramawave', 'dramabox', 'netshort', 'reelshort', 'shortmax'].filter(s => s !== source);
-    const searchPromises = fallbackSources.map(s => 
+  if (source === 'all') {
+    // Global search across main providers
+    const allSources = ['dramawave', 'shortmax', 'melolo', 'netshort', 'reelshort', 'dramabox', 'goodshort', 'freereels'];
+    const searchPromises = allSources.map(s => 
       sendWsRequest(s, 'search', { query: query.trim() })
         .then(r => normalizeDramaList(r.data).map(item => ({ ...item, source: resolveActualSource(item.id, s) })))
         .catch(() => [])
@@ -378,6 +374,14 @@ async function searchDramas(source = 'dramawave', query = '') {
         items.push(...r.value);
       }
     });
+  } else {
+    // Pencarian ketat khusus provider yang sedang aktif (tidak mencampur provider lain)
+    try {
+      const res = await sendWsRequest(source, 'search', { query: query.trim() });
+      items = normalizeDramaList(res.data).map(item => ({ ...item, source: resolveActualSource(item.id, source) }));
+    } catch (err) {
+      items = [];
+    }
   }
 
   // Deduplicate items
