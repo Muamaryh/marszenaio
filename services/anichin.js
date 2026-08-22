@@ -19,8 +19,7 @@ const SOURCES = {
   dramanova:  { name: 'DramaNova',  id: '102062', badge: 'Romance / 18+', desc: 'Drama romantis & dewasa', icon: 'https://dramanova.com/favicon.ico' },
   reelshort:  { name: 'ReelShort',  id: '699d1eefa3a7262cff05534b', badge: 'Hot', desc: 'Drama pendek romantis dan billionaire viral', icon: 'https://www.reelshort.com/favicon.ico' },
   goodshort:  { name: 'GoodShort',  id: '31001188126', badge: 'Recom', desc: 'Drama pilihan terfavorit penonton', icon: 'https://goodshort.com/favicon.ico' },
-  flickreels: { name: 'FlickReels', id: '5672', badge: 'Top Rank', desc: 'Serial drama rating tinggi', icon: 'https://flickreels.com/favicon.ico' },
-  stardusttv: { name: 'StardustTV', id: '146', badge: 'Top', desc: 'Koleksi drama sci-fi dan modern', icon: 'https://stardust.tv/favicon.ico' }
+  flickreels: { name: 'FlickReels', id: '5672', badge: 'Top Rank', desc: 'Serial drama rating tinggi', icon: 'https://flickreels.com/favicon.ico' }
 };
 
 let ws = null;
@@ -433,7 +432,7 @@ async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
 
   let streamData;
 
-  if (source === 'dramabox' || /^\d{11}$/.test(String(id))) {
+  if (source === 'dramabox' || /^420\d{8}$/.test(String(id))) {
     try {
       const axios = require('axios');
       const token = getToken();

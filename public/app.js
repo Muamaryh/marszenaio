@@ -282,7 +282,9 @@ async function loadSources() {
       { key: 'shortmax', name: 'ShortMax', badge: 'Trending', desc: 'Katalog ribuan drama pendek bertema CEO & Reinkarnasi' },
       { key: 'melolo', name: 'Melolo', badge: 'Multi-Bitrate', desc: 'Pilihan resolusi 720p, 540p, 360p' },
       { key: 'dramanova', name: 'DramaNova', badge: 'Romance / 18+', desc: 'Drama romantis & dewasa' },
-      { key: 'reelshort', name: 'ReelShort', badge: 'Hot', desc: 'Drama pendek billionaire & werewolf viral' }
+      { key: 'reelshort', name: 'ReelShort', badge: 'Hot', desc: 'Drama pendek billionaire & werewolf viral' },
+      { key: 'goodshort', name: 'GoodShort', badge: 'Recom', desc: 'Drama pilihan terfavorit penonton' },
+      { key: 'flickreels', name: 'FlickReels', badge: 'Top Rank', desc: 'Serial drama rating tinggi' }
     ];
     renderSourcesPills();
   }
@@ -877,23 +879,9 @@ async function playEpisode(source, dramaId, epNum, sessionId = null) {
   }
 
   try {
-    let data = null;
-    const epObj = appState.episodesList?.[Number(epNum) - 1];
-    if (epObj && epObj.videoUrl && !epObj.videoUrl.includes('miniapp.anichin.bio/api/dramabox/hls')) {
-      data = {
-        success: true,
-        source,
-        id: dramaId,
-        episodeNumber: Number(epNum),
-        videoUrl: epObj.videoUrl,
-        qualities: [{ label: 'HD Auto', url: epObj.videoUrl, isDefault: true }],
-        subtitles: []
-      };
-    } else {
-      const url = `/api/drama/episode?source=${encodeURIComponent(source)}&id=${encodeURIComponent(dramaId)}&ep=${epNum}&_v=${Date.now()}`;
-      const res = await fetch(url);
-      data = await res.json();
-    }
+    const url = `/api/drama/episode?source=${encodeURIComponent(source)}&id=${encodeURIComponent(dramaId)}&ep=${epNum}&_v=${Date.now()}`;
+    const res = await fetch(url);
+    const data = await res.json();
 
     if (currentSession !== playbackSessionId) return; // Discard jika sudah berpindah drama / ditutup
     hide('videoLoader');
@@ -1021,6 +1009,9 @@ function setupVideoPlayer(data, sessionId) {
       streamUrl.includes('dramaboxdb.com') ||
       streamUrl.includes('bytedrama.com') ||
       streamUrl.includes('melolostatic.com') ||
+      streamUrl.includes('goodreels.com') ||
+      streamUrl.includes('shorttv.live') ||
+      streamUrl.includes('crazymaplestudios.com') ||
       streamUrl.includes('kwcdn.com') ||
       streamUrl.includes('kjcdn.com') ||
       streamUrl.includes('alicdn.com') ||
