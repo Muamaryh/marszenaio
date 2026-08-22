@@ -500,6 +500,8 @@ async function initApp() {
 
   initPWA();
   initPopupSearch();
+  initDesktopSearch();
+  initSourcesDrag();
   await loadSources();
   await loadFeed();
   renderContinueWatchingBanner();
@@ -551,6 +553,7 @@ async function loadSources() {
 
   updateActiveProviderHeader();
   renderProviderModalGrid();
+  renderSourcesPills();
 }
 
 function updateActiveProviderHeader() {
@@ -559,6 +562,104 @@ function updateActiveProviderHeader() {
   const nameEl = el('activeProviderName');
   if (logoEl) logoEl.src = `/assets/logos/${cur.key}.svg?v=2.2.0`;
   if (nameEl) nameEl.textContent = cur.name;
+}
+
+function renderSourcesPills() {
+  const container = el('sourcesPillsBar');
+  if (!container) return;
+  container.innerHTML = '';
+
+  appState.sources.forEach(src => {
+    const btn = document.createElement('button');
+    btn.className = 'source-btn' + (src.key === appState.currentSource ? ' active' : '');
+    btn.dataset.source = src.key;
+    const logoHtml = `<img src="/assets/logos/${src.key}.svg?v=2.2.0" alt="${escapeHtml(src.name)}" class="source-logo-img" onerror="this.src='/assets/icons/icon.svg'"/>`;
+    btn.innerHTML = `
+      ${logoHtml}
+      <span class="source-name-text">${escapeHtml(src.name)}</span>
+      ${src.badge ? `<span class="source-badge">${escapeHtml(src.badge)}</span>` : ''}
+    `;
+    btn.onclick = () => selectSource(src.key, src.name, src.desc);
+    container.appendChild(btn);
+  });
+}
+
+function scrollSources(direction) {
+  const container = el('sourcesPillsBar');
+  if (!container) return;
+  const scrollAmount = 260 * direction;
+  container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+}
+
+function initSourcesDrag() {
+  const slider = el('sourcesPillsBar');
+  if (!slider) return;
+
+  let isDown = false;
+  let startX;
+  let scrollLeft;
+
+  slider.addEventListener('mousedown', (e) => {
+    isDown = true;
+    slider.classList.add('dragging');
+    startX = e.pageX - slider.offsetLeft;
+    scrollLeft = slider.scrollLeft;
+  });
+
+  slider.addEventListener('mouseleave', () => {
+    isDown = false;
+    slider.classList.remove('dragging');
+  });
+
+  slider.addEventListener('mouseup', () => {
+    isDown = false;
+    slider.classList.remove('dragging');
+  });
+
+  slider.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - slider.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    slider.scrollLeft = scrollLeft - walk;
+  });
+
+  slider.addEventListener('wheel', (e) => {
+    if (e.deltaY !== 0) {
+      e.preventDefault();
+      slider.scrollLeft += e.deltaY;
+    }
+  }, { passive: false });
+}
+
+function initDesktopSearch() {
+  const input = el('headerSearchInput');
+  const clearBtn = el('headerSearchClear');
+  if (!input) return;
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim();
+    if (q) show('headerSearchClear');
+    else hide('headerSearchClear');
+
+    clearTimeout(appState.searchTimeout);
+    appState.searchTimeout = setTimeout(() => {
+      if (q) {
+        appState.currentQuery = q;
+        loadFeed();
+      } else {
+        appState.currentQuery = '';
+        loadFeed();
+      }
+    }, 350);
+  });
+
+  clearBtn?.addEventListener('click', () => {
+    input.value = '';
+    hide('headerSearchClear');
+    appState.currentQuery = '';
+    loadFeed();
+  });
 }
 
 function openProviderModal() {
@@ -610,6 +711,12 @@ function selectSource(sourceKey, sourceName, sourceDesc = '') {
 
   appState.currentPage = 1;
   appState.currentQuery = '';
+
+  if (el('sourceDesc')) el('sourceDesc').textContent = sourceDesc || 'Streaming drama pilihan';
+
+  document.querySelectorAll('.source-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.source === sourceKey || b.textContent.includes(sourceName));
+  });
 
   updateActiveProviderHeader();
   renderProviderModalGrid();

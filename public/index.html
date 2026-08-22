@@ -49,7 +49,7 @@
         </a>
 
         <div class="header-right">
-          <!-- Provider Switcher Trigger Button (Pojok Kanan Atas - Frameless Logo + Name) -->
+          <!-- Provider Switcher Trigger Button (Framed Logo + Provider Name) -->
           <button class="btn-provider-trigger" id="btnProviderTrigger" onclick="openProviderModal()" title="Pilih Provider Drama">
             <img src="/assets/logos/dramawave.svg" id="activeProviderLogo" class="provider-trigger-logo" alt="DramaWave" onerror="this.src='/assets/icons/icon.svg'"/>
             <span class="provider-trigger-name" id="activeProviderName">DramaWave</span>
@@ -67,7 +67,40 @@
 
     <!-- Main Container -->
     <main class="main-content">
-      <!-- Category Filter Tabs (Trending, Untuk Anda, Populer, Rekomendasi) -->
+      <!-- Hero Intro Banner (Desktop Web Mode) -->
+      <section class="hero-section desktop-only">
+        <div class="hero-badge">⚡ AIO SHORT DRAMA STREAMING PORTAL</div>
+        <h1 class="hero-title">Nonton Drama Pendek <span class="grad-text">Tanpa Batas</span></h1>
+        <p class="hero-sub">Streaming ribuan episode drama pendek viral dari <strong>15 provider</strong> terbaik dengan kualitas HD dan Subtitle Indonesia.</p>
+      </section>
+
+      <!-- Provider Selection Bar with Drag & Nav Arrows (Desktop Web Mode) -->
+      <section class="sources-section desktop-only">
+        <div class="section-header-compact">
+          <span class="section-title-sm">PILIH PROVIDER DRAMA:</span>
+          <span class="source-info-sub" id="sourceDesc">Direct M3U8 streaming dengan 20+ subtitle multi-bahasa</span>
+        </div>
+        <div class="sources-scroll-wrapper">
+          <button class="sources-nav-btn prev" id="btnSourcesPrev" onclick="scrollSources(-1)" aria-label="Scroll Kiri">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div class="sources-pill-scroll" id="sourcesPillsBar">
+            <!-- Dynamic sources rendered here -->
+          </div>
+          <button class="sources-nav-btn next" id="btnSourcesNext" onclick="scrollSources(1)" aria-label="Scroll Kanan">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- Continue Watching Bar (Desktop Web Mode) -->
+      <section class="continue-watching-section desktop-only hidden" id="continueWatchingSection">
+        <div class="continue-watching-card" id="continueWatchingCard">
+          <!-- Rendered dynamically -->
+        </div>
+      </section>
+
+      <!-- Category Filter Tabs -->
       <section class="feed-tabs-section">
         <div class="feed-tabs-row">
           <div class="feed-tabs" id="feedTabsContainer">
@@ -83,6 +116,21 @@
             <button class="feed-tab-btn" data-type="recommended" onclick="setFeedType('recommended')">
               <span>💎</span> Rekomendasi
             </button>
+            <button class="feed-tab-btn desktop-only" data-type="history" onclick="setFeedType('history')">
+              <span>🕒</span> Riwayat Nonton
+            </button>
+            <button class="feed-tab-btn desktop-only" data-type="favorites" onclick="setFeedType('favorites')">
+              <span>⭐</span> Favorit Saya
+            </button>
+          </div>
+        </div>
+
+        <!-- Search Bar on Desktop Web -->
+        <div class="feed-search-wrap desktop-only">
+          <div class="feed-search-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="headerSearchInput" placeholder="Cari judul drama, CEO, naga, billionaire, romantis..." autocomplete="off">
+            <button class="search-clear-btn hidden" id="headerSearchClear">&times;</button>
           </div>
         </div>
 
