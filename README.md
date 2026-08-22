@@ -6,23 +6,32 @@ Aplikasi web streaming drama pendek (Dracin / Short Drama) All-In-One terlengkap
 
 ## 🌟 Fitur Utama
 
-- **16+ Drama Providers Terlengkap**:
+- **15 Drama Providers Terlengkap**:
   - **DramaWave** *(HD M3U8 Direct + 20+ Subtitle Multi-Bahasa)*
   - **FreeReels** *(Direct Streaming + Subtitle Indonesia)*
   - **NetShort** *(Direct MP4 Original + Subtitle Indonesia)*
-  - **DramaNova** *(Romance & 18+ Dewasa)*
-  - **StarShort** *(Fast M3U8 Streaming)*
+  - **DramaBox** *(Top #1 Asia Drama + Sansekai VIP Decrypt Resolver)*
+  - **ShortMax** *(Katalog Drama CEO & Reinkarnasi)*
   - **Melolo** *(Multi-Bitrate: 720p, 540p, 360p)*
-  - **DramaBox**, **ReelShort**, **ShortMax**, **GoodShort**, **FlickReels**, **StardustTV**, **iDrama**, **DramaBite**, **MoboReels**, **FlareFlow**.
+  - **DramaNova** *(Romance & 18+ Dewasa)*
+  - **ReelShort** *(Billionaire & Werewolf Viral)*
+  - **GoodShort** *(Drama Pilihan Terfavorit)*
+  - **FlickReels** *(Serial Drama Rating Tinggi)*
+  - **iDrama** *(Koleksi Drama Pendek Asia Terpopuler)*
+  - **DramaBite** *(Update Drama Baru Tiap Hari)*
+  - **MoboReels** *(Drama Pilihan Trending Penonton)*
+  - **FlareFlow** *(Drama Romantis & Aksi Trending HD)*
+  - **PineDrama** *(Drama Pendek TikTok HD & Dubbing Indonesia)*
 - **Fitur Player Modern**:
   - Auto-Next Episode otomatis saat video selesai.
   - Multi-Quality Switching (1080p, 720p, 540p, 480p, 360p, Auto HD).
   - Subtitle Selector (Bahasa Indonesia, English, Spanish, dll.).
   - Kontrol Kecepatan Putar (0.75x, 1.0x, 1.25x, 1.5x, 2.0x).
-  - Shortcut Keyboard: `Spasi` (Play/Pause), `Panah Kanan/Kiri` (Seek 5s), `F` (Fullscreen), `M` (Mute), `Esc` (Tutup Theater).
+  - Shortcut Keyboard & Mobile Gesture (Tap toggle, Fullscreen drawer).
 - **Dark Cinema UI**:
-  - Desain elegan ramah mata untuk Desktop dan Mobile.
-  - Live Search dengan instant debounce.
+  - Desain elegan Neo-Brutalist TrobosLink Style ramah mata untuk Desktop dan Mobile.
+  - Live Search per provider dengan instant debounce.
+  - Riwayat Nonton & Continue Watching card otomatis.
   - Drawer Episode lengkap (1 s/d 80+ episode).
 
 ---
