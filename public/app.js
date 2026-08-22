@@ -1593,6 +1593,7 @@ function setupVideoPlayer(data, sessionId, startTime = 0) {
       streamUrl.startsWith('http://') ||
       streamUrl.includes('dramahue.com') ||
       streamUrl.includes('dramaboxdb.com') ||
+      streamUrl.includes('sansekai.my.id') ||
       streamUrl.includes('bytedrama.com') ||
       streamUrl.includes('melolostatic.com') ||
       streamUrl.includes('goodreels.com') ||

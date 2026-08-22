@@ -2,19 +2,20 @@ const axios = require('axios');
 
 const SANSEKAI_BASE = 'https://api.sansekai.my.id/api';
 const dramaBoxCache = new Map();
-const CACHE_TTL_DRAMABOX = 60 * 60 * 1000; // 1 Jam Cache
+const CACHE_TTL_DRAMABOX = 24 * 60 * 60 * 1000; // 24 Jam Cache
 
 const client = axios.create({
   baseURL: SANSEKAI_BASE,
-  timeout: 45000,
+  timeout: 30000,
   headers: {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Referer': 'https://api.sansekai.my.id/',
     'Accept': 'application/json, text/plain, */*'
   }
 });
 
 /**
- * Ambil daftar semua episode DramaBox dari Sansekai dengan caching 1 jam
+ * Ambil daftar semua episode DramaBox dari Sansekai dengan caching 24 jam & retry
  */
 async function getDramaBoxAllEpisodes(bookId) {
   const cacheKey = `db_all_${bookId}`;
@@ -23,12 +24,27 @@ async function getDramaBoxAllEpisodes(bookId) {
     return cached.data;
   }
 
-  const res = await client.get(`/dramabox/allepisode?bookId=${encodeURIComponent(bookId)}`);
-  const list = Array.isArray(res.data) ? res.data : (res.data.data || res.data.list || []);
-  
-  if (list && list.length > 0) {
-    dramaBoxCache.set(cacheKey, { timestamp: Date.now(), data: list });
+  let list = [];
+  let attempts = 0;
+
+  while (attempts < 2) {
+    attempts++;
+    try {
+      const res = await client.get(`/dramabox/allepisode?bookId=${encodeURIComponent(bookId)}`);
+      list = Array.isArray(res.data) ? res.data : (res.data?.data || res.data?.list || []);
+      if (list && list.length > 0) {
+        dramaBoxCache.set(cacheKey, { timestamp: Date.now(), data: list });
+        return list;
+      }
+    } catch (err) {
+      if (attempts < 2 && err.response?.status === 429) {
+        await new Promise(r => setTimeout(r, 1500));
+        continue;
+      }
+      throw err;
+    }
   }
+
   return list;
 }
 
@@ -44,7 +60,7 @@ async function getDramaBoxEpisodeStream(bookId, ep = 1) {
   }
 
   const epData = list[epIndex];
-  const cdn = epData.cdnList?.[0];
+  const cdn = epData.cdnList?.[0] || epData.cdnList?.[1];
   const videoItem = cdn?.videoPathList?.[0];
   let rawUrl = videoItem?.videoPath || '';
 
