@@ -1231,20 +1231,6 @@ function initPlayerEventListeners() {
   const videoContainer = el('videoContainer');
   if (!video || !videoContainer) return;
 
-  // Sync Fullscreen state
-  const handleFsChange = () => {
-    const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
-    if (isFs) {
-      videoContainer.classList.add('is-fullscreen');
-    } else {
-      videoContainer.classList.remove('is-fullscreen');
-      hide('fullscreenEpDrawer');
-    }
-    showControls(4000);
-  };
-  document.addEventListener('fullscreenchange', handleFsChange);
-  document.addEventListener('webkitfullscreenchange', handleFsChange);
-
   // Desktop mouse movement untuk menampilkan bar kontrol
   videoContainer.addEventListener('mousemove', () => showControls(3500));
   videoContainer.addEventListener('mouseenter', () => showControls(3500));
@@ -1369,6 +1355,49 @@ function initPlayerEventListeners() {
     showControls(4000);
   });
 
+  // Visibility & Screen Lifecycle Handlers
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && !document.hidden) {
+      if (appState.activeDrama && !el('theaterModal')?.classList.contains('hidden')) {
+        acquireWakeLock();
+        if (appState.wantsFullscreen) {
+          const container = el('videoContainer');
+          if (container) {
+            container.classList.add('is-fullscreen');
+          }
+        }
+      }
+    } else {
+      releaseWakeLock();
+    }
+  });
+
+  const handleFsChange = () => {
+    const isNativeFs = Boolean(
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement
+    );
+    const container = el('videoContainer');
+    if (isNativeFs) {
+      appState.wantsFullscreen = true;
+      if (container) container.classList.add('is-fullscreen');
+      acquireWakeLock();
+    } else {
+      // Jika native fullscreen keluar karena layar mati / rotasi HP / keyboard:
+      // Pertahankan CSS full view jika pengguna tidak sengaja menutupnya
+      if (appState.wantsFullscreen && container) {
+        container.classList.add('is-fullscreen');
+      }
+    }
+  };
+
+  document.addEventListener('fullscreenchange', handleFsChange);
+  document.addEventListener('webkitfullscreenchange', handleFsChange);
+  document.addEventListener('mozfullscreenchange', handleFsChange);
+  document.addEventListener('MSFullscreenChange', handleFsChange);
+
   // Keyboard Shortcuts
   document.addEventListener('keydown', (e) => {
     if (el('theaterModal')?.classList.contains('hidden')) return;
@@ -1388,13 +1417,32 @@ function initPlayerEventListeners() {
     } else if (e.code === 'KeyE') {
       toggleFullscreenEpisodes();
     } else if (e.code === 'Escape') {
-      if (document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
-      } else {
-        closeTheater();
-      }
+      exitFullscreenOrTheater();
     }
   });
+}
+
+// ===== SCREEN WAKE LOCK (MENCEGAH LAYAR HP MATI SAAT NONTON) =====
+let wakeLockSentinel = null;
+
+async function acquireWakeLock() {
+  try {
+    if ('wakeLock' in navigator && !wakeLockSentinel) {
+      wakeLockSentinel = await navigator.wakeLock.request('screen');
+      wakeLockSentinel.addEventListener('release', () => {
+        wakeLockSentinel = null;
+      });
+    }
+  } catch (err) {
+    // Wake Lock not supported or rejected
+  }
+}
+
+function releaseWakeLock() {
+  if (wakeLockSentinel) {
+    try { wakeLockSentinel.release(); } catch {}
+    wakeLockSentinel = null;
+  }
 }
 
 function triggerCenterFeedback(type) {
@@ -1421,8 +1469,12 @@ function triggerCenterFeedback(type) {
 function togglePlay() {
   const video = el('playerVideo');
   if (!video) return;
-  if (video.paused) video.play().catch(() => {});
-  else video.pause();
+  if (video.paused) {
+    video.play().catch(() => {});
+    acquireWakeLock();
+  } else {
+    video.pause();
+  }
 }
 
 function toggleMute() {
@@ -1449,7 +1501,8 @@ function isCurrentlyFullscreen() {
     document.webkitFullscreenElement ||
     document.mozFullScreenElement ||
     document.msFullscreenElement ||
-    container?.classList.contains('is-fullscreen')
+    container?.classList.contains('is-fullscreen') ||
+    appState.wantsFullscreen
   );
 }
 
@@ -1461,22 +1514,25 @@ function toggleFullscreen() {
 
   if (!isFs) {
     // Masuk mode Layar Penuh
+    appState.wantsFullscreen = true;
+    container.classList.add('is-fullscreen');
+    acquireWakeLock();
+
     if (container.requestFullscreen) {
-      container.requestFullscreen().catch(() => {
-        container.classList.add('is-fullscreen');
-      });
+      container.requestFullscreen().catch(() => {});
     } else if (container.webkitRequestFullscreen) {
       container.webkitRequestFullscreen();
     } else if (container.mozRequestFullScreen) {
       container.mozRequestFullScreen();
     } else if (container.msRequestFullscreen) {
       container.msRequestFullscreen();
-    } else {
-      container.classList.add('is-fullscreen');
     }
-    container.classList.add('is-fullscreen');
   } else {
     // Keluar mode Layar Penuh
+    appState.wantsFullscreen = false;
+    container.classList.remove('is-fullscreen');
+    hide('fullscreenEpDrawer');
+
     if (document.exitFullscreen) {
       document.exitFullscreen().catch(() => {});
     } else if (document.webkitExitFullscreen) {
@@ -1486,8 +1542,6 @@ function toggleFullscreen() {
     } else if (document.msExitFullscreen) {
       document.msExitFullscreen();
     }
-    container.classList.remove('is-fullscreen');
-    hide('fullscreenEpDrawer');
   }
   showControls(4000);
 }
@@ -1511,13 +1565,14 @@ function toggleFullscreenEpisodes(e) {
 function exitFullscreenOrTheater() {
   const container = el('videoContainer');
   if (isCurrentlyFullscreen()) {
+    appState.wantsFullscreen = false;
+    if (container) container.classList.remove('is-fullscreen');
+    hide('fullscreenEpDrawer');
     if (document.exitFullscreen) {
       document.exitFullscreen().catch(() => {});
     } else if (document.webkitExitFullscreen) {
       document.webkitExitFullscreen();
     }
-    container?.classList.remove('is-fullscreen');
-    hide('fullscreenEpDrawer');
   } else {
     closeTheater();
   }
@@ -1531,6 +1586,8 @@ function navigateEpisode(delta) {
 }
 
 function closeTheater() {
+  appState.wantsFullscreen = false;
+  releaseWakeLock();
   playbackSessionId++; // Invalidate pending requests
 
   const video = el('playerVideo');
@@ -1543,6 +1600,13 @@ function closeTheater() {
   if (appState.hlsPlayer) {
     try { appState.hlsPlayer.destroy(); } catch {}
     appState.hlsPlayer = null;
+  }
+
+  const container = el('videoContainer');
+  if (container) container.classList.remove('is-fullscreen');
+
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(() => {});
   }
 
   appState.activeDrama = null;
