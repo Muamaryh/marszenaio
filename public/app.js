@@ -154,39 +154,72 @@ function saveWatchProgress(drama, episode, currentTime = 0, duration = 0) {
   if (!drama || !drama.id) return;
   try {
     let history = getWatchHistory();
-    const progress = (duration > 0) ? Math.min(100, Math.round((currentTime / duration) * 100)) : 0;
-    const currentSrc = drama.source || appState.currentSource || 'dramawave';
+    const existing = history.find(item => item.id === drama.id);
+    const currentSrc = drama.source || appState.currentSource || (existing ? existing.source : 'dramawave');
     const dramaTitle = drama.title && drama.title !== 'Short Drama' && drama.title !== 'Drama'
       ? drama.title
-      : (appState.activeDrama?.title || el('theaterDramaTitle')?.textContent || 'Short Drama');
+      : (appState.activeDrama?.title || (existing ? existing.title : 'Short Drama'));
 
-    // Filter existing item
-    history = history.filter(item => !(item.id === drama.id));
+    const epNum = Number(episode || (existing ? existing.lastEpisode : 1));
+    let curTime = Math.floor(currentTime || 0);
+    let durTime = Math.floor(duration || 0);
+
+    // Jika durasi bernilai 0 tapi sudah ada durasi sebelumnya di episode yang sama
+    if (durTime <= 0 && existing && Number(existing.lastEpisode) === epNum && existing.duration > 0) {
+      durTime = existing.duration;
+    }
+
+    // Jika curTime bernilai 0 tapi di episode yang sama sudah ada posisi tonton sebelumnya
+    if (curTime <= 0 && existing && Number(existing.lastEpisode) === epNum && existing.currentTime > 0) {
+      curTime = existing.currentTime;
+    }
+
+    const progress = (durTime > 0) ? Math.min(100, Math.round((curTime / durTime) * 100)) : 0;
+
+    // Hapus entry lama drama ini
+    history = history.filter(item => item.id !== drama.id);
 
     const entry = {
       id: drama.id,
       source: currentSrc,
       title: dramaTitle,
-      cover: drama.cover || appState.activeDrama?.cover || '',
-      lastEpisode: Number(episode || 1),
-      totalEpisodes: Number(drama.totalEpisodes || appState.totalEpisodes || 1),
-      currentTime: Math.floor(currentTime || 0),
-      duration: Math.floor(duration || 0),
+      cover: drama.cover || appState.activeDrama?.cover || (existing ? existing.cover : ''),
+      lastEpisode: epNum,
+      totalEpisodes: Number(drama.totalEpisodes || appState.totalEpisodes || (existing ? existing.totalEpisodes : 1)),
+      currentTime: curTime,
+      duration: durTime,
       progress: progress,
       lastWatched: Date.now()
     };
 
-    // Add to beginning (most recent)
+    // Tambah ke paling depan (paling baru)
     history.unshift(entry);
 
-    // Keep max 50 items
+    // Simpan maksimal 50 item
     if (history.length > 50) history = history.slice(0, 50);
 
     localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(history));
 
-    // Update Continue Watching Banner if on home
+    // Update Banner Lanjutkan Menonton
     renderContinueWatchingBanner();
   } catch (e) {}
+}
+
+function showResumeToast(seconds) {
+  const toast = el('resumeToast');
+  const toastText = el('resumeToastText');
+  if (!toast) return;
+  if (toastText) toastText.innerHTML = `▶ Melanjutkan dari <strong>${formatTime(seconds)}</strong>`;
+  toast.classList.remove('hidden', 'fade-out');
+  toast.classList.add('visible');
+  clearTimeout(appState.resumeToastTimeout);
+  appState.resumeToastTimeout = setTimeout(() => {
+    toast.classList.add('fade-out');
+    setTimeout(() => {
+      toast.classList.remove('visible', 'fade-out');
+      toast.classList.add('hidden');
+    }, 400);
+  }, 2800);
 }
 
 function removeFromHistory(dramaId, source, e) {
@@ -760,15 +793,26 @@ async function openDrama(source, dramaId, fallbackTitle = '', startEpisode = nul
     });
   }
 
-  // Cek riwayat tontonan jika startEpisode tidak ditentukan
+  // Cek riwayat tontonan untuk episode dan posisi detik terakhir
+  const history = getWatchHistory();
+  const existing = history.find(item => item.id === dramaId);
+
   let resumeEp = startEpisode;
-  if (!resumeEp) {
-    const history = getWatchHistory();
-    const existing = history.find(item => item.id === dramaId);
-    if (existing && existing.lastEpisode) {
-      resumeEp = existing.lastEpisode;
+  let resumeTime = 0;
+
+  if (existing) {
+    if (!resumeEp) {
+      resumeEp = existing.lastEpisode || 1;
+    }
+    // Jika episode yang dibuka sama persis dengan episode di riwayat dan durasi > 2 detik
+    if (Number(resumeEp) === Number(existing.lastEpisode) && existing.currentTime > 2) {
+      // Jika video belum di detik-detik akhir
+      if (!existing.duration || existing.currentTime < (existing.duration - 2)) {
+        resumeTime = existing.currentTime;
+      }
     }
   }
+
   const initialEp = resumeEp || 1;
 
   // Hentikan video dan stream sebelumnya secara tuntas
@@ -825,7 +869,7 @@ async function openDrama(source, dramaId, fallbackTitle = '', startEpisode = nul
       }
 
       renderEpisodesDrawer();
-      playEpisode(source, dramaId, initialEp, currentSession);
+      playEpisode(source, dramaId, initialEp, currentSession, resumeTime);
     }
   } catch (err) {
     if (currentSession !== playbackSessionId) return;
@@ -850,7 +894,7 @@ function renderEpisodesDrawer() {
       btn.textContent = `Ep ${i}`;
       btn.onclick = (e) => {
         e.stopPropagation();
-        playEpisode(appState.currentSource, appState.activeDrama?.id, i);
+        playEpisode(appState.currentSource, appState.activeDrama?.id, i, null, 0);
       };
       container.appendChild(btn);
     }
@@ -863,7 +907,7 @@ function renderEpisodesDrawer() {
       fsBtn.textContent = `Ep ${i}`;
       fsBtn.onclick = (e) => {
         e.stopPropagation();
-        playEpisode(appState.currentSource, appState.activeDrama?.id, i);
+        playEpisode(appState.currentSource, appState.activeDrama?.id, i, null, 0);
         hide('fullscreenEpDrawer');
       };
       fsContainer.appendChild(fsBtn);
@@ -871,7 +915,7 @@ function renderEpisodesDrawer() {
   }
 }
 
-async function playEpisode(source, dramaId, epNum, sessionId = null) {
+async function playEpisode(source, dramaId, epNum, sessionId = null, startTime = 0) {
   const currentSession = sessionId || playbackSessionId;
   appState.currentEpisode = epNum;
   
@@ -916,9 +960,9 @@ async function playEpisode(source, dramaId, epNum, sessionId = null) {
     video.load();
   }
 
-  // Catat ke riwayat tontonan
+  // Catat posisi episode ke riwayat tontonan
   if (appState.activeDrama) {
-    saveWatchProgress(appState.activeDrama, epNum, 0, 0);
+    saveWatchProgress(appState.activeDrama, epNum, startTime, 0);
   }
 
   try {
@@ -931,7 +975,7 @@ async function playEpisode(source, dramaId, epNum, sessionId = null) {
 
     if (data.success && data.videoUrl) {
       appState.currentVideoData = data;
-      setupVideoPlayer(data, currentSession);
+      setupVideoPlayer(data, currentSession, startTime);
     } else {
       alert('Gagal memuat stream video episode ' + epNum);
     }
@@ -942,7 +986,7 @@ async function playEpisode(source, dramaId, epNum, sessionId = null) {
   }
 }
 
-function setupVideoPlayer(data, sessionId) {
+function setupVideoPlayer(data, sessionId, startTime = 0) {
   const video = el('playerVideo');
   if (!video || sessionId !== playbackSessionId) return;
 
@@ -969,6 +1013,21 @@ function setupVideoPlayer(data, sessionId) {
   // Populasi Quality Dropdown
   populateQualityOptions(data.qualities || []);
 
+  let resumeApplied = false;
+  const applyResumePosition = () => {
+    if (resumeApplied || !startTime || startTime <= 0) return;
+    try {
+      const dur = video.duration || 0;
+      if (dur > 0 && startTime >= (dur - 2)) {
+        resumeApplied = true;
+        return;
+      }
+      video.currentTime = startTime;
+      resumeApplied = true;
+      showResumeToast(startTime);
+    } catch (e) {}
+  };
+
   const isM3u8 = streamUrl.includes('.m3u8') || streamUrl.includes('/hls');
 
   if (isM3u8 && window.Hls && Hls.isSupported()) {
@@ -993,6 +1052,13 @@ function setupVideoPlayer(data, sessionId) {
     hls.loadSource(proxiedM3u8Url);
     hls.attachMedia(video);
 
+    const onMetaHls = () => {
+      if (sessionId !== playbackSessionId) return;
+      applyResumePosition();
+    };
+    video.addEventListener('loadedmetadata', onMetaHls, { once: true });
+    video.addEventListener('canplay', onMetaHls, { once: true });
+
     hls.on(Hls.Events.MANIFEST_PARSED, (event, manifestData) => {
       if (sessionId !== playbackSessionId) return;
       hide('videoLoader');
@@ -1001,8 +1067,13 @@ function setupVideoPlayer(data, sessionId) {
       }
       video.muted = false;
       video.volume = 1;
-      video.play().catch(() => {
+      applyResumePosition();
+      video.play().then(() => {
+        if (sessionId !== playbackSessionId) return;
+        applyResumePosition();
+      }).catch(() => {
         show('bigPlayOverlay');
+        applyResumePosition();
       });
     });
 
@@ -1039,7 +1110,7 @@ function setupVideoPlayer(data, sessionId) {
             hls.destroy();
             video.src = proxiedM3u8Url;
             video.load();
-            video.play().catch(() => show('bigPlayOverlay'));
+            video.play().then(() => applyResumePosition()).catch(() => show('bigPlayOverlay'));
             break;
         }
       }
@@ -1065,18 +1136,26 @@ function setupVideoPlayer(data, sessionId) {
       ? `/api/stream/proxy?url=${encodeURIComponent(streamUrl)}`
       : streamUrl;
 
+    const onMetaMp4 = () => {
+      if (sessionId !== playbackSessionId) return;
+      applyResumePosition();
+    };
+    video.addEventListener('loadedmetadata', onMetaMp4, { once: true });
+    video.addEventListener('canplay', onMetaMp4, { once: true });
+
     video.onerror = () => {
       if (sessionId !== playbackSessionId) return;
       if (!video.src.includes('/api/stream/proxy')) {
         video.src = `/api/stream/proxy?url=${encodeURIComponent(streamUrl)}`;
         video.load();
-        video.play().catch(() => show('bigPlayOverlay'));
+        video.play().then(() => applyResumePosition()).catch(() => show('bigPlayOverlay'));
       }
     };
 
     video.onloadeddata = () => {
       if (sessionId !== playbackSessionId) return;
       hide('videoLoader');
+      applyResumePosition();
     };
 
     video.muted = false;
@@ -1086,10 +1165,12 @@ function setupVideoPlayer(data, sessionId) {
     video.play().then(() => {
       if (sessionId !== playbackSessionId) return;
       video.muted = false;
+      applyResumePosition();
       hide('videoLoader');
       hide('bigPlayOverlay');
     }).catch(() => {
       if (sessionId !== playbackSessionId) return;
+      applyResumePosition();
       hide('videoLoader');
       show('bigPlayOverlay');
     });
@@ -1328,7 +1409,19 @@ function initPlayerEventListeners() {
     if (playBtn) playBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
     triggerCenterFeedback('pause');
     showControls(0); // Tetap biarkan kontrol terbuka saat video di-pause
+    if (appState.activeDrama && video.currentTime > 0) {
+      saveWatchProgress(appState.activeDrama, appState.currentEpisode, video.currentTime, video.duration);
+    }
   });
+
+  // Simpan progres instan saat user menutup tab/browser
+  const saveCurrentProgressOnLeave = () => {
+    if (video && appState.activeDrama && video.currentTime > 0) {
+      saveWatchProgress(appState.activeDrama, appState.currentEpisode, video.currentTime, video.duration);
+    }
+  };
+  window.addEventListener('beforeunload', saveCurrentProgressOnLeave);
+  window.addEventListener('pagehide', saveCurrentProgressOnLeave);
 
   let autoNextTriggered = false;
 
@@ -1365,9 +1458,9 @@ function initPlayerEventListeners() {
       triggerAutoNext();
     }
 
-    // Simpan progres ke riwayat tontonan setiap 3 detik
+    // Simpan progres ke riwayat tontonan setiap 2 detik
     const now = Date.now();
-    if (now - lastProgressSaveTime > 3000 && appState.activeDrama && cur > 0) {
+    if (now - lastProgressSaveTime > 2000 && appState.activeDrama && cur > 0) {
       lastProgressSaveTime = now;
       saveWatchProgress(appState.activeDrama, appState.currentEpisode, cur, dur);
     }
@@ -1613,11 +1706,15 @@ function navigateEpisode(delta) {
 }
 
 function closeTheater() {
+  const video = el('playerVideo');
+  if (video && appState.activeDrama && video.currentTime > 0) {
+    saveWatchProgress(appState.activeDrama, appState.currentEpisode, video.currentTime, video.duration);
+  }
+
   appState.wantsFullscreen = false;
   releaseWakeLock();
   playbackSessionId++; // Invalidate pending requests
 
-  const video = el('playerVideo');
   if (video) {
     try { video.pause(); } catch {}
     video.removeAttribute('src');
