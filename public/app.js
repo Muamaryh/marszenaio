@@ -644,6 +644,23 @@ function selectSource(sourceKey, sourceName, sourceDesc = '') {
   }
 }
 
+function handleBottomNav(type) {
+  if (type === 'search') {
+    const input = el('headerSearchInput');
+    if (input) {
+      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => input.focus(), 250);
+    }
+    document.querySelectorAll('.bnav-btn').forEach(b => {
+      b.classList.toggle('active', b.id === 'bnavSearch');
+    });
+    return;
+  }
+
+  setFeedType(type);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function setFeedType(type) {
   appState.currentFeedType = type;
   appState.currentPage = 1;
@@ -654,6 +671,10 @@ function setFeedType(type) {
 
   document.querySelectorAll('.feed-tab-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.type === type);
+  });
+
+  document.querySelectorAll('.bnav-btn').forEach(b => {
+    b.classList.toggle('active', b.id.toLowerCase() === `bnav${type.toLowerCase()}`);
   });
 
   const titles = {
@@ -1055,6 +1076,7 @@ let playbackSessionId = 0;
 async function openDrama(source, dramaId, fallbackTitle = '', startEpisode = null) {
   source = resolveActualSource(dramaId, source);
   const currentSession = ++playbackSessionId;
+  document.body.classList.add('theater-open');
   show('theaterModal');
   hide('fullscreenEpDrawer');
 
@@ -2011,6 +2033,7 @@ function closeTheater() {
 
   appState.activeDrama = null;
   appState.currentVideoData = null;
+  document.body.classList.remove('theater-open');
   hide('fullscreenEpDrawer');
   hide('theaterModal');
 }
