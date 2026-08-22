@@ -21,6 +21,23 @@
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
 </head>
 <body>
+  <!-- App Initial Splash Loading Screen with Hero Text -->
+  <div id="appSplashScreen" class="app-splash-screen">
+    <div class="splash-card">
+      <div class="splash-badge">⚡ AIO SHORT DRAMA STREAMING PORTAL</div>
+      <div class="splash-brand">
+        <div class="splash-logo">🎬</div>
+        <h1 class="splash-title">DRACIN<span class="brand-highlight">HUB</span></h1>
+      </div>
+      <h2 class="splash-heading">Nonton Drama Pendek <span class="grad-text">Tanpa Batas</span></h2>
+      <p class="splash-desc">Streaming ribuan episode drama pendek viral dari <strong>15 provider</strong> terbaik dengan kualitas HD dan Subtitle Indonesia.</p>
+      <div class="splash-loader-wrap">
+        <div class="spinner-ring"></div>
+        <span class="splash-status-text" id="splashStatusText">Menghubungkan ke Anichin Gateway...</span>
+      </div>
+    </div>
+  </div>
+
   <div class="app-layout">
     <!-- Navbar Header (TrobosLink Neo-Brutalist Style) -->
     <header class="navbar">
@@ -32,46 +49,25 @@
         </a>
 
         <div class="header-right">
+          <!-- Provider Switcher Trigger Button (Pojok Kanan Atas) -->
+          <button class="btn-provider-trigger" id="btnProviderTrigger" onclick="openProviderModal()" title="Pilih Provider Drama">
+            <span class="provider-trigger-prefix">Provider:</span>
+            <img src="/assets/logos/dramawave.svg" id="activeProviderLogo" class="provider-trigger-logo" alt="DramaWave" onerror="this.src='/assets/icons/icon.svg'"/>
+            <span class="provider-trigger-name" id="activeProviderName">DramaWave</span>
+            <svg class="provider-trigger-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+
+          <!-- PWA Install Button -->
           <button class="btn-install-app hidden" id="btnInstallApp" onclick="installPWA()" title="Install DracinHub App ke HP / Desktop">
             <span class="install-icon">📲</span>
             <span class="install-text">Install App</span>
           </button>
-          <div class="live-status">
-            <span class="live-pulse"></span>
-            <span class="live-text" id="liveSourcesCount">15 Sources Ready</span>
-          </div>
         </div>
       </div>
     </header>
 
     <!-- Main Container -->
     <main class="main-content">
-      <!-- Hero Intro Banner (TrobosLink Style) -->
-      <section class="hero-section">
-        <div class="hero-badge">⚡ AIO SHORT DRAMA STREAMING PORTAL</div>
-        <h1 class="hero-title">Nonton Drama Pendek <span class="grad-text">Tanpa Batas</span></h1>
-        <p class="hero-sub">Streaming ribuan episode drama pendek viral dari <span id="heroProvidersCount">15</span> provider terbaik dengan kualitas HD dan Subtitle Indonesia.</p>
-      </section>
-
-      <!-- Provider Selection Bar with Drag & Nav Arrows -->
-      <section class="sources-section">
-        <div class="section-header-compact">
-          <span class="section-title-sm">PILIH PROVIDER DRAMA:</span>
-          <span class="source-info-sub" id="sourceDesc">Provider drama box nomor 1 di Asia</span>
-        </div>
-        <div class="sources-scroll-wrapper">
-          <button class="sources-nav-btn prev" id="btnSourcesPrev" onclick="scrollSources(-1)" aria-label="Scroll Kiri">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"/></svg>
-          </button>
-          <div class="sources-pill-scroll" id="sourcesPillsBar">
-            <!-- Dynamic sources will be rendered here -->
-          </div>
-          <button class="sources-nav-btn next" id="btnSourcesNext" onclick="scrollSources(1)" aria-label="Scroll Kanan">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-        </div>
-      </section>
-
       <!-- Continue Watching Bar (Appears when history exists) -->
       <section class="continue-watching-section hidden" id="continueWatchingSection">
         <div class="continue-watching-card" id="continueWatchingCard">
@@ -79,7 +75,7 @@
         </div>
       </section>
 
-      <!-- Category Filter Tabs -->
+      <!-- Category Filter Tabs (Trending, Untuk Anda, Populer, Rekomendasi) -->
       <section class="feed-tabs-section">
         <div class="feed-tabs-row">
           <div class="feed-tabs" id="feedTabsContainer">
@@ -95,21 +91,6 @@
             <button class="feed-tab-btn" data-type="recommended" onclick="setFeedType('recommended')">
               <span>💎</span> Rekomendasi
             </button>
-            <button class="feed-tab-btn" data-type="history" onclick="setFeedType('history')">
-              <span>🕒</span> Riwayat Nonton
-            </button>
-            <button class="feed-tab-btn" data-type="favorites" onclick="setFeedType('favorites')">
-              <span>⭐</span> Favorit Saya
-            </button>
-          </div>
-        </div>
-
-        <!-- Search Bar Integrated Below Category Tabs -->
-        <div class="feed-search-wrap">
-          <div class="feed-search-box">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-            <input type="text" id="headerSearchInput" placeholder="Cari judul drama, CEO, naga, billionaire, romantis..." autocomplete="off">
-            <button class="search-clear-btn hidden" id="headerSearchClear">&times;</button>
           </div>
         </div>
 
@@ -164,29 +145,85 @@
       </div>
     </footer>
 
-    <!-- Mobile & PWA App Bottom Navigation Bar -->
+    <!-- Mobile & PWA App Bottom Navigation Bar (Cari, Favorit, Riwayat) -->
     <nav class="bottom-nav-bar" id="bottomNavBar">
-      <button class="bnav-btn active" id="bnavTrending" onclick="handleBottomNav('trending')" title="Trending">
-        <span class="bnav-icon">🔥</span>
-        <span class="bnav-label">Trending</span>
-      </button>
-      <button class="bnav-btn" id="bnavForyou" onclick="handleBottomNav('foryou')" title="Untuk Anda">
-        <span class="bnav-icon">✨</span>
-        <span class="bnav-label">Untuk Anda</span>
-      </button>
-      <button class="bnav-btn" id="bnavSearch" onclick="handleBottomNav('search')" title="Pencarian">
+      <button class="bnav-btn" id="bnavSearch" onclick="handleBottomNav('search')" title="Pencarian Drama">
         <span class="bnav-icon">🔍</span>
         <span class="bnav-label">Cari</span>
       </button>
-      <button class="bnav-btn" id="bnavFavorites" onclick="handleBottomNav('favorites')" title="Favorit Saya">
+      <button class="bnav-btn" id="bnavFavorites" onclick="handleBottomNav('favorites')" title="Drama Favorit Saya">
         <span class="bnav-icon">⭐</span>
         <span class="bnav-label">Favorit</span>
       </button>
-      <button class="bnav-btn" id="bnavHistory" onclick="handleBottomNav('history')" title="Riwayat Nonton">
+      <button class="bnav-btn" id="bnavHistory" onclick="handleBottomNav('history')" title="Riwayat Tontonan">
         <span class="bnav-icon">🕒</span>
         <span class="bnav-label">Riwayat</span>
       </button>
     </nav>
+  </div>
+
+  <!-- ==============================================
+       PROVIDER SELECTOR MODAL / SHEET (15 PROVIDERS)
+       ============================================== -->
+  <div id="providerModal" class="provider-modal-overlay hidden" onclick="if(event.target===this) closeProviderModal()">
+    <div class="provider-modal-card">
+      <div class="provider-modal-head">
+        <div class="provider-modal-title">
+          <span class="pmt-icon">⚡</span>
+          <div>
+            <h3>PILIH PROVIDER DRAMA</h3>
+            <span class="pmt-sub">15 Provider Resmi Siap Nonton</span>
+          </div>
+        </div>
+        <button class="provider-modal-close" onclick="closeProviderModal()" title="Tutup">&times;</button>
+      </div>
+      <div class="provider-modal-body">
+        <div class="provider-grid-select" id="providerGridSelect">
+          <!-- Dynamic 15 provider items rendered here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==============================================
+       SEARCH MODAL OVERLAY (TRIGGERED VIA BOTTOM BAR)
+       ============================================== -->
+  <div id="searchModalOverlay" class="search-modal-overlay hidden" onclick="if(event.target===this) closeSearchModal()">
+    <div class="search-modal-window">
+      <div class="search-modal-header">
+        <div class="search-box-popup">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="popupSearchInput" placeholder="Cari judul drama, CEO, naga, billionaire, romantis..." autocomplete="off">
+          <button class="search-clear-btn hidden" id="popupSearchClear" onclick="clearPopupSearch()">&times;</button>
+        </div>
+        <button class="search-modal-close" onclick="closeSearchModal()" title="Tutup Pencarian">&times;</button>
+      </div>
+
+      <!-- Quick Keyword Suggestion Tags -->
+      <div class="search-quick-tags">
+        <span class="quick-tag-label">Pencarian Cepat:</span>
+        <button class="quick-tag-btn" onclick="quickSearch('CEO')">👑 CEO</button>
+        <button class="quick-tag-btn" onclick="quickSearch('Billionaire')">💰 Billionaire</button>
+        <button class="quick-tag-btn" onclick="quickSearch('Reinkarnasi')">✨ Reinkarnasi</button>
+        <button class="quick-tag-btn" onclick="quickSearch('Balas Dendam')">🔥 Balas Dendam</button>
+        <button class="quick-tag-btn" onclick="quickSearch('Romantis')">❤️ Romantis</button>
+        <button class="quick-tag-btn" onclick="quickSearch('Naga')">🐉 Naga</button>
+        <button class="quick-tag-btn" onclick="quickSearch('Dewa Judi')">🃏 Dewa Judi</button>
+      </div>
+
+      <div class="search-modal-body">
+        <div id="popupSearchLoader" class="catalog-loader hidden">
+          <div class="spinner-ring"></div>
+          <p>Mencari koleksi drama...</p>
+        </div>
+        <div id="popupSearchEmpty" class="empty-state-box hidden">
+          <div class="empty-emoji">🔍</div>
+          <h3>Tidak Ada Drama Ditemukan</h3>
+          <p>Coba kata kunci lain atau pilih provider yang berbeda.</p>
+        </div>
+        <div class="drama-grid" id="popupSearchGrid"></div>
+      </div>
+    </div>
   </div>
 
   <!-- ==============================================

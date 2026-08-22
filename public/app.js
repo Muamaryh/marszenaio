@@ -477,6 +477,18 @@ async function installPWA() {
 
 // ===== 1. INITIALIZATION & SOURCES =====
 
+function hideSplashScreen() {
+  const splash = el('appSplashScreen');
+  if (splash) {
+    splash.classList.add('fade-out');
+    setTimeout(() => {
+      splash.style.display = 'none';
+    }, 450);
+  }
+}
+
+// ===== 1. INITIALIZATION & SOURCES =====
+
 async function initApp() {
   // Purge any stale client session cache
   try {
@@ -487,13 +499,13 @@ async function initApp() {
   } catch (e) {}
 
   initPWA();
+  initPopupSearch();
   await loadSources();
   await loadFeed();
   renderContinueWatchingBanner();
-  initSearch();
   initInfiniteScroll();
-  initSourcesDrag();
   initPlayerEventListeners();
+  hideSplashScreen();
 
   // Handle URL deep-link (e.g. ?source=dramawave&id=QCJvQG2LLD&ep=26)
   try {
@@ -510,15 +522,11 @@ async function initApp() {
 }
 
 async function loadSources() {
-  const container = el('sourcesPillsBar');
-  if (!container) return;
-
   try {
     const res = await fetch(`/api/drama/sources?_v=${Date.now()}`);
     const data = await res.json();
     if (data.success && data.sources && Array.isArray(data.sources)) {
       appState.sources = data.sources;
-      renderSourcesPills();
     }
   } catch (err) {
     // Fallback default list
@@ -539,86 +547,61 @@ async function loadSources() {
       { key: 'flareflow', name: 'FlareFlow', badge: 'HD & Sub', desc: 'Drama romantis & aksi trending terbaru' },
       { key: 'pinedrama', name: 'PineDrama', badge: 'TikTok HD', desc: 'Drama pendek viral & dubbing Indonesia' }
     ];
-    renderSourcesPills();
   }
+
+  updateActiveProviderHeader();
+  renderProviderModalGrid();
 }
 
-function getProviderBrandLogo(src) {
-  const logoPath = `/assets/logos/${src.key}.svg?v=2.2.0`;
-  return `<img src="${logoPath}" alt="${escapeHtml(src.name)}" class="source-logo-img"/>`;
+function updateActiveProviderHeader() {
+  const cur = appState.sources.find(s => s.key === appState.currentSource) || { key: 'dramawave', name: 'DramaWave' };
+  const logoEl = el('activeProviderLogo');
+  const nameEl = el('activeProviderName');
+  if (logoEl) logoEl.src = `/assets/logos/${cur.key}.svg?v=2.2.0`;
+  if (nameEl) nameEl.textContent = cur.name;
 }
 
-function renderSourcesPills() {
-  const container = el('sourcesPillsBar');
-  if (!container) return;
-  container.innerHTML = '';
+function openProviderModal() {
+  renderProviderModalGrid();
+  show('providerModal');
+}
 
-  const totalCount = appState.sources.length;
-  if (el('liveSourcesCount')) el('liveSourcesCount').textContent = `${totalCount} Sources Ready`;
-  if (el('heroProvidersCount')) el('heroProvidersCount').textContent = `${totalCount}`;
+function closeProviderModal() {
+  hide('providerModal');
+}
+
+function renderProviderModalGrid() {
+  const grid = el('providerGridSelect');
+  if (!grid) return;
+  grid.innerHTML = '';
 
   appState.sources.forEach(src => {
-    const btn = document.createElement('button');
-    btn.className = 'source-btn' + (src.key === appState.currentSource ? ' active' : '');
-    btn.dataset.source = src.key;
-    const logoHtml = getProviderBrandLogo(src);
-    btn.innerHTML = `
-      ${logoHtml}
-      <span class="source-name-text">${escapeHtml(src.name)}</span>
-      ${src.badge ? `<span class="source-badge">${escapeHtml(src.badge)}</span>` : ''}
+    const isAct = src.key === appState.currentSource;
+    const item = document.createElement('button');
+    item.className = 'provider-select-card' + (isAct ? ' active' : '');
+    item.onclick = () => selectSource(src.key, src.name, src.desc);
+
+    const logoHtml = `<img src="/assets/logos/${src.key}.svg?v=2.2.0" alt="${escapeHtml(src.name)}" class="psc-logo" onerror="this.src='/assets/icons/icon.svg'"/>`;
+    const badgeHtml = src.badge ? `<span class="psc-badge">${escapeHtml(src.badge)}</span>` : '';
+    const checkHtml = isAct ? `<span class="psc-check">✓ Aktif</span>` : '';
+
+    item.innerHTML = `
+      <div class="psc-left">
+        ${logoHtml}
+        <div class="psc-info">
+          <div class="psc-title-row">
+            <h4 class="psc-name">${escapeHtml(src.name)}</h4>
+            ${badgeHtml}
+          </div>
+          <p class="psc-desc">${escapeHtml(src.desc || '')}</p>
+        </div>
+      </div>
+      <div class="psc-right">
+        ${checkHtml}
+      </div>
     `;
-    btn.onclick = () => selectSource(src.key, src.name, src.desc);
-    container.appendChild(btn);
+    grid.appendChild(item);
   });
-}
-
-function scrollSources(direction) {
-  const container = el('sourcesPillsBar');
-  if (!container) return;
-  const scrollAmount = 260 * direction;
-  container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-}
-
-function initSourcesDrag() {
-  const slider = el('sourcesPillsBar');
-  if (!slider) return;
-
-  let isDown = false;
-  let startX;
-  let scrollLeft;
-
-  slider.addEventListener('mousedown', (e) => {
-    isDown = true;
-    slider.classList.add('dragging');
-    startX = e.pageX - slider.offsetLeft;
-    scrollLeft = slider.scrollLeft;
-  });
-
-  slider.addEventListener('mouseleave', () => {
-    isDown = false;
-    slider.classList.remove('dragging');
-  });
-
-  slider.addEventListener('mouseup', () => {
-    isDown = false;
-    slider.classList.remove('dragging');
-  });
-
-  slider.addEventListener('mousemove', (e) => {
-    if (!isDown) return;
-    e.preventDefault();
-    const x = e.pageX - slider.offsetLeft;
-    const walk = (x - startX) * 1.5;
-    slider.scrollLeft = scrollLeft - walk;
-  });
-
-  // Mouse wheel horizontal scroll support
-  slider.addEventListener('wheel', (e) => {
-    if (e.deltaY !== 0) {
-      e.preventDefault();
-      slider.scrollLeft += e.deltaY;
-    }
-  }, { passive: false });
 }
 
 function selectSource(sourceKey, sourceName, sourceDesc = '') {
@@ -627,33 +610,193 @@ function selectSource(sourceKey, sourceName, sourceDesc = '') {
 
   appState.currentPage = 1;
   appState.currentQuery = '';
-  
-  if (el('headerSearchInput')) el('headerSearchInput').value = '';
-  hide('headerSearchClear');
 
-  if (el('sourceDesc')) el('sourceDesc').textContent = sourceDesc || 'Streaming drama pilihan';
+  updateActiveProviderHeader();
+  renderProviderModalGrid();
+  closeProviderModal();
 
-  document.querySelectorAll('.source-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.source === sourceKey || b.textContent.includes(sourceName));
-  });
-
-  if (appState.currentFeedType === 'history') {
+  if (appState.currentFeedType === 'history' || appState.currentFeedType === 'favorites') {
     setFeedType('trending');
   } else {
     loadFeed();
   }
 }
 
+// ===== POPUP SEARCH MODAL SYSTEM =====
+
+function openSearchModal() {
+  show('searchModalOverlay');
+  const input = el('popupSearchInput');
+  if (input) {
+    input.value = appState.currentQuery || '';
+    if (input.value) show('popupSearchClear');
+    else hide('popupSearchClear');
+    setTimeout(() => input.focus(), 150);
+  }
+  if (appState.currentQuery) {
+    performPopupSearch(appState.currentQuery);
+  }
+}
+
+function closeSearchModal() {
+  hide('searchModalOverlay');
+}
+
+function clearPopupSearch() {
+  const input = el('popupSearchInput');
+  if (input) input.value = '';
+  hide('popupSearchClear');
+  hide('popupSearchEmpty');
+  const grid = el('popupSearchGrid');
+  if (grid) grid.innerHTML = '';
+  input?.focus();
+}
+
+function quickSearch(keyword) {
+  const input = el('popupSearchInput');
+  if (input) {
+    input.value = keyword;
+    show('popupSearchClear');
+    input.focus();
+  }
+  performPopupSearch(keyword);
+}
+
+function initPopupSearch() {
+  const input = el('popupSearchInput');
+  if (!input) return;
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim();
+    if (q) show('popupSearchClear');
+    else hide('popupSearchClear');
+
+    clearTimeout(appState.searchTimeout);
+    appState.searchTimeout = setTimeout(() => {
+      if (q) {
+        performPopupSearch(q);
+      } else {
+        hide('popupSearchEmpty');
+        const grid = el('popupSearchGrid');
+        if (grid) grid.innerHTML = '';
+      }
+    }, 350);
+  });
+
+  // Global Keyboard shortcut (Ctrl+K or '/' to search, 'Escape' to close)
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      openSearchModal();
+    } else if (e.key === '/' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      openSearchModal();
+    } else if (e.key === 'Escape') {
+      closeSearchModal();
+      closeProviderModal();
+    }
+  });
+}
+
+async function performPopupSearch(query) {
+  if (!query || !query.trim()) {
+    hide('popupSearchLoader');
+    hide('popupSearchEmpty');
+    const grid = el('popupSearchGrid');
+    if (grid) grid.innerHTML = '';
+    return;
+  }
+
+  show('popupSearchLoader');
+  hide('popupSearchEmpty');
+  const grid = el('popupSearchGrid');
+  if (grid) grid.innerHTML = '';
+
+  try {
+    const url = `/api/drama/search?source=${encodeURIComponent(appState.currentSource)}&query=${encodeURIComponent(query.trim())}`;
+    const data = await fetchWithClientCache(url, 5 * 60 * 1000);
+    hide('popupSearchLoader');
+
+    if (data.success && data.items && data.items.length > 0) {
+      appendSearchGrid(data.items, 'popupSearchGrid');
+    } else {
+      show('popupSearchEmpty');
+      const srcObj = appState.sources.find(s => s.key === appState.currentSource);
+      const srcName = srcObj ? srcObj.name : appState.currentSource.toUpperCase();
+      if (el('popupSearchEmpty')) {
+        el('popupSearchEmpty').innerHTML = `
+          <div class="empty-emoji">🔍</div>
+          <h3>Tidak Ada Drama Ditemukan</h3>
+          <p>Tidak ditemukan drama dengan kata kunci <strong>"${escapeHtml(query)}"</strong> di provider <strong>${escapeHtml(srcName)}</strong>.</p>
+        `;
+      }
+    }
+  } catch (err) {
+    hide('popupSearchLoader');
+    show('popupSearchEmpty');
+  }
+}
+
+function appendSearchGrid(dramas, targetContainerId = 'popupSearchGrid') {
+  const grid = el(targetContainerId);
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  dramas.forEach(d => {
+    const card = document.createElement('div');
+    card.className = 'drama-card';
+
+    const actualSrc = d.source || appState.currentSource;
+    const isFav = isFavorite(d.id);
+    const epBadge = d.episodes > 0 ? `<span class="badge-episodes">${d.episodes} Ep</span>` : '';
+    const statusBadge = d.isCompleted ? `<span class="badge-status">Tamat</span>` : '';
+    const tagsHtml = (d.tags || []).slice(0, 2).map(t => `<span class="card-tag">${escapeHtml(t)}</span>`).join('');
+    const sourceBadge = d.source ? `<span class="card-tag" style="background:rgba(250,204,21,0.15);color:var(--primary);">${escapeHtml(d.source.toUpperCase())}</span>` : '';
+
+    const fallbackCover = getFallbackPosterSvg(d.title);
+    const posterSrc = d.cover || fallbackCover;
+
+    const favSvg = isFav 
+      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>'
+      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
+
+    const favButtonHtml = `
+      <button class="card-fav-btn ${isFav ? 'active' : ''}" data-id="${escapeHtml(d.id)}" onclick="event.stopPropagation(); toggleFavorite({ id: '${escapeHtml(d.id)}', source: '${escapeHtml(actualSrc)}', title: '${escapeHtml(d.title)}', cover: '${escapeHtml(d.cover || '')}', totalEpisodes: ${d.episodes || 1}, tags: ${escapeHtml(JSON.stringify(d.tags || []))} }, event)" title="${isFav ? 'Hapus dari Favorit' : 'Simpan ke Favorit'}">
+        ${favSvg}
+      </button>
+    `;
+
+    card.innerHTML = `
+      <div class="poster-wrap">
+        <img src="${escapeHtml(posterSrc)}" alt="${escapeHtml(d.title)}" class="poster-img" loading="lazy" onerror="this.onerror=null; this.src='${fallbackCover}'"/>
+        <div class="poster-overlay-gradient"></div>
+        ${favButtonHtml}
+        ${epBadge}
+        ${statusBadge}
+        <div class="play-hover-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </div>
+      </div>
+      <div class="card-content">
+        <h4 class="card-title" title="${escapeHtml(d.title)}">${escapeHtml(d.title)}</h4>
+        <div class="card-tags">
+          ${sourceBadge}
+          ${tagsHtml}
+        </div>
+      </div>
+    `;
+
+    card.onclick = () => {
+      closeSearchModal();
+      openDrama(actualSrc, d.id, d.title);
+    };
+    grid.appendChild(card);
+  });
+}
+
 function handleBottomNav(type) {
   if (type === 'search') {
-    const input = el('headerSearchInput');
-    if (input) {
-      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setTimeout(() => input.focus(), 250);
-    }
-    document.querySelectorAll('.bnav-btn').forEach(b => {
-      b.classList.toggle('active', b.id === 'bnavSearch');
-    });
+    openSearchModal();
     return;
   }
 
@@ -665,9 +808,6 @@ function setFeedType(type) {
   appState.currentFeedType = type;
   appState.currentPage = 1;
   appState.currentQuery = '';
-
-  if (el('headerSearchInput')) el('headerSearchInput').value = '';
-  hide('headerSearchClear');
 
   document.querySelectorAll('.feed-tab-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.type === type);
@@ -994,79 +1134,6 @@ function initInfiniteScroll() {
       loadFeed(true);
     }
   }, { passive: true });
-}
-
-function initSearch() {
-  const input = el('headerSearchInput');
-  const clearBtn = el('headerSearchClear');
-  if (!input) return;
-
-  input.addEventListener('input', () => {
-    const q = input.value.trim();
-    if (q) show('headerSearchClear');
-    else hide('headerSearchClear');
-
-    clearTimeout(appState.searchTimeout);
-    appState.searchTimeout = setTimeout(() => {
-      if (q) {
-        appState.currentQuery = q;
-        performSearch(q);
-      } else {
-        appState.currentQuery = '';
-        loadFeed();
-      }
-    }, 350);
-  });
-
-  clearBtn?.addEventListener('click', () => {
-    input.value = '';
-    hide('headerSearchClear');
-    appState.currentQuery = '';
-    loadFeed();
-  });
-}
-
-async function performSearch(query) {
-  show('dramaCatalogLoader');
-  hide('dramaEmptyState');
-  hide('infiniteScrollLoader');
-  hide('infiniteScrollEnded');
-  const grid = el('dramaGridContainer');
-  if (grid) grid.innerHTML = '';
-  if (el('feedCountBadge')) el('feedCountBadge').textContent = `Mencari "${query}"...`;
-
-  try {
-    const url = `/api/drama/search?source=${encodeURIComponent(appState.currentSource)}&query=${encodeURIComponent(query)}`;
-    const data = await fetchWithClientCache(url, 5 * 60 * 1000);
-    hide('dramaCatalogLoader');
-
-    if (data.success && data.items && data.items.length > 0) {
-      renderGrid(data.items);
-      if (el('feedCountBadge')) el('feedCountBadge').textContent = `${data.items.length} drama ditemukan`;
-    } else {
-      show('dramaEmptyState');
-      if (el('dramaEmptyState')) {
-        const srcObj = appState.sources.find(s => s.key === appState.currentSource);
-        const srcName = srcObj ? srcObj.name : appState.currentSource.toUpperCase();
-        el('dramaEmptyState').innerHTML = `
-          <div class="empty-emoji">🔍</div>
-          <h3>Tidak Ada Drama Ditemukan</h3>
-          <p>Tidak ditemukan drama dengan kata kunci <strong>"${escapeHtml(query)}"</strong> di provider <strong>${escapeHtml(srcName)}</strong>.</p>
-        `;
-      }
-      if (el('feedCountBadge')) el('feedCountBadge').textContent = '0 hasil';
-    }
-  } catch (err) {
-    hide('dramaCatalogLoader');
-    show('dramaEmptyState');
-  }
-}
-
-function changePage(delta) {
-  const newPage = appState.currentPage + delta;
-  if (newPage < 1) return;
-  appState.currentPage = newPage;
-  loadFeed();
 }
 
 // ===== 3. CINEMA THEATER & VIDEO PLAYBACK =====
