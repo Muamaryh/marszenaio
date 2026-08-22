@@ -81,10 +81,50 @@ app.get('/api/drama/episode', async (req, res) => {
   }
 });
 
-// 6. Stream HLS / MP4 Proxy
+// 6. Get Random Drama (Drama Acak)
+app.get('/api/drama/random', async (req, res) => {
+  const { source = 'dramabox' } = req.query;
+  try {
+    if (source === 'dramabox') {
+      const { getDramaBoxRandomDrama } = require('./services/dramabox_sansekai');
+      const randomRes = await getDramaBoxRandomDrama();
+      return res.json(randomRes);
+    }
+    // General fallback
+    const feed = await getFeed(source, 'trending', 1);
+    if (feed.items && feed.items.length > 0) {
+      const idx = Math.floor(Math.random() * feed.items.length);
+      return res.json({ success: true, source, drama: feed.items[idx] });
+    }
+    res.json({ success: false, error: 'Tidak ada drama tersedia' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 7. Get Popular Search Tags (Pencarian Populer)
+app.get('/api/drama/popularsearch', async (req, res) => {
+  const { source = 'dramabox' } = req.query;
+  try {
+    if (source === 'dramabox') {
+      const { getDramaBoxPopularSearch } = require('./services/dramabox_sansekai');
+      const popRes = await getDramaBoxPopularSearch();
+      return res.json(popRes);
+    }
+    res.json({
+      success: true,
+      source,
+      keywords: ['👑 CEO', '💰 Billionaire', '✨ Reinkarnasi', '🔥 Balas Dendam', '❤️ Romantis', '🐉 Naga', '🃏 Dewa Judi']
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 8. Stream HLS / MP4 Proxy
 app.get('/api/stream/proxy', handleStreamProxy);
 
-// 7. Subtitle Proxy (SRT -> VTT)
+// 9. Subtitle Proxy (SRT -> VTT)
 app.get('/api/stream/subtitle', handleSubtitleProxy);
 
 // Debug route

@@ -503,6 +503,7 @@ async function initApp() {
   initDesktopSearch();
   initSourcesDrag();
   await loadSources();
+  renderCategoryTabs();
   await loadFeed();
   renderContinueWatchingBanner();
   initInfiniteScroll();
@@ -705,6 +706,78 @@ function renderProviderModalGrid() {
   });
 }
 
+function renderCategoryTabs() {
+  const container = el('feedTabsContainer');
+  if (!container) return;
+
+  const isDramaBox = appState.currentSource === 'dramabox';
+  let tabsHtml = '';
+
+  if (isDramaBox) {
+    tabsHtml = `
+      <button class="feed-tab-btn ${appState.currentFeedType === 'foryou' ? 'active' : ''}" data-type="foryou" onclick="setFeedType('foryou')">
+        <span>✨</span> Untuk Anda
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'trending' ? 'active' : ''}" data-type="trending" onclick="setFeedType('trending')">
+        <span>🔥</span> Trending
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'vip' ? 'active' : ''}" data-type="vip" onclick="setFeedType('vip')">
+        <span>👑</span> VIP
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'dubindo' ? 'active' : ''}" data-type="dubindo" onclick="setFeedType('dubindo')">
+        <span>🇮🇩</span> Dub Indo
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'latest' ? 'active' : ''}" data-type="latest" onclick="setFeedType('latest')">
+        <span>🆕</span> Terbaru
+      </button>
+      <button class="feed-tab-btn btn-random-tab" data-action="random" onclick="playRandomDrama()" title="Pilih & Putar Drama Acak">
+        <span>🎲</span> Acak
+      </button>
+    `;
+  } else {
+    tabsHtml = `
+      <button class="feed-tab-btn ${appState.currentFeedType === 'foryou' ? 'active' : ''}" data-type="foryou" onclick="setFeedType('foryou')">
+        <span>✨</span> Untuk Anda
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'trending' ? 'active' : ''}" data-type="trending" onclick="setFeedType('trending')">
+        <span>🔥</span> Trending
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'hotrank' ? 'active' : ''}" data-type="hotrank" onclick="setFeedType('hotrank')">
+        <span>🏆</span> Populer
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'recommended' ? 'active' : ''}" data-type="recommended" onclick="setFeedType('recommended')">
+        <span>💎</span> Rekomendasi
+      </button>
+    `;
+  }
+
+  tabsHtml += `
+    <button class="feed-tab-btn desktop-only ${appState.currentFeedType === 'history' ? 'active' : ''}" data-type="history" onclick="setFeedType('history')">
+      <span>🕒</span> Riwayat Nonton
+    </button>
+    <button class="feed-tab-btn desktop-only ${appState.currentFeedType === 'favorites' ? 'active' : ''}" data-type="favorites" onclick="setFeedType('favorites')">
+      <span>⭐</span> Favorit Saya
+    </button>
+  `;
+
+  container.innerHTML = tabsHtml;
+}
+
+async function playRandomDrama() {
+  showResumeToast('🎲 Memilih drama acak untuk Anda...');
+  try {
+    const res = await fetch(`/api/drama/random?source=${encodeURIComponent(appState.currentSource)}`);
+    const data = await res.json();
+    if (data.success && data.drama) {
+      openDrama(data.drama.source || appState.currentSource, data.drama.id, data.drama.title || 'Drama Acak', 1);
+    } else {
+      loadFeed();
+    }
+  } catch (err) {
+    loadFeed();
+  }
+}
+
 function selectSource(sourceKey, sourceName, sourceDesc = '') {
   appState.currentSource = sourceKey;
   try { localStorage.setItem('dracin_last_selected_source', sourceKey); } catch {}
@@ -720,6 +793,7 @@ function selectSource(sourceKey, sourceName, sourceDesc = '') {
 
   updateActiveProviderHeader();
   renderProviderModalGrid();
+  renderCategoryTabs();
   closeProviderModal();
 
   if (appState.currentFeedType === 'history' || appState.currentFeedType === 'favorites') {
@@ -731,8 +805,24 @@ function selectSource(sourceKey, sourceName, sourceDesc = '') {
 
 // ===== POPUP SEARCH MODAL SYSTEM =====
 
+async function loadPopularSearchTags() {
+  const container = el('searchQuickTags');
+  if (!container) return;
+  try {
+    const res = await fetch(`/api/drama/popularsearch?source=${encodeURIComponent(appState.currentSource)}`);
+    const data = await res.json();
+    if (data.success && Array.isArray(data.keywords) && data.keywords.length > 0) {
+      container.innerHTML = `
+        <span class="sqt-label">⚡ ${appState.currentSource === 'dramabox' ? 'Pencarian Populer DramaBox' : 'Kata Kunci Populer'}:</span>
+        ${data.keywords.map(k => `<button class="sqt-chip" onclick="quickSearch('${escapeHtml(k)}')">${escapeHtml(k)}</button>`).join('')}
+      `;
+    }
+  } catch (e) {}
+}
+
 function openSearchModal() {
   show('searchModalOverlay');
+  loadPopularSearchTags();
   const input = el('popupSearchInput');
   if (input) {
     input.value = appState.currentQuery || '';
@@ -925,8 +1015,11 @@ function setFeedType(type) {
   });
 
   const titles = {
-    trending: '🔥 Trending Dramas',
     foryou: '✨ Untuk Anda',
+    trending: '🔥 Trending Dramas',
+    vip: '👑 Koleksi Drama VIP DramaBox',
+    dubindo: '🇮🇩 Drama Sulih Suara (Dub Indo)',
+    latest: '🆕 Drama Rilis Terbaru',
     hotrank: '🏆 Peringkat Populer',
     recommended: '💎 Rekomendasi Pilihan',
     history: '🕒 Riwayat Tontonan Anda',

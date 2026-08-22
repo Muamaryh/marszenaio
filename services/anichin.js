@@ -316,6 +316,18 @@ async function getFeed(source = 'dramawave', type = 'trending', page = 1) {
     return cached.data;
   }
 
+  // Khusus DramaBox (Multi-category suite: foryou, trending, vip, dubindo, latest, randomdrama)
+  if (source === 'dramabox') {
+    try {
+      const { getDramaBoxFeed } = require('./dramabox_sansekai');
+      const dbFeed = await getDramaBoxFeed(type, page);
+      if (dbFeed && dbFeed.items && dbFeed.items.length > 0) {
+        memoryCache.set(cacheKey, { timestamp: Date.now(), data: dbFeed });
+        return dbFeed;
+      }
+    } catch (e) {}
+  }
+
   // Khusus PineDrama (via Sansekai API dengan Caching)
   if (source === 'pinedrama') {
     try {

@@ -1117,6 +1117,17 @@ body {
   transform: translate(-2px, -2px);
 }
 
+.feed-tab-btn.btn-random-tab {
+  background: #fff5f8;
+  border-color: var(--black);
+}
+
+.feed-tab-btn.btn-random-tab:hover {
+  background: var(--accent-pink);
+  transform: translate(-1.5px, -1.5px);
+  box-shadow: var(--shadow-hover);
+}
+
 /* Integrated Search Box Below Category Tabs */
 .feed-search-wrap {
   margin: 14px 0 14px;
