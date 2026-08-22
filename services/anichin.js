@@ -22,7 +22,7 @@ const SOURCES = {
   flickreels: { name: 'FlickReels', id: '5672', badge: 'Top Rank', desc: 'Serial drama rating tinggi', icon: 'https://flickreels.com/favicon.ico' },
   idrama:     { name: 'iDrama',     id: '160000641712', badge: 'Viral', desc: 'Koleksi drama pendek Asia terpopuler', icon: 'https://idrama.com/favicon.ico' },
   dramabite:  { name: 'DramaBite',  id: '15384', badge: 'Fresh', desc: 'Update drama baru setiap hari', icon: 'https://dramabite.com/favicon.ico' },
-  moboreels:  { name: 'MoboReels',  id: '7342', badge: 'Trending', desc: 'Drama pendek pilihan trending penonton', icon: 'https://moboreels.com/favicon.ico' }
+  moboreels:  { name: 'MoboReels',  id: '41896322', badge: 'Trending', desc: 'Drama pendek pilihan trending penonton', icon: 'https://moboreels.com/favicon.ico' }
 };
 
 let ws = null;
