@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="pineGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#059669"/>
+      <stop offset="50%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#34d399"/>
+    </linearGradient>
+  </defs>
+  <rect width="92" height="92" x="4" y="4" rx="22" fill="#18181b" stroke="#27272a" stroke-width="2"/>
+  <polygon points="50,20 68,42 32,42" fill="url(#pineGrad)"/>
+  <polygon points="50,34 74,58 26,58" fill="url(#pineGrad)" opacity="0.9"/>
+  <polygon points="50,48 80,74 20,74" fill="url(#pineGrad)" opacity="0.8"/>
+  <rect x="46" y="74" width="8" height="8" rx="2" fill="#78350f"/>
+  <polygon points="47,48 57,54 47,60" fill="#ffffff"/>
+</svg>

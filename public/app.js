@@ -124,14 +124,18 @@ function resolveActualSource(id, requestedSource) {
   // 3. GoodShort: 11 digits starting with 310 or 320 (e.g. 31001345253)
   if (/^3[12]\d{9}$/.test(str)) return 'goodshort';
 
-  // 4. NetShort / Melolo: 19 digits
+  // 4. PineDrama / NetShort / Melolo: 19 digits
   if (/^\d{19}$/.test(str)) {
+    if (requestedSource === 'pinedrama') return 'pinedrama';
     if (requestedSource === 'melolo') return 'melolo';
     return 'netshort';
   }
 
-  // 5. ShortMax: integer IDs like 8151
-  if (/^\d{1,6}$/.test(str) && requestedSource === 'shortmax') return 'shortmax';
+  // 5. ShortMax / FlareFlow: integer IDs like 8151 / 460235
+  if (/^\d{1,6}$/.test(str)) {
+    if (requestedSource === 'flareflow') return 'flareflow';
+    if (requestedSource === 'shortmax') return 'shortmax';
+  }
 
   if (requestedSource && requestedSource !== 'all') return requestedSource;
   return 'dramawave';
@@ -308,7 +312,9 @@ async function loadSources() {
       { key: 'flickreels', name: 'FlickReels', badge: 'Top Rank', desc: 'Serial drama rating tinggi' },
       { key: 'idrama', name: 'iDrama', badge: 'Viral', desc: 'Koleksi drama pendek Asia terpopuler' },
       { key: 'dramabite', name: 'DramaBite', badge: 'Fresh', desc: 'Update drama baru setiap hari' },
-      { key: 'moboreels', name: 'MoboReels', badge: 'Trending', desc: 'Drama pendek pilihan trending penonton' }
+      { key: 'moboreels', name: 'MoboReels', badge: 'Trending', desc: 'Drama pendek pilihan trending penonton' },
+      { key: 'flareflow', name: 'FlareFlow', badge: 'HD & Sub', desc: 'Drama romantis & aksi trending terbaru' },
+      { key: 'pinedrama', name: 'PineDrama', badge: 'TikTok HD', desc: 'Drama pendek viral & dubbing Indonesia' }
     ];
     renderSourcesPills();
   }

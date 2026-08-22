@@ -22,7 +22,9 @@ const SOURCES = {
   flickreels: { name: 'FlickReels', id: '5672', badge: 'Top Rank', desc: 'Serial drama rating tinggi', icon: 'https://flickreels.com/favicon.ico' },
   idrama:     { name: 'iDrama',     id: '160000641712', badge: 'Viral', desc: 'Koleksi drama pendek Asia terpopuler', icon: 'https://idrama.com/favicon.ico' },
   dramabite:  { name: 'DramaBite',  id: '15384', badge: 'Fresh', desc: 'Update drama baru setiap hari', icon: 'https://dramabite.com/favicon.ico' },
-  moboreels:  { name: 'MoboReels',  id: '41896322', badge: 'Trending', desc: 'Drama pendek pilihan trending penonton', icon: 'https://moboreels.com/favicon.ico' }
+  moboreels:  { name: 'MoboReels',  id: '41896322', badge: 'Trending', desc: 'Drama pendek pilihan trending penonton', icon: 'https://moboreels.com/favicon.ico' },
+  flareflow:  { name: 'FlareFlow',  id: '746751', badge: 'HD & Sub', desc: 'Drama romantis & aksi trending terbaru', icon: 'https://flareflow.tv/favicon.ico' },
+  pinedrama:  { name: 'PineDrama',  id: 'pinedrama', badge: 'TikTok HD', desc: 'Drama pendek viral & dubbing Indonesia', icon: 'https://pinedrama.com/favicon.ico' }
 };
 
 let ws = null;
@@ -314,6 +316,37 @@ async function getFeed(source = 'dramawave', type = 'trending', page = 1) {
     return cached.data;
   }
 
+  // Khusus PineDrama (via Sansekai API dengan Caching)
+  if (source === 'pinedrama') {
+    try {
+      const axios = require('axios');
+      const endpoint = type === 'foryou' ? '/pinedrama/foryou' : '/pinedrama/trending';
+      const res = await axios.get(`https://api.sansekai.my.id/api${endpoint}`, {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        timeout: 15000
+      });
+
+      const collections = res.data?.collections || res.data?.data?.collections || res.data?.data?.list || [];
+      const items = collections.map(c => ({
+        id: String(c.collection_id || c.id),
+        title: c.title || 'Short Drama',
+        cover: c.cover || (Array.isArray(c.cover_urls) ? c.cover_urls[0] : ''),
+        synopsis: c.description || '',
+        episodes: Number(c.total_episodes || 0),
+        tags: Array.isArray(c.tags) ? c.tags : (c.categories ? c.categories.split(',').map(s => s.trim()) : []),
+        isCompleted: true,
+        source: 'pinedrama'
+      }));
+
+      const result = { success: true, source, type, page, items };
+      memoryCache.set(cacheKey, { timestamp: Date.now(), data: result });
+      return result;
+    } catch (err) {
+      console.error('PineDrama feed error:', err.message);
+      return { success: true, source, type, page, items: [] };
+    }
+  }
+
   let path = type;
   const params = {};
   if (type === 'foryou' || type === 'latest' || type === 'new' || type === 'romance') {
@@ -359,14 +392,53 @@ async function searchDramas(source = 'dramawave', query = '') {
 
   let items = [];
 
-  if (source === 'all') {
+  if (source === 'pinedrama') {
+    try {
+      const axios = require('axios');
+      const res = await axios.get(`https://api.sansekai.my.id/api/pinedrama/search`, {
+        params: { query: query.trim() },
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        timeout: 15000
+      });
+      const collections = res.data?.collections || res.data?.data?.collections || res.data?.data?.list || res.data?.data || [];
+      items = collections.map(c => ({
+        id: String(c.collection_id || c.id),
+        title: c.title || 'Short Drama',
+        cover: c.cover || (Array.isArray(c.cover_urls) ? c.cover_urls[0] : ''),
+        synopsis: c.description || '',
+        episodes: Number(c.total_episodes || 0),
+        tags: Array.isArray(c.tags) ? c.tags : [],
+        isCompleted: true,
+        source: 'pinedrama'
+      }));
+    } catch (e) {
+      items = [];
+    }
+  } else if (source === 'all') {
     // Global search across main providers
-    const allSources = ['dramawave', 'shortmax', 'melolo', 'netshort', 'reelshort', 'dramabox', 'goodshort', 'freereels'];
-    const searchPromises = allSources.map(s => 
-      sendWsRequest(s, 'search', { query: query.trim() })
+    const allSources = ['dramawave', 'shortmax', 'melolo', 'netshort', 'reelshort', 'dramabox', 'goodshort', 'freereels', 'flareflow', 'pinedrama'];
+    const searchPromises = allSources.map(s => {
+      if (s === 'pinedrama') {
+        const axios = require('axios');
+        return axios.get(`https://api.sansekai.my.id/api/pinedrama/search`, {
+          params: { query: query.trim() },
+          headers: { 'User-Agent': 'Mozilla/5.0' },
+          timeout: 10000
+        }).then(r => (r.data?.collections || []).map(c => ({
+          id: String(c.collection_id || c.id),
+          title: c.title || 'Short Drama',
+          cover: c.cover || '',
+          synopsis: c.description || '',
+          episodes: Number(c.total_episodes || 0),
+          tags: Array.isArray(c.tags) ? c.tags : [],
+          isCompleted: true,
+          source: 'pinedrama'
+        }))).catch(() => []);
+      }
+      return sendWsRequest(s, 'search', { query: query.trim() })
         .then(r => normalizeDramaList(r.data).map(item => ({ ...item, source: resolveActualSource(item.id, s) })))
-        .catch(() => [])
-    );
+        .catch(() => []);
+    });
 
     const fallbackResults = await Promise.allSettled(searchPromises);
     fallbackResults.forEach(r => {
@@ -413,14 +485,18 @@ function resolveActualSource(id, requestedSource) {
   // 3. GoodShort: 11 digits starting with 310 or 320 (e.g. 31001345253)
   if (/^3[12]\d{9}$/.test(str)) return 'goodshort';
 
-  // 4. NetShort / Melolo: 19 digits
+  // 4. PineDrama / NetShort / Melolo: 19 digits
   if (/^\d{19}$/.test(str)) {
+    if (requestedSource === 'pinedrama') return 'pinedrama';
     if (requestedSource === 'melolo') return 'melolo';
     return 'netshort';
   }
 
-  // 5. ShortMax: integer IDs like 8151
-  if (/^\d{1,6}$/.test(str) && requestedSource === 'shortmax') return 'shortmax';
+  // 5. ShortMax / FlareFlow: integer IDs like 8151 / 460235
+  if (/^\d{1,6}$/.test(str)) {
+    if (requestedSource === 'flareflow') return 'flareflow';
+    if (requestedSource === 'shortmax') return 'shortmax';
+  }
 
   if (requestedSource && requestedSource !== 'all') return requestedSource;
   return 'dramawave';
@@ -434,6 +510,39 @@ async function getDramaDetail(source = 'dramawave', id) {
   const cached = memoryCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL_DETAIL_MS) {
     return cached.data;
+  }
+
+  // Khusus PineDrama
+  if (source === 'pinedrama') {
+    const axios = require('axios');
+    const res = await axios.get(`https://api.sansekai.my.id/api/pinedrama/detail`, {
+      params: { collection_id: String(id) },
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      timeout: 15000
+    });
+    const d = res.data || {};
+    const totalEpisodes = Number(d.total_episodes || 1);
+    const episodes = [];
+    for (let i = 1; i <= totalEpisodes; i++) {
+      episodes.push({
+        id: String(i),
+        number: i,
+        title: `Episode ${i}`,
+        isLocked: false
+      });
+    }
+    const detail = {
+      id: String(id),
+      title: d.title || 'Short Drama',
+      description: d.description || '',
+      cover: (Array.isArray(d.cover_urls) ? d.cover_urls[0] : d.cover) || '',
+      totalEpisodes,
+      episodes,
+      isCompleted: true
+    };
+    const result = { success: true, source: 'pinedrama', drama: detail };
+    memoryCache.set(cacheKey, { timestamp: Date.now(), data: result });
+    return result;
   }
 
   const res = await sendWsRequest(source, 'detail', { id: String(id) });
@@ -456,7 +565,32 @@ async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
 
   let streamData;
 
-  if (source === 'dramabox' || /^420\d{8}$/.test(String(id))) {
+  // Khusus PineDrama
+  if (source === 'pinedrama') {
+    try {
+      const axios = require('axios');
+      const res = await axios.get(`https://api.sansekai.my.id/api/pinedrama/episode`, {
+        params: { collection_id: String(id), episodeNumber: Number(ep) },
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        timeout: 15000
+      });
+      const d = res.data || {};
+      const bestUrl = d.best_url || d.main?.indo_hd_cdn_urls?.[0] || d.main?.indo_cdn_urls?.[0] || d.stream_url || '';
+      if (!bestUrl) throw new Error(`Video stream tidak ditemukan untuk episode ${ep}`);
+
+      streamData = {
+        success: true,
+        source: 'pinedrama',
+        id: String(id),
+        episodeNumber: Number(ep),
+        videoUrl: bestUrl,
+        qualities: [{ label: '1080p HD (Dub/Sub Indo)', url: bestUrl, isDefault: true }],
+        subtitles: []
+      };
+    } catch (err) {
+      console.error('PineDrama episode stream error:', err.message);
+    }
+  } else if (source === 'dramabox' || /^420\d{8}$/.test(String(id))) {
     const epNum = Number(ep);
 
     // Untuk Episode 21 ke atas (VIP DramaBox), langsung gunakan Sansekai Decrypt Resolver agar instan 0ms
