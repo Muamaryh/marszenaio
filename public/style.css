@@ -2586,18 +2586,31 @@ body {
     display: none; /* Mobile uses natural touch swipe */
   }
 
-  .feed-tabs {
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    padding-bottom: 4px;
-    -webkit-overflow-scrolling: touch;
+  .feed-tabs-row {
     width: 100%;
+    margin-bottom: 6px;
+  }
+
+  .feed-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    width: 100%;
+    overflow: visible;
   }
 
   .feed-tab-btn {
-    flex-shrink: 0;
-    font-size: 0.8rem;
-    padding: 7px 12px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    padding: 9px 6px;
+    white-space: nowrap;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
   }
 
   .feed-search-wrap {
