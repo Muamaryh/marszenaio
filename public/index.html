@@ -49,9 +49,8 @@
         </a>
 
         <div class="header-right">
-          <!-- Provider Switcher Trigger Button (Pojok Kanan Atas) -->
+          <!-- Provider Switcher Trigger Button (Pojok Kanan Atas - Frameless Logo + Name) -->
           <button class="btn-provider-trigger" id="btnProviderTrigger" onclick="openProviderModal()" title="Pilih Provider Drama">
-            <span class="provider-trigger-prefix">Provider:</span>
             <img src="/assets/logos/dramawave.svg" id="activeProviderLogo" class="provider-trigger-logo" alt="DramaWave" onerror="this.src='/assets/icons/icon.svg'"/>
             <span class="provider-trigger-name" id="activeProviderName">DramaWave</span>
             <svg class="provider-trigger-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
@@ -68,13 +67,6 @@
 
     <!-- Main Container -->
     <main class="main-content">
-      <!-- Continue Watching Bar (Appears when history exists) -->
-      <section class="continue-watching-section hidden" id="continueWatchingSection">
-        <div class="continue-watching-card" id="continueWatchingCard">
-          <!-- Rendered dynamically -->
-        </div>
-      </section>
-
       <!-- Category Filter Tabs (Trending, Untuk Anda, Populer, Rekomendasi) -->
       <section class="feed-tabs-section">
         <div class="feed-tabs-row">

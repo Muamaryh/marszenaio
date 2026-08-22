@@ -259,18 +259,18 @@ body {
   gap: 10px;
 }
 
-/* Provider Switcher Button on Top Right */
+/* Provider Switcher Button on Top Right (Frameless Logo + Name) */
 .btn-provider-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  background: #ffffff;
-  color: var(--black);
-  border: var(--border-thick);
-  box-shadow: var(--shadow-sm);
-  padding: 6px 14px;
+  gap: 8px;
+  background: transparent;
+  color: var(--text-main);
+  border: none;
+  box-shadow: none;
+  padding: 6px 10px;
   border-radius: var(--radius-full);
-  font-size: 0.8rem;
+  font-size: 0.88rem;
   font-weight: 900;
   cursor: pointer;
   transition: var(--transition);
@@ -279,38 +279,36 @@ body {
 }
 
 .btn-provider-trigger:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: var(--shadow-hover);
-  background: #fdfdfd;
-}
-
-.provider-trigger-prefix {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  font-weight: 800;
-  letter-spacing: 0.02em;
+  background: rgba(24, 24, 27, 0.07);
+  transform: translateY(-1px);
 }
 
 .provider-trigger-logo {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
-  border-radius: 4px;
+  border-radius: 6px;
+  box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: #ffffff;
+  padding: 1px;
 }
 
 .provider-trigger-name {
-  font-size: 0.84rem;
+  font-size: 0.9rem;
   font-weight: 900;
   color: var(--black);
+  letter-spacing: -0.01em;
 }
 
 .provider-trigger-arrow {
-  color: var(--text-muted);
-  transition: transform 0.2s ease;
+  color: #71717a;
+  transition: transform 0.2s ease, color 0.2s ease;
 }
 
 .btn-provider-trigger:hover .provider-trigger-arrow {
   transform: translateY(2px);
+  color: var(--black);
 }
 
 .btn-install-app {
