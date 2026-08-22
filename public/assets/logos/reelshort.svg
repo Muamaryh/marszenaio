@@ -1,10 +1,24 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
-    <linearGradient id="grad_reelshort" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="rs_bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#e11d48"/>
-      <stop offset="100%" stop-color="#be123c"/>
+      <stop offset="50%" stop-color="#be123c"/>
+      <stop offset="100%" stop-color="#9f1239"/>
     </linearGradient>
+    <filter id="rs_sh" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
   </defs>
-  <rect x="8" y="8" width="84" height="84" rx="22" fill="url(#grad_reelshort)"/><text x="50" y="63" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="-2">RS</text>
+  <rect x="4" y="4" width="92" height="92" rx="24" fill="url(#rs_bg)"/>
+  <rect x="4" y="4" width="92" height="92" rx="24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+  <!-- ReelShort Stylized 'R' Play -->
+  <g filter="url(#rs_sh)">
+    <!-- Stem -->
+    <rect x="25" y="24" width="13" height="52" rx="4" fill="#ffffff"/>
+    <!-- Loop -->
+    <path d="M36 24 L56 24 C68 24 74 32 74 42 C74 52 68 60 56 60 L36 60 Z" fill="#ffffff"/>
+    <circle cx="54" cy="42" r="7" fill="url(#rs_bg)"/>
+    <!-- Play Tail -->
+    <polygon points="52,56 75,76 52,76" fill="#ffffff"/>
+  </g>
 </svg>

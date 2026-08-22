@@ -298,7 +298,7 @@ async function loadSources() {
 }
 
 function getProviderBrandLogo(src) {
-  const logoPath = `/assets/logos/${src.key}.svg`;
+  const logoPath = `/assets/logos/${src.key}.svg?v=2.2.0`;
   return `<img src="${logoPath}" alt="${escapeHtml(src.name)}" class="source-logo-img"/>`;
 }
 

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="mb_bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="50%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#6d28d9"/>
+    </linearGradient>
+    <linearGradient id="mb_gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <filter id="mb_sh" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <rect x="4" y="4" width="92" height="92" rx="24" fill="url(#mb_bg)"/>
+  <rect x="4" y="4" width="92" height="92" rx="24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+  <!-- Phone Silhouette + Golden Play Reel -->
+  <g filter="url(#mb_sh)">
+    <!-- Smartphone Outline -->
+    <rect x="30" y="18" width="40" height="64" rx="8" fill="none" stroke="#ffffff" stroke-width="4"/>
+    <line x1="45" y1="24" x2="55" y2="24" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+    <!-- Central Golden Play Reel -->
+    <circle cx="50" cy="50" r="14" fill="url(#mb_gold)"/>
+    <polygon points="46,43 57,50 46,57" fill="#6d28d9"/>
+  </g>
+</svg>

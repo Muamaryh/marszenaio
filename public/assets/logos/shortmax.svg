@@ -1,10 +1,27 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
-    <linearGradient id="grad_shortmax" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#18181b"/>
-      <stop offset="100%" stop-color="#27272a"/>
+    <linearGradient id="sm_bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1c1917"/>
+      <stop offset="50%" stop-color="#0c0a09"/>
+      <stop offset="100%" stop-color="#000000"/>
     </linearGradient>
+    <linearGradient id="sm_orange" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fb923c"/>
+      <stop offset="100%" stop-color="#ea580c"/>
+    </linearGradient>
+    <linearGradient id="sm_cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <filter id="sm_sh" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#ea580c" flood-opacity="0.35"/>
+    </filter>
   </defs>
-  <rect x="8" y="8" width="84" height="84" rx="22" fill="url(#grad_shortmax)"/><path d="M64 32 C50 25 34 32 34 46 C34 62 66 54 66 70 C66 78 52 80 36 74" fill="none" stroke="#f97316" stroke-width="9" stroke-linecap="round"/><circle cx="50" cy="51" r="8" fill="#38bdf8"/>
+  <rect x="4" y="4" width="92" height="92" rx="24" fill="url(#sm_bg)"/>
+  <rect x="4" y="4" width="92" height="92" rx="24" fill="none" stroke="rgba(251,146,60,0.25)" stroke-width="2"/>
+  <!-- ShortMax Stylized S Ribbon -->
+  <g filter="url(#sm_sh)">
+    <path d="M68 30 C52 20 32 28 32 44 C32 62 68 52 68 70 C68 80 50 82 34 74" fill="none" stroke="url(#sm_orange)" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="50" cy="51" r="7.5" fill="url(#sm_cyan)"/>
+  </g>
 </svg>
