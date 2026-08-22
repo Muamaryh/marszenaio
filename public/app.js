@@ -284,7 +284,10 @@ async function loadSources() {
       { key: 'dramanova', name: 'DramaNova', badge: 'Romance / 18+', desc: 'Drama romantis & dewasa' },
       { key: 'reelshort', name: 'ReelShort', badge: 'Hot', desc: 'Drama pendek billionaire & werewolf viral' },
       { key: 'goodshort', name: 'GoodShort', badge: 'Recom', desc: 'Drama pilihan terfavorit penonton' },
-      { key: 'flickreels', name: 'FlickReels', badge: 'Top Rank', desc: 'Serial drama rating tinggi' }
+      { key: 'flickreels', name: 'FlickReels', badge: 'Top Rank', desc: 'Serial drama rating tinggi' },
+      { key: 'idrama', name: 'iDrama', badge: 'Viral', desc: 'Koleksi drama pendek Asia terpopuler' },
+      { key: 'dramabite', name: 'DramaBite', badge: 'Fresh', desc: 'Update drama baru setiap hari' },
+      { key: 'moboreels', name: 'MoboReels', badge: 'Trending', desc: 'Drama pendek pilihan trending penonton' }
     ];
     renderSourcesPills();
   }
@@ -299,6 +302,10 @@ function renderSourcesPills() {
   const container = el('sourcesPillsBar');
   if (!container) return;
   container.innerHTML = '';
+
+  const totalCount = appState.sources.length;
+  if (el('liveSourcesCount')) el('liveSourcesCount').textContent = `${totalCount} Sources Ready`;
+  if (el('heroProvidersCount')) el('heroProvidersCount').textContent = `${totalCount}`;
 
   appState.sources.forEach(src => {
     const btn = document.createElement('button');

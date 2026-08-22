@@ -2,8 +2,13 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { getSources: getAnichinSources, getFeed: getAnichinFeed, searchDramas: searchAnichinDramas, getDramaDetail: getAnichinDetail, getDramaEpisode: getAnichinEpisode } = require('./services/anichin');
-const { getNunoSources, isNunoSource, getNunoFeed, searchNunoDramas, getNunoDramaDetail, getNunoDramaEpisode } = require('./services/nunodrama');
+const { 
+  getSources, 
+  getFeed, 
+  searchDramas, 
+  getDramaDetail, 
+  getDramaEpisode 
+} = require('./services/anichin');
 const { handleStreamProxy, handleSubtitleProxy } = require('./services/stream_proxy');
 
 const app = express();
@@ -13,15 +18,13 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ===== API ROUTES =====
+// ===== API ROUTES (OFFICIAL ANICHIN GATEWAY) =====
 
-// 1. Get Sources List (Gabungan Anichin + NunoDrama)
+// 1. Get Sources List
 app.get('/api/drama/sources', (req, res) => {
   try {
     res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400');
-    const anichinSources = getAnichinSources();
-    const nunoSources = getNunoSources();
-    const sources = [...anichinSources, ...nunoSources];
+    const sources = getSources();
     res.json({ success: true, sources });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -33,12 +36,7 @@ app.get('/api/drama/feed', async (req, res) => {
   const { source = 'dramawave', type = 'trending', page = 1 } = req.query;
   try {
     res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=1800, stale-while-revalidate=3600');
-    let feed;
-    if (isNunoSource(source)) {
-      feed = await getNunoFeed(source, type, Number(page));
-    } else {
-      feed = await getAnichinFeed(source, type, Number(page));
-    }
+    const feed = await getFeed(source, type, Number(page));
     res.json(feed);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -50,12 +48,7 @@ app.get('/api/drama/search', async (req, res) => {
   const { source = 'dramawave', query = '' } = req.query;
   try {
     res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=1800, stale-while-revalidate=3600');
-    let results;
-    if (isNunoSource(source)) {
-      results = await searchNunoDramas(source, query);
-    } else {
-      results = await searchAnichinDramas(source, query);
-    }
+    const results = await searchDramas(source, query);
     res.json(results);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -68,12 +61,7 @@ app.get('/api/drama/detail', async (req, res) => {
   if (!id) return res.status(400).json({ success: false, error: 'ID drama diperlukan' });
   try {
     res.setHeader('Cache-Control', 'public, max-age=600, s-maxage=3600, stale-while-revalidate=7200');
-    let detail;
-    if (isNunoSource(source)) {
-      detail = await getNunoDramaDetail(source, id);
-    } else {
-      detail = await getAnichinDetail(source, id);
-    }
+    const detail = await getDramaDetail(source, id);
     res.json(detail);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -86,13 +74,7 @@ app.get('/api/drama/episode', async (req, res) => {
   if (!id) return res.status(400).json({ success: false, error: 'ID drama diperlukan' });
   try {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    let episode;
-
-    if (isNunoSource(source)) {
-      episode = await getNunoDramaEpisode(source, id, Number(ep));
-    } else {
-      episode = await getAnichinEpisode(source, id, Number(ep));
-    }
+    const episode = await getDramaEpisode(source, id, Number(ep));
     res.json(episode);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
