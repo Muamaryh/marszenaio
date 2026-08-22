@@ -235,7 +235,10 @@ function renderContinueWatchingBanner() {
 // ===== 1. INITIALIZATION & SOURCES =====
 
 async function initApp() {
+  // Purge any stale client session cache
   try {
+    sessionStorage.clear();
+    clientMemoryCache.clear();
     const savedSource = localStorage.getItem('dracin_last_selected_source');
     if (savedSource) appState.currentSource = savedSource;
   } catch (e) {}
@@ -267,8 +270,9 @@ async function loadSources() {
   if (!container) return;
 
   try {
-    const data = await fetchWithClientCache('/api/drama/sources', 3600000);
-    if (data.success && data.sources) {
+    const res = await fetch(`/api/drama/sources?_v=${Date.now()}`);
+    const data = await res.json();
+    if (data.success && data.sources && Array.isArray(data.sources)) {
       appState.sources = data.sources;
       renderSourcesPills();
     }
