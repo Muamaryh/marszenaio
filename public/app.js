@@ -1355,17 +1355,11 @@ function initPlayerEventListeners() {
     showControls(4000);
   });
 
-  // Visibility & Screen Lifecycle Handlers
+  // Visibility & Screen Lifecycle Handlers (Screen Wake Lock)
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && !document.hidden) {
       if (appState.activeDrama && !el('theaterModal')?.classList.contains('hidden')) {
         acquireWakeLock();
-        if (appState.wantsFullscreen) {
-          const container = el('videoContainer');
-          if (container) {
-            container.classList.add('is-fullscreen');
-          }
-        }
       }
     } else {
       releaseWakeLock();
@@ -1385,12 +1379,13 @@ function initPlayerEventListeners() {
       if (container) container.classList.add('is-fullscreen');
       acquireWakeLock();
     } else {
-      // Jika native fullscreen keluar karena layar mati / rotasi HP / keyboard:
-      // Pertahankan CSS full view jika pengguna tidak sengaja menutupnya
-      if (appState.wantsFullscreen && container) {
-        container.classList.add('is-fullscreen');
-      }
+      // Saat keluar dari fullscreen (termasuk saat layar HP mati/terkunci):
+      // Kembalikan ke layout normal agar tidak mengambang/rusak di bawah address bar browser
+      appState.wantsFullscreen = false;
+      if (container) container.classList.remove('is-fullscreen');
+      hide('fullscreenEpDrawer');
     }
+    showControls(4000);
   };
 
   document.addEventListener('fullscreenchange', handleFsChange);
