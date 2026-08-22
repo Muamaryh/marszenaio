@@ -111,12 +111,29 @@ async function fetchWithClientCache(url, ttlMs = 15 * 60 * 1000) {
 }
 
 function resolveActualSource(id, requestedSource) {
-  if (requestedSource && requestedSource !== 'all') return requestedSource;
-  if (!id) return 'dramawave';
+  if (!id) return requestedSource || 'dramawave';
   const str = String(id).trim();
-  if (/^420\d{8}$/.test(str)) return 'dramabox';
-  if (/^\d{19}$/.test(str)) return 'netshort';
+
+  // Pattern detection based on provider-specific ID formats:
+  // 1. ReelShort: 24-character hexadecimal ObjectId (e.g. 686b831298c9395bc70495f1)
   if (/^[0-9a-f]{24}$/i.test(str)) return 'reelshort';
+
+  // 2. DramaBox: 11 digits starting with 420 (e.g. 42000003451)
+  if (/^420\d{8}$/.test(str)) return 'dramabox';
+
+  // 3. GoodShort: 11 digits starting with 310 or 320 (e.g. 31001345253)
+  if (/^3[12]\d{9}$/.test(str)) return 'goodshort';
+
+  // 4. NetShort / Melolo: 19 digits
+  if (/^\d{19}$/.test(str)) {
+    if (requestedSource === 'melolo') return 'melolo';
+    return 'netshort';
+  }
+
+  // 5. ShortMax: integer IDs like 8151
+  if (/^\d{1,6}$/.test(str) && requestedSource === 'shortmax') return 'shortmax';
+
+  if (requestedSource && requestedSource !== 'all') return requestedSource;
   return 'dramawave';
 }
 
