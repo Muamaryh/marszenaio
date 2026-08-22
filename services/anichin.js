@@ -457,52 +457,91 @@ async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
   let streamData;
 
   if (source === 'dramabox' || /^420\d{8}$/.test(String(id))) {
-    try {
-      const axios = require('axios');
-      const token = getToken();
-      const masterUrl = `${ANICHIN_BASE_URL}/api/dramabox/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(ep)}&token=${token}`;
-      const masterRes = await axios.get(masterUrl, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: 10000 });
-      const lines = masterRes.data.split('\n');
-      const qualities = [];
+    const epNum = Number(ep);
 
-      for (let i = 0; i < lines.length; i++) {
-        if (lines[i].includes('#EXT-X-STREAM-INF')) {
-          const qMatch = lines[i].match(/NAME="([^"]+)"/);
-          const qLabel = qMatch ? qMatch[1] : 'HD';
-          let nextLine = lines[i + 1] ? lines[i + 1].trim() : '';
-          if (nextLine) {
-            nextLine = nextLine.replace(/api_key=[^&]+/, `api_key=${token}`);
-            const subUrl = nextLine.startsWith('http') ? nextLine : `${ANICHIN_BASE_URL}${nextLine}`;
-            try {
-              const subRes = await axios.get(subUrl, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: 8000 });
-              const subLines = subRes.data.split('\n');
-              const directMediaUrl = subLines.find(l => l.startsWith('http'));
-              if (directMediaUrl) {
-                qualities.push({
-                  label: qLabel,
-                  url: directMediaUrl.trim(),
-                  isDefault: qLabel.includes('720')
-                });
-              }
-            } catch (e) {}
+    // Untuk Episode 21 ke atas (VIP DramaBox), langsung gunakan Sansekai Decrypt Resolver agar instan 0ms
+    if (epNum > 20) {
+      try {
+        const { getDramaBoxEpisodeStream } = require('./dramabox_sansekai');
+        const dbRes = await getDramaBoxEpisodeStream(id, ep);
+        if (dbRes && dbRes.videoUrl) {
+          streamData = {
+            success: true,
+            source: 'dramabox',
+            id,
+            episodeNumber: epNum,
+            videoUrl: dbRes.videoUrl,
+            qualities: dbRes.qualities?.map(q => ({ label: q.quality, url: q.url, isDefault: q.quality.includes('1080') })) || [{ label: '1080p Full HD', url: dbRes.videoUrl, isDefault: true }],
+            subtitles: []
+          };
+        }
+      } catch (dbErr) {
+        console.error('DramaBox Sansekai VIP resolver error:', dbErr.message);
+      }
+    } else {
+      // Episode 1 - 20 gunakan Anichin Direct CDN
+      try {
+        const axios = require('axios');
+        const token = getToken();
+        const masterUrl = `${ANICHIN_BASE_URL}/api/dramabox/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(ep)}&token=${token}`;
+        const masterRes = await axios.get(masterUrl, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: 5000 });
+        const lines = masterRes.data.split('\n');
+        const qualities = [];
+
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].includes('#EXT-X-STREAM-INF')) {
+            const qMatch = lines[i].match(/NAME="([^"]+)"/);
+            const qLabel = qMatch ? qMatch[1] : 'HD';
+            let nextLine = lines[i + 1] ? lines[i + 1].trim() : '';
+            if (nextLine) {
+              nextLine = nextLine.replace(/api_key=[^&]+/, `api_key=${token}`);
+              const subUrl = nextLine.startsWith('http') ? nextLine : `${ANICHIN_BASE_URL}${nextLine}`;
+              try {
+                const subRes = await axios.get(subUrl, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: 4000 });
+                const subLines = subRes.data.split('\n');
+                const directMediaUrl = subLines.find(l => l.startsWith('http'));
+                if (directMediaUrl) {
+                  qualities.push({
+                    label: qLabel,
+                    url: directMediaUrl.trim(),
+                    isDefault: qLabel.includes('720')
+                  });
+                }
+              } catch (e) {}
+            }
           }
         }
-      }
 
-      const def = qualities.find(q => q.isDefault) || qualities[0];
-      if (def && def.url) {
-        streamData = {
-          success: true,
-          source: 'dramabox',
-          id,
-          episodeNumber: Number(ep),
-          videoUrl: def.url,
-          qualities: qualities.length > 0 ? qualities : [{ label: '720p HD', url: def.url, isDefault: true }],
-          subtitles: []
-        };
+        const def = qualities.find(q => q.isDefault) || qualities[0];
+        if (def && def.url) {
+          streamData = {
+            success: true,
+            source: 'dramabox',
+            id,
+            episodeNumber: epNum,
+            videoUrl: def.url,
+            qualities: qualities.length > 0 ? qualities : [{ label: '720p HD', url: def.url, isDefault: true }],
+            subtitles: []
+          };
+        }
+      } catch (err) {
+        // Fallback ke Sansekai jika Anichin error di episode 1-20
+        try {
+          const { getDramaBoxEpisodeStream } = require('./dramabox_sansekai');
+          const dbRes = await getDramaBoxEpisodeStream(id, ep);
+          if (dbRes && dbRes.videoUrl) {
+            streamData = {
+              success: true,
+              source: 'dramabox',
+              id,
+              episodeNumber: epNum,
+              videoUrl: dbRes.videoUrl,
+              qualities: dbRes.qualities?.map(q => ({ label: q.quality, url: q.url, isDefault: q.quality.includes('1080') })) || [{ label: '1080p Full HD', url: dbRes.videoUrl, isDefault: true }],
+              subtitles: []
+            };
+          }
+        } catch (e) {}
       }
-    } catch (err) {
-      console.error('Dramabox stream extraction error:', err.message);
     }
   } else if (source === 'shortmax') {
     streamData = {
