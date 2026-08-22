@@ -5,10 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>DracinHub - Nonton Ribuan Short Drama Gratis Tanpa Iklan</title>
   <meta name="description" content="Platform nonton drama pendek asia (dracin, reelshort, dramabox, shortmax) terlengkap dengan subtitle Indonesia dan kualitas HD.">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0c0d14">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DracinHub">
+  <link rel="apple-touch-icon" href="/assets/icons/icon.svg">
+  <link rel="icon" type="image/svg+xml" href="/assets/icons/icon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=2.8.0">
+  <link rel="stylesheet" href="style.css?v=2.9.0">
   <!-- HLS.js for HLS streaming support -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
 </head>
@@ -24,6 +32,10 @@
         </a>
 
         <div class="header-right">
+          <button class="btn-install-app hidden" id="btnInstallApp" onclick="installPWA()" title="Install DracinHub App ke HP / Desktop">
+            <span class="install-icon">📲</span>
+            <span class="install-text">Install App</span>
+          </button>
           <div class="live-status">
             <span class="live-pulse"></span>
             <span class="live-text" id="liveSourcesCount">15 Sources Ready</span>
@@ -86,6 +98,9 @@
             <button class="feed-tab-btn" data-type="history" onclick="setFeedType('history')">
               <span>🕒</span> Riwayat Nonton
             </button>
+            <button class="feed-tab-btn" data-type="favorites" onclick="setFeedType('favorites')">
+              <span>⭐</span> Favorit Saya
+            </button>
           </div>
         </div>
 
@@ -103,6 +118,9 @@
           <span class="feed-count-badge" id="feedCountBadge">Memuat...</span>
           <button class="btn-clear-history hidden" id="btnClearHistory" onclick="clearAllHistory()" title="Hapus Semua Riwayat">
             🗑️ Hapus Riwayat
+          </button>
+          <button class="btn-clear-favorites hidden" id="btnClearFavorites" onclick="clearAllFavorites()" title="Hapus Semua Favorit">
+            🗑️ Hapus Semua Favorit
           </button>
         </div>
       </section>
@@ -193,6 +211,9 @@
                   <span class="fs-ep-pill" id="fsEpCurrent">Ep 1</span>
                 </div>
                 <div class="fs-top-actions">
+                  <button class="btn-fs-fav" id="btnFsFav" onclick="event.stopPropagation(); toggleActiveDramaFavorite(event)" title="Simpan ke Favorit">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                  </button>
                   <button class="btn-fs-ep-toggle" id="btnFsEpisodes" onclick="toggleFullscreenEpisodes(event)" title="Daftar Episode">
                     <span>📋</span> <span>Eps (<span id="fsEpisodesTotal">0</span>)</span>
                   </button>
@@ -304,10 +325,16 @@
 
           <!-- Drama Details Card -->
           <div class="drama-synopsis-card">
-            <div class="theater-header-left">
-              <span class="theater-provider-badge" id="theaterSourceBadge">DRAMAWAVE</span>
-              <h2 class="theater-title-text" id="theaterDramaTitle">Judul Drama</h2>
-              <span class="theater-ep-indicator" id="theaterEpisodeIndicator">Ep 1</span>
+            <div class="theater-header-top-row">
+              <div class="theater-header-left">
+                <span class="theater-provider-badge" id="theaterSourceBadge">DRAMAWAVE</span>
+                <h2 class="theater-title-text" id="theaterDramaTitle">Judul Drama</h2>
+                <span class="theater-ep-indicator" id="theaterEpisodeIndicator">Ep 1</span>
+              </div>
+              <button class="btn-theater-fav" id="btnFavPlayer" onclick="toggleActiveDramaFavorite(event)" title="Simpan ke Favorit">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                <span id="favPlayerText">Favorit</span>
+              </button>
             </div>
             <h3 class="synopsis-heading">Sinopsis Cerita:</h3>
             <p class="synopsis-body" id="theaterSynopsisText">Memuat detail sinopsis...</p>

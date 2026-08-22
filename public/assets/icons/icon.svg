@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c0d14"/>
+      <stop offset="100%" stop-color="#181926"/>
+    </linearGradient>
+    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff3b5c"/>
+      <stop offset="50%" stop-color="#ff6b81"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+    <linearGradient id="neonGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f2fe"/>
+      <stop offset="100%" stop-color="#4facfe"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- App Icon Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" stroke="#27293d" stroke-width="12"/>
+
+  <!-- Glowing Aura -->
+  <circle cx="256" cy="256" r="160" fill="url(#primaryGrad)" opacity="0.15" filter="url(#glow)" />
+
+  <!-- Film Clapper / Rounded Card Body -->
+  <rect x="96" y="116" width="320" height="280" rx="36" fill="#151622" stroke="url(#primaryGrad)" stroke-width="10" filter="url(#glow)"/>
+
+  <!-- Film Strip Top Slits -->
+  <path d="M120 116 L150 176 M190 116 L220 176 M260 116 L290 176 M330 116 L360 176 M400 116 L430 176" stroke="url(#primaryGrad)" stroke-width="8" stroke-linecap="round"/>
+  <line x1="96" y1="176" x2="416" y2="176" stroke="url(#primaryGrad)" stroke-width="8"/>
+
+  <!-- Play Button Triangle Neon -->
+  <polygon points="225,230 330,290 225,350" fill="url(#primaryGrad)" stroke="#ffffff" stroke-width="4" stroke-linejoin="round"/>
+
+  <!-- Subtitle / Live Dot -->
+  <circle cx="370" cy="215" r="10" fill="#00f2fe"/>
+  <rect x="136" y="345" width="50" height="8" rx="4" fill="#64748b"/>
+  <rect x="196" y="345" width="30" height="8" rx="4" fill="#00f2fe"/>
+</svg>

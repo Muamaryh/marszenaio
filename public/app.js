@@ -286,6 +286,195 @@ function renderContinueWatchingBanner() {
   `;
 }
 
+// ===== FAVORITES / BOOKMARKS MANAGER =====
+
+const STORAGE_KEY_FAVORITES = 'dracin_favorites_v1';
+
+function getFavorites() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_FAVORITES);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function isFavorite(dramaId) {
+  if (!dramaId) return false;
+  const favs = getFavorites();
+  return favs.some(item => String(item.id) === String(dramaId));
+}
+
+function toggleFavorite(drama, e) {
+  if (e) e.stopPropagation();
+  if (!drama || !drama.id) return;
+  try {
+    let favs = getFavorites();
+    const existsIndex = favs.findIndex(item => String(item.id) === String(drama.id));
+    const currentSrc = drama.source || appState.currentSource || 'dramawave';
+    const dramaTitle = drama.title || appState.activeDrama?.title || 'Short Drama';
+    const dramaCover = drama.cover || appState.activeDrama?.cover || '';
+    const dramaTotalEp = Number(drama.totalEpisodes || drama.episodes || appState.totalEpisodes || 1);
+    const dramaTags = Array.isArray(drama.tags) ? drama.tags : (appState.activeDrama?.tags || []);
+
+    let added = false;
+    if (existsIndex !== -1) {
+      favs.splice(existsIndex, 1);
+      added = false;
+    } else {
+      favs.unshift({
+        id: String(drama.id),
+        source: currentSrc,
+        title: dramaTitle,
+        cover: dramaCover,
+        totalEpisodes: dramaTotalEp,
+        tags: dramaTags,
+        savedAt: Date.now()
+      });
+      added = true;
+    }
+
+    localStorage.setItem(STORAGE_KEY_FAVORITES, JSON.stringify(favs));
+    updateFavoriteUIState(drama.id, added);
+
+    if (appState.currentFeedType === 'favorites') {
+      renderFavoritesFeed();
+    }
+
+    showResumeToastCustom(added ? '❤️ Ditambahkan ke Favorit' : '💔 Dihapus dari Favorit');
+  } catch (err) {}
+}
+
+function removeFavorite(dramaId, e) {
+  if (e) e.stopPropagation();
+  try {
+    let favs = getFavorites();
+    favs = favs.filter(item => String(item.id) !== String(dramaId));
+    localStorage.setItem(STORAGE_KEY_FAVORITES, JSON.stringify(favs));
+    updateFavoriteUIState(dramaId, false);
+    if (appState.currentFeedType === 'favorites') {
+      renderFavoritesFeed();
+    }
+    showResumeToastCustom('💔 Dihapus dari Favorit');
+  } catch (err) {}
+}
+
+function clearAllFavorites() {
+  if (confirm('Apakah Anda yakin ingin menghapus semua daftar drama favorit?')) {
+    localStorage.removeItem(STORAGE_KEY_FAVORITES);
+    if (appState.currentFeedType === 'favorites') {
+      renderFavoritesFeed();
+    }
+    document.querySelectorAll('.card-fav-btn').forEach(b => {
+      b.classList.remove('active');
+      b.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
+    });
+    const btnInPlayer = el('btnFavPlayer');
+    const btnFsFav = el('btnFsFav');
+    if (btnInPlayer) {
+      btnInPlayer.classList.remove('active');
+      btnInPlayer.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> <span>Favorit</span>';
+    }
+    if (btnFsFav) {
+      btnFsFav.classList.remove('active');
+      btnFsFav.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
+    }
+  }
+}
+
+function updateFavoriteUIState(dramaId, isFav) {
+  document.querySelectorAll(`.card-fav-btn[data-id="${dramaId}"]`).forEach(btn => {
+    btn.classList.toggle('active', isFav);
+    btn.innerHTML = isFav 
+      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>'
+      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
+    btn.title = isFav ? 'Hapus dari Favorit' : 'Simpan ke Favorit';
+  });
+
+  if (appState.activeDrama && String(appState.activeDrama.id) === String(dramaId)) {
+    const btnInPlayer = el('btnFavPlayer');
+    const btnFsFav = el('btnFsFav');
+    const favSvg = isFav 
+      ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>'
+      : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
+
+    if (btnInPlayer) {
+      btnInPlayer.classList.toggle('active', isFav);
+      btnInPlayer.innerHTML = `${favSvg} <span>${isFav ? 'Tersimpan' : 'Favorit'}</span>`;
+    }
+    if (btnFsFav) {
+      btnFsFav.classList.toggle('active', isFav);
+      btnFsFav.innerHTML = favSvg;
+    }
+  }
+}
+
+function toggleActiveDramaFavorite(e) {
+  if (e) e.stopPropagation();
+  if (!appState.activeDrama) return;
+  toggleFavorite({
+    id: appState.activeDrama.id,
+    source: appState.currentSource,
+    title: appState.activeDrama.title,
+    cover: appState.activeDrama.cover,
+    totalEpisodes: appState.totalEpisodes,
+    tags: appState.activeDrama.tags
+  }, e);
+}
+
+function showResumeToastCustom(text) {
+  const toast = el('resumeToast');
+  const toastText = el('resumeToastText');
+  if (!toast) return;
+  if (toastText) toastText.innerHTML = text;
+  toast.classList.remove('hidden', 'fade-out');
+  toast.classList.add('visible');
+  clearTimeout(appState.resumeToastTimeout);
+  appState.resumeToastTimeout = setTimeout(() => {
+    toast.classList.add('fade-out');
+    setTimeout(() => {
+      toast.classList.remove('visible', 'fade-out');
+      toast.classList.add('hidden');
+    }, 400);
+  }, 2200);
+}
+
+// ===== PWA INSTALLATION HELPER =====
+
+let deferredPrompt = null;
+
+function initPWA() {
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    show('btnInstallApp');
+  });
+
+  window.addEventListener('appinstalled', () => {
+    hide('btnInstallApp');
+    deferredPrompt = null;
+  });
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
+}
+
+async function installPWA() {
+  if (!deferredPrompt) {
+    alert('Aplikasi sudah terpasang atau gunakan opsi "Tambahkan ke Layar Utama" (Add to Home screen) di menu browser Anda.');
+    return;
+  }
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') {
+    hide('btnInstallApp');
+  }
+  deferredPrompt = null;
+}
+
 // ===== 1. INITIALIZATION & SOURCES =====
 
 async function initApp() {
@@ -297,6 +486,7 @@ async function initApp() {
     if (savedSource) appState.currentSource = savedSource;
   } catch (e) {}
 
+  initPWA();
   await loadSources();
   await loadFeed();
   renderContinueWatchingBanner();
@@ -471,24 +661,92 @@ function setFeedType(type) {
     foryou: '✨ Untuk Anda',
     hotrank: '🏆 Peringkat Populer',
     recommended: '💎 Rekomendasi Pilihan',
-    history: '🕒 Riwayat Tontonan Anda'
+    history: '🕒 Riwayat Tontonan Anda',
+    favorites: '⭐ Drama Favorit Saya'
   };
   if (el('currentFeedTitle')) el('currentFeedTitle').textContent = titles[type] || type;
 
   if (type === 'history') {
     show('btnClearHistory');
+    hide('btnClearFavorites');
     hide('continueWatchingSection');
     renderHistoryFeed();
+  } else if (type === 'favorites') {
+    hide('btnClearHistory');
+    show('btnClearFavorites');
+    hide('continueWatchingSection');
+    renderFavoritesFeed();
   } else {
     hide('btnClearHistory');
+    hide('btnClearFavorites');
     renderContinueWatchingBanner();
     loadFeed();
   }
 }
 
+function renderFavoritesFeed() {
+  hide('dramaCatalogLoader');
+  hide('infiniteScrollLoader');
+  hide('infiniteScrollEnded');
+  const grid = el('dramaGridContainer');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const favs = getFavorites();
+
+  if (favs.length === 0) {
+    show('dramaEmptyState');
+    if (el('dramaEmptyState')) {
+      el('dramaEmptyState').innerHTML = `
+        <div class="empty-emoji">⭐</div>
+        <h3>Belum Ada Drama Favorit</h3>
+        <p>Klik tombol ikon Bookmark / Favorit pada poster drama atau di player untuk menyimpannya di sini.</p>
+      `;
+    }
+    if (el('feedCountBadge')) el('feedCountBadge').textContent = '0 drama';
+    return;
+  }
+
+  hide('dramaEmptyState');
+  if (el('feedCountBadge')) el('feedCountBadge').textContent = `${favs.length} drama difavoritkan`;
+
+  favs.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'drama-card fav-card';
+
+    const fallbackCover = getFallbackPosterSvg(item.title);
+    const posterSrc = item.cover || fallbackCover;
+    const epBadge = item.totalEpisodes > 0 ? `<span class="badge-episodes">${item.totalEpisodes} Ep</span>` : '';
+    const tagsHtml = (item.tags || []).slice(0, 2).map(t => `<span class="card-tag">${escapeHtml(t)}</span>`).join('');
+
+    card.innerHTML = `
+      <div class="poster-wrap">
+        <img src="${escapeHtml(posterSrc)}" alt="${escapeHtml(item.title)}" class="poster-img" loading="lazy" onerror="this.onerror=null; this.src='${fallbackCover}'"/>
+        <div class="poster-overlay-gradient"></div>
+        <button class="card-fav-del-btn" onclick="event.stopPropagation(); removeFavorite('${escapeHtml(item.id)}', event)" title="Hapus dari favorit">✕</button>
+        ${epBadge}
+        <div class="play-hover-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </div>
+      </div>
+      <div class="card-content">
+        <h4 class="card-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</h4>
+        <div class="card-tags">
+          <span class="card-tag" style="background:rgba(250,204,21,0.15);color:var(--primary);">${escapeHtml((item.source || 'drama').toUpperCase())}</span>
+          ${tagsHtml}
+        </div>
+      </div>
+    `;
+
+    card.onclick = () => openDrama(item.source, item.id, item.title);
+    grid.appendChild(card);
+  });
+}
+
 function renderHistoryFeed() {
   hide('dramaCatalogLoader');
-  hide('dramaPagination');
+  hide('infiniteScrollLoader');
+  hide('infiniteScrollEnded');
   const grid = el('dramaGridContainer');
   if (!grid) return;
   grid.innerHTML = '';
@@ -550,6 +808,10 @@ function renderHistoryFeed() {
 async function loadFeed(isAppend = false) {
   if (appState.currentFeedType === 'history') {
     renderHistoryFeed();
+    return;
+  }
+  if (appState.currentFeedType === 'favorites') {
+    renderFavoritesFeed();
     return;
   }
 
@@ -642,6 +904,8 @@ function appendGrid(dramas) {
     const card = document.createElement('div');
     card.className = 'drama-card';
 
+    const actualSrc = d.source || appState.currentSource;
+    const isFav = isFavorite(d.id);
     const epBadge = d.episodes > 0 ? `<span class="badge-episodes">${d.episodes} Ep</span>` : '';
     const statusBadge = d.isCompleted ? `<span class="badge-status">Tamat</span>` : '';
     const tagsHtml = (d.tags || []).slice(0, 2).map(t => `<span class="card-tag">${escapeHtml(t)}</span>`).join('');
@@ -650,10 +914,21 @@ function appendGrid(dramas) {
     const fallbackCover = getFallbackPosterSvg(d.title);
     const posterSrc = d.cover || fallbackCover;
 
+    const favSvg = isFav 
+      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>'
+      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
+
+    const favButtonHtml = `
+      <button class="card-fav-btn ${isFav ? 'active' : ''}" data-id="${escapeHtml(d.id)}" onclick="event.stopPropagation(); toggleFavorite({ id: '${escapeHtml(d.id)}', source: '${escapeHtml(actualSrc)}', title: '${escapeHtml(d.title)}', cover: '${escapeHtml(d.cover || '')}', totalEpisodes: ${d.episodes || 1}, tags: ${escapeHtml(JSON.stringify(d.tags || []))} }, event)" title="${isFav ? 'Hapus dari Favorit' : 'Simpan ke Favorit'}">
+        ${favSvg}
+      </button>
+    `;
+
     card.innerHTML = `
       <div class="poster-wrap">
         <img src="${escapeHtml(posterSrc)}" alt="${escapeHtml(d.title)}" class="poster-img" loading="lazy" onerror="this.onerror=null; this.src='${fallbackCover}'"/>
         <div class="poster-overlay-gradient"></div>
+        ${favButtonHtml}
         ${epBadge}
         ${statusBadge}
         <div class="play-hover-icon">
@@ -669,7 +944,6 @@ function appendGrid(dramas) {
       </div>
     `;
 
-    const actualSrc = d.source || appState.currentSource;
     card.onclick = () => openDrama(actualSrc, d.id, d.title);
     grid.appendChild(card);
   });
@@ -680,7 +954,7 @@ function initInfiniteScroll() {
     const sentinel = el('infiniteScrollSentinel');
     if (sentinel) {
       const observer = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && !appState.isLoadingMore && appState.hasMorePages && !appState.currentQuery && appState.currentFeedType !== 'history') {
+        if (entries[0].isIntersecting && !appState.isLoadingMore && appState.hasMorePages && !appState.currentQuery && appState.currentFeedType !== 'history' && appState.currentFeedType !== 'favorites') {
           appState.currentPage++;
           loadFeed(true);
         }
@@ -691,7 +965,7 @@ function initInfiniteScroll() {
 
   // Window scroll fallback
   window.addEventListener('scroll', () => {
-    if (appState.isLoadingMore || !appState.hasMorePages || appState.currentQuery || appState.currentFeedType === 'history') return;
+    if (appState.isLoadingMore || !appState.hasMorePages || appState.currentQuery || appState.currentFeedType === 'history' || appState.currentFeedType === 'favorites') return;
     const scrollPosition = window.innerHeight + window.scrollY;
     const threshold = document.body.offsetHeight - 600;
     if (scrollPosition >= threshold) {
@@ -842,7 +1116,8 @@ async function openDrama(source, dramaId, fallbackTitle = '', startEpisode = nul
   if (el('theaterSynopsisText')) el('theaterSynopsisText').textContent = 'Mengambil sinopsis drama...';
   if (el('theaterEpisodesGrid')) el('theaterEpisodesGrid').innerHTML = '<div style="color:#888;font-size:12px;padding:10px;">Memuat episode...</div>';
   if (el('fsEpisodesGrid')) el('fsEpisodesGrid').innerHTML = '<div style="color:#888;font-size:12px;padding:10px;">Memuat episode...</div>';
-  show('videoLoader');
+  // Update initial favorite state in player
+  updateFavoriteUIState(dramaId, isFavorite(dramaId));
 
   try {
     const data = await fetchWithClientCache(`/api/drama/detail?source=${encodeURIComponent(source)}&id=${encodeURIComponent(dramaId)}`, 30 * 60 * 1000);
@@ -868,6 +1143,7 @@ async function openDrama(source, dramaId, fallbackTitle = '', startEpisode = nul
         tagsContainer.innerHTML = (d.tags || []).map(t => `<span class="card-tag">${escapeHtml(t)}</span>`).join('');
       }
 
+      updateFavoriteUIState(dramaId, isFavorite(dramaId));
       renderEpisodesDrawer();
       playEpisode(source, dramaId, initialEp, currentSession, resumeTime);
     }

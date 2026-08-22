@@ -170,6 +170,32 @@ body {
   font-family: 'JetBrains Mono', monospace;
 }
 
+.btn-install-app {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent-yellow);
+  color: var(--black);
+  border: var(--border-sm);
+  box-shadow: var(--shadow-sm);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-install-app:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-hover);
+  background: #fde047;
+}
+
+.btn-install-app .install-icon {
+  font-size: 0.95rem;
+}
+
 /* ========================================================
    MAIN CONTENT & HERO SECTION
    ======================================================== */
@@ -700,6 +726,24 @@ body {
   box-shadow: var(--shadow-hover);
 }
 
+.btn-clear-favorites {
+  background: #f59e0b;
+  border: var(--border-sm);
+  box-shadow: var(--shadow-sm);
+  color: #000000;
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-clear-favorites:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-hover);
+}
+
 /* ========================================================
    DRAMA GRID CARDS (NEO-BRUTALIST CARDS)
    ======================================================== */
@@ -760,6 +804,75 @@ body {
   font-weight: 900;
   padding: 2px 7px;
   border-radius: var(--radius-full);
+}
+
+.card-fav-btn {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(4px);
+  border: 1.5px solid var(--black);
+  box-shadow: 1px 1px 0px var(--black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  color: #64748b;
+  transition: var(--transition);
+}
+
+.card-fav-btn:hover {
+  transform: scale(1.14);
+  background: #ffffff;
+  color: #ef4444;
+}
+
+.card-fav-btn.active {
+  background: #ffe4e6;
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.card-fav-btn svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.card-fav-btn.active svg {
+  transform: scale(1.15);
+}
+
+.card-fav-del-btn {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: #ffffff;
+  border: var(--border-sm);
+  box-shadow: 1.5px 1.5px 0px var(--black);
+  color: #ff5e6a;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 900;
+  cursor: pointer;
+  z-index: 6;
+  transition: var(--transition);
+}
+
+.card-fav-del-btn:hover {
+  background: #ff5e6a;
+  color: #ffffff;
+  transform: scale(1.1);
 }
 
 .badge-status {
@@ -1388,6 +1501,34 @@ body {
   flex-shrink: 0;
 }
 
+.btn-fs-fav {
+  background: #27272a;
+  border: 1.5px solid #52525b;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.btn-fs-fav:hover {
+  background: #ffe4e6;
+  border-color: #ef4444;
+  color: #ef4444;
+  transform: scale(1.08);
+}
+
+.btn-fs-fav.active {
+  background: #ffe4e6;
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
 .btn-fs-ep-toggle {
   background: #27272a;
   border: 1.5px solid #52525b;
@@ -1758,6 +1899,43 @@ body {
   border: 2px solid #3f3f46;
   border-radius: var(--radius-md);
   padding: 16px;
+}
+
+.theater-header-top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.btn-theater-fav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #18181b;
+  border: 1.5px solid #52525b;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.btn-theater-fav:hover {
+  background: #ffe4e6;
+  border-color: #ef4444;
+  color: #ef4444;
+  transform: translate(-1.5px, -1.5px);
+}
+
+.btn-theater-fav.active {
+  background: #ffe4e6;
+  border-color: #ef4444;
+  color: #ef4444;
 }
 
 .synopsis-heading {

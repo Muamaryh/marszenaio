@@ -1,0 +1,21 @@
+{
+  "name": "DracinHub - Short Drama Streaming All-In-One",
+  "short_name": "DracinHub",
+  "description": "Nonton ribuan drama pendek asia viral gratis tanpa iklan dengan kualitas HD dan Subtitle Indonesia.",
+  "start_url": "/",
+  "id": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0c0d14",
+  "theme_color": "#0c0d14",
+  "categories": ["entertainment", "video"],
+  "icons": [
+    {
+      "src": "/assets/icons/icon.svg",
+      "sizes": "192x192 512x512 any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

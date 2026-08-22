@@ -24,10 +24,17 @@ Aplikasi web streaming drama pendek (Dracin / Short Drama) All-In-One terlengkap
   - **PineDrama** *(Drama Pendek TikTok HD & Dubbing Indonesia)*
 - **Fitur Player Modern**:
   - Auto-Next Episode otomatis saat video selesai.
+  - Resume Playback tepat di detik terakhir dengan notifikasi toast.
   - Multi-Quality Switching (1080p, 720p, 540p, 480p, 360p, Auto HD).
   - Subtitle Selector (Bahasa Indonesia, English, Spanish, dll.).
   - Kontrol Kecepatan Putar (0.75x, 1.0x, 1.25x, 1.5x, 2.0x).
   - Shortcut Keyboard & Mobile Gesture (Tap toggle, Fullscreen drawer).
+- **Personal Watchlist & History**:
+  - ⭐ **Favorit / Bookmark Saya**: Simpan drama favorit langsung dari poster atau di dalam player.
+  - 🕒 **Riwayat Nonton**: Menyimpan posisi episode & detik terakhir secara instan.
+- **PWA (Progressive Web App)**:
+  - 📲 Dapat di-install ke Layar Utama HP (Android & iOS) / Desktop layaknya aplikasi native fullscreen.
+  - Service Worker shell caching untuk loading instan.
 - **Dark Cinema UI**:
   - Desain elegan Neo-Brutalist TrobosLink Style ramah mata untuk Desktop dan Mobile.
   - Live Search per provider dengan instant debounce.
