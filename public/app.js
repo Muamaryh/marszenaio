@@ -710,10 +710,10 @@ function renderCategoryTabs() {
   const container = el('feedTabsContainer');
   if (!container) return;
 
-  const isDramaBox = appState.currentSource === 'dramabox';
+  const src = appState.currentSource;
   let tabsHtml = '';
 
-  if (isDramaBox) {
+  if (src === 'dramabox') {
     tabsHtml = `
       <button class="feed-tab-btn ${appState.currentFeedType === 'foryou' ? 'active' : ''}" data-type="foryou" onclick="setFeedType('foryou')">
         <span>✨</span> Untuk Anda
@@ -734,6 +734,114 @@ function renderCategoryTabs() {
         <span>🎲</span> Acak
       </button>
     `;
+  } else if (src === 'melolo') {
+    tabsHtml = `
+      <button class="feed-tab-btn ${appState.currentFeedType === 'foryou' ? 'active' : ''}" data-type="foryou" onclick="setFeedType('foryou')">
+        <span>✨</span> Untuk Anda
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'trending' ? 'active' : ''}" data-type="trending" onclick="setFeedType('trending')">
+        <span>🔥</span> Trending
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'latest' ? 'active' : ''}" data-type="latest" onclick="setFeedType('latest')">
+        <span>🆕</span> Terbaru
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'anime' ? 'active' : ''}" data-type="anime" onclick="setFeedType('anime')">
+        <span>🎭</span> Anime
+      </button>
+      <button class="feed-tab-btn btn-random-tab" data-action="random" onclick="playRandomDrama()" title="Pilih & Putar Drama Acak">
+        <span>🎲</span> Acak
+      </button>
+    `;
+  } else if (src === 'freereels') {
+    tabsHtml = `
+      <button class="feed-tab-btn ${appState.currentFeedType === 'foryou' ? 'active' : ''}" data-type="foryou" onclick="setFeedType('foryou')">
+        <span>✨</span> Untuk Anda
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'trending' ? 'active' : ''}" data-type="trending" onclick="setFeedType('trending')">
+        <span>🏠</span> Beranda
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'anime' ? 'active' : ''}" data-type="anime" onclick="setFeedType('anime')">
+        <span>🎭</span> Anime
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'recommended' ? 'active' : ''}" data-type="recommended" onclick="setFeedType('recommended')">
+        <span>💎</span> Rekomendasi
+      </button>
+      <button class="feed-tab-btn btn-random-tab" data-action="random" onclick="playRandomDrama()" title="Pilih & Putar Drama Acak">
+        <span>🎲</span> Acak
+      </button>
+    `;
+  } else if (src === 'shortmax') {
+    tabsHtml = `
+      <button class="feed-tab-btn ${appState.currentFeedType === 'foryou' ? 'active' : ''}" data-type="foryou" onclick="setFeedType('foryou')">
+        <span>✨</span> Untuk Anda
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'latest' ? 'active' : ''}" data-type="latest" onclick="setFeedType('latest')">
+        <span>🆕</span> Terbaru
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'recommended' ? 'active' : ''}" data-type="recommended" onclick="setFeedType('recommended')">
+        <span>💎</span> Rekomendasi
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'hotrank' ? 'active' : ''}" data-type="hotrank" onclick="setFeedType('hotrank')">
+        <span>🏆</span> Populer
+      </button>
+      <button class="feed-tab-btn btn-random-tab" data-action="random" onclick="playRandomDrama()" title="Pilih & Putar Drama Acak">
+        <span>🎲</span> Acak
+      </button>
+    `;
+  } else if (src === 'reelshort') {
+    tabsHtml = `
+      <button class="feed-tab-btn ${appState.currentFeedType === 'foryou' ? 'active' : ''}" data-type="foryou" onclick="setFeedType('foryou')">
+        <span>✨</span> Untuk Anda
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'trending' ? 'active' : ''}" data-type="trending" onclick="setFeedType('trending')">
+        <span>🏠</span> Beranda
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'recommended' ? 'active' : ''}" data-type="recommended" onclick="setFeedType('recommended')">
+        <span>💎</span> Rekomendasi
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'hotrank' ? 'active' : ''}" data-type="hotrank" onclick="setFeedType('hotrank')">
+        <span>🏆</span> Populer
+      </button>
+      <button class="feed-tab-btn btn-random-tab" data-action="random" onclick="playRandomDrama()" title="Pilih & Putar Drama Acak">
+        <span>🎲</span> Acak
+      </button>
+    `;
+  } else if (src === 'pinedrama') {
+    tabsHtml = `
+      <button class="feed-tab-btn ${appState.currentFeedType === 'foryou' ? 'active' : ''}" data-type="foryou" onclick="setFeedType('foryou')">
+        <span>✨</span> Untuk Anda
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'trending' ? 'active' : ''}" data-type="trending" onclick="setFeedType('trending')">
+        <span>🔥</span> Trending
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'recommended' ? 'active' : ''}" data-type="recommended" onclick="setFeedType('recommended')">
+        <span>💎</span> Rekomendasi
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'hotrank' ? 'active' : ''}" data-type="hotrank" onclick="setFeedType('hotrank')">
+        <span>🏆</span> Populer
+      </button>
+      <button class="feed-tab-btn btn-random-tab" data-action="random" onclick="playRandomDrama()" title="Pilih & Putar Drama Acak">
+        <span>🎲</span> Acak
+      </button>
+    `;
+  } else if (src === 'dramanova') {
+    tabsHtml = `
+      <button class="feed-tab-btn ${appState.currentFeedType === 'foryou' ? 'active' : ''}" data-type="foryou" onclick="setFeedType('foryou')">
+        <span>🏠</span> Beranda
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'drama18' ? 'active' : ''}" data-type="drama18" onclick="setFeedType('drama18')">
+        <span>🔞</span> Drama 18+
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'komik' ? 'active' : ''}" data-type="komik" onclick="setFeedType('komik')">
+        <span>📚</span> Komik
+      </button>
+      <button class="feed-tab-btn ${appState.currentFeedType === 'hotrank' ? 'active' : ''}" data-type="hotrank" onclick="setFeedType('hotrank')">
+        <span>🔥</span> Populer
+      </button>
+      <button class="feed-tab-btn btn-random-tab" data-action="random" onclick="playRandomDrama()" title="Pilih & Putar Drama Acak">
+        <span>🎲</span> Acak
+      </button>
+    `;
   } else {
     tabsHtml = `
       <button class="feed-tab-btn ${appState.currentFeedType === 'foryou' ? 'active' : ''}" data-type="foryou" onclick="setFeedType('foryou')">
@@ -747,6 +855,9 @@ function renderCategoryTabs() {
       </button>
       <button class="feed-tab-btn ${appState.currentFeedType === 'recommended' ? 'active' : ''}" data-type="recommended" onclick="setFeedType('recommended')">
         <span>💎</span> Rekomendasi
+      </button>
+      <button class="feed-tab-btn btn-random-tab" data-action="random" onclick="playRandomDrama()" title="Pilih & Putar Drama Acak">
+        <span>🎲</span> Acak
       </button>
     `;
   }
@@ -1017,9 +1128,12 @@ function setFeedType(type) {
   const titles = {
     foryou: '✨ Untuk Anda',
     trending: '🔥 Trending Dramas',
-    vip: '👑 Koleksi Drama VIP DramaBox',
+    vip: '👑 Koleksi Drama VIP',
     dubindo: '🇮🇩 Drama Sulih Suara (Dub Indo)',
     latest: '🆕 Drama Rilis Terbaru',
+    anime: '🎭 Drama Anime & Animasi',
+    drama18: '🔞 Koleksi Drama 18+',
+    komik: '📚 Komik & Manga Populer',
     hotrank: '🏆 Peringkat Populer',
     recommended: '💎 Rekomendasi Pilihan',
     history: '🕒 Riwayat Tontonan Anda',

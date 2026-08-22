@@ -328,35 +328,17 @@ async function getFeed(source = 'dramawave', type = 'trending', page = 1) {
     } catch (e) {}
   }
 
-  // Khusus PineDrama (via Sansekai API dengan Caching)
-  if (source === 'pinedrama') {
+  // Khusus Provider Sansekai (PineDrama, Melolo, FreeReels, ShortMax, ReelShort, DramaNova)
+  const SANSEKAI_SOURCES = ['pinedrama', 'melolo', 'freereels', 'shortmax', 'reelshort', 'dramanova'];
+  if (SANSEKAI_SOURCES.includes(source)) {
     try {
-      const axios = require('axios');
-      const endpoint = type === 'foryou' ? '/pinedrama/foryou' : '/pinedrama/trending';
-      const res = await axios.get(`https://api.sansekai.my.id/api${endpoint}`, {
-        headers: { 'User-Agent': 'Mozilla/5.0' },
-        timeout: 15000
-      });
-
-      const collections = res.data?.collections || res.data?.data?.collections || res.data?.data?.list || [];
-      const items = collections.map(c => ({
-        id: String(c.collection_id || c.id),
-        title: c.title || 'Short Drama',
-        cover: c.cover || (Array.isArray(c.cover_urls) ? c.cover_urls[0] : ''),
-        synopsis: c.description || '',
-        episodes: Number(c.total_episodes || 0),
-        tags: Array.isArray(c.tags) ? c.tags : (c.categories ? c.categories.split(',').map(s => s.trim()) : []),
-        isCompleted: true,
-        source: 'pinedrama'
-      }));
-
-      const result = { success: true, source, type, page, items };
-      memoryCache.set(cacheKey, { timestamp: Date.now(), data: result });
-      return result;
-    } catch (err) {
-      console.error('PineDrama feed error:', err.message);
-      return { success: true, source, type, page, items: [] };
-    }
+      const { getSansekaiFeed } = require('./sansekai_providers');
+      const sFeed = await getSansekaiFeed(source, type, page);
+      if (sFeed && sFeed.items && sFeed.items.length > 0) {
+        memoryCache.set(cacheKey, { timestamp: Date.now(), data: sFeed });
+        return sFeed;
+      }
+    } catch (e) {}
   }
 
   let path = type;
@@ -370,16 +352,16 @@ async function getFeed(source = 'dramawave', type = 'trending', page = 1) {
     res = await sendWsRequest(source, path, params);
   } catch (err) {
     // Fallback otomatis jika provider tidak support feed type tertentu
-    if (err.message.includes('unknown action') || err.message.includes('not supported') || err.message.includes('not found')) {
+    try {
+      res = await sendWsRequest(source, 'trending', {});
+      path = 'trending';
+    } catch (err2) {
       try {
-        res = await sendWsRequest(source, 'trending', {});
-        path = 'trending';
-      } catch (err2) {
         res = await sendWsRequest(source, 'foryou', { page: '1' });
         path = 'foryou';
+      } catch (err3) {
+        return { success: true, source, type, page, items: [] };
       }
-    } else {
-      throw err;
     }
   }
 
