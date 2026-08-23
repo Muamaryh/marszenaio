@@ -3038,9 +3038,9 @@ body.theater-open .bottom-nav-bar {
 }
 
 [data-theme="dark"] .hero-badge {
-  background: #252533;
-  border-color: #383847;
-  color: var(--primary);
+  background: var(--accent-yellow) !important;
+  border-color: #000000 !important;
+  color: #000000 !important;
   box-shadow: 2px 2px 0px #000000;
 }
 
@@ -3053,6 +3053,12 @@ body.theater-open .bottom-nav-bar {
 
 [data-theme="dark"] .cw-title {
   color: #ffffff !important;
+}
+
+[data-theme="dark"] .cw-label {
+  background: var(--accent-yellow) !important;
+  border-color: #000000 !important;
+  color: #000000 !important;
 }
 
 [data-theme="dark"] .cw-source-badge {
@@ -3071,9 +3077,9 @@ body.theater-open .bottom-nav-bar {
 }
 
 [data-theme="dark"] .btn-cw-play {
-  background: var(--primary);
+  background: var(--primary) !important;
   color: #000000 !important;
-  border-color: #000000;
+  border-color: #000000 !important;
 }
 
 /* --- Dark Theme Feed Header & Label --- */
@@ -3284,6 +3290,13 @@ body.theater-open .bottom-nav-bar {
   color: #f4f4f6 !important;
 }
 
+[data-theme="dark"] .psc-badge {
+  background: var(--accent-yellow) !important;
+  color: #000000 !important;
+  border: 1px solid #000000 !important;
+  font-weight: 900 !important;
+}
+
 [data-theme="dark"] .psc-desc {
   color: #9ca3af !important;
 }
@@ -3293,6 +3306,14 @@ body.theater-open .bottom-nav-bar {
   background: #18181f;
   border-color: #272732;
   box-shadow: 4px 4px 0px #000000;
+}
+
+[data-theme="dark"] .badge-episodes {
+  background: var(--accent-yellow) !important;
+  color: #000000 !important;
+  border: 1.5px solid #000000 !important;
+  box-shadow: 1px 1px 0px #000000 !important;
+  font-weight: 900 !important;
 }
 
 [data-theme="dark"] .drama-card:hover {
