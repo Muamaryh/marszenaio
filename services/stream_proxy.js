@@ -23,7 +23,7 @@ async function handleStreamProxy(req, res) {
     const isM3u8 = targetUrl.includes('.m3u8') || targetUrl.includes('m3u8') || req.path.endsWith('.m3u8');
 
     const token = process.env.ANICHIN_API_KEY || 'ANICHIN-A5A16A417FC3EBA15BE691F2B9AA6DA1';
-    let referer = 'https://miniapp.anichin.bio/';
+    let referer = 'https://api.anichin.bio/';
     if (targetUrl.includes('sansekai.my.id')) referer = 'https://api.sansekai.my.id/';
     else if (targetUrl.includes('mydramawave.com')) referer = 'https://mydramawave.com/';
     else if (targetUrl.includes('dramabox')) referer = 'https://www.dramaboxdb.com/';

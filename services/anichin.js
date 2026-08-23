@@ -1,13 +1,14 @@
 /**
  * DracinHub - Anichin Short Drama Service
- * WebSocket multiplexing gateway ke Anichin Official API (miniapp.anichin.bio)
- * Mendukung 12 Provider Resmi dengan API Key #1
+ * Direct HTTP REST API & WebSocket Multiplexing ke https://api.anichin.bio
+ * API Key #1: ANICHIN-A5A16A417FC3EBA15BE691F2B9AA6DA1
  */
 
+const axios = require('axios');
 const WebSocket = require('ws');
 
+const ANICHIN_API_URL = 'https://api.anichin.bio';
 const ANICHIN_WS_URL = 'wss://miniapp.anichin.bio/ws';
-const ANICHIN_BASE_URL = 'https://miniapp.anichin.bio';
 const DEFAULT_TOKEN = 'ANICHIN-A5A16A417FC3EBA15BE691F2B9AA6DA1';
 
 const SOURCES = {
@@ -25,21 +26,28 @@ const SOURCES = {
   dramabite:  { name: 'DramaBite',  id: '15384', badge: 'Fresh', desc: 'Update drama baru setiap hari', icon: '/assets/logos/dramabite.png' }
 };
 
+function getToken() {
+  return process.env.ANICHIN_API_KEY || DEFAULT_TOKEN;
+}
+
+const httpClient = axios.create({
+  baseURL: ANICHIN_API_URL,
+  timeout: 10000
+});
+
+// WebSocket Connection Management
 let ws = null;
 let wsReady = false;
 let reqCounter = 0;
 const pendingCallbacks = new Map();
 const memoryCache = new Map();
 const knownDramaMetadata = new Map();
-const CACHE_TTL_FEED_MS = 10 * 60 * 1000; // 10 menit
-const CACHE_TTL_DETAIL_MS = 30 * 60 * 1000; // 30 menit
-const CACHE_TTL_EPISODE_MS = 15 * 60 * 1000; // 15 menit
-const CACHE_TTL_SEARCH_MS = 5 * 60 * 1000; // 5 menit
-
-function getToken() {
-  return process.env.ANICHIN_API_KEY || DEFAULT_TOKEN;
-}
 let authResolvers = [];
+
+const CACHE_TTL_FEED_MS = 10 * 60 * 1000;
+const CACHE_TTL_DETAIL_MS = 30 * 60 * 1000;
+const CACHE_TTL_EPISODE_MS = 15 * 60 * 1000;
+const CACHE_TTL_SEARCH_MS = 5 * 60 * 1000;
 
 function initWebSocket() {
   if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) {
@@ -98,7 +106,6 @@ function initWebSocket() {
   }
 }
 
-// Inisialisasi awal
 initWebSocket();
 
 function waitForWsReady(timeoutMs = 12000) {
@@ -125,36 +132,65 @@ function waitForWsReady(timeoutMs = 12000) {
 async function sendWsRequest(source, path, params = {}) {
   await waitForWsReady();
   return new Promise((resolve, reject) => {
-    executeDirect(source, path, params, resolve, reject);
+    const id = 'dracin_' + Date.now() + '_' + (++reqCounter);
+    const timer = setTimeout(() => {
+      if (pendingCallbacks.has(id)) {
+        pendingCallbacks.delete(id);
+        reject(new Error('Permintaan ke API drama timeout (30 detik)'));
+      }
+    }, 30000);
+
+    pendingCallbacks.set(id, { resolve, reject, timer });
+
+    const payload = {
+      id,
+      action: 'execute',
+      source,
+      path,
+      params
+    };
+
+    try {
+      ws.send(JSON.stringify(payload));
+    } catch (err) {
+      clearTimeout(timer);
+      pendingCallbacks.delete(id);
+      reject(err);
+    }
   });
 }
 
-function executeDirect(source, path, params, resolve, reject) {
-  const id = 'dracin_' + Date.now() + '_' + (++reqCounter);
-  const timer = setTimeout(() => {
-    if (pendingCallbacks.has(id)) {
-      pendingCallbacks.delete(id);
-      reject(new Error('Permintaan ke API drama timeout (30 detik)'));
-    }
-  }, 30000);
-
-  pendingCallbacks.set(id, { resolve, reject, timer });
-
-  const payload = {
-    id,
-    action: 'execute',
-    source,
-    path,
-    params
-  };
-
+/**
+ * Universal Unified Caller: Direct HTTP (api.anichin.bio) -> WebSocket Fallback
+ */
+async function callAnichinApi(source, endpoint, params = {}) {
+  const token = getToken();
+  
+  // 1. Coba Direct HTTP REST API (api.anichin.bio)
   try {
-    ws.send(JSON.stringify(payload));
-  } catch (err) {
-    clearTimeout(timer);
-    pendingCallbacks.delete(id);
-    reject(err);
-  }
+    const res = await httpClient.get(`/${source}/${endpoint}`, {
+      params: { ...params, token },
+      headers: {
+        'X-API-Key': token,
+        'Authorization': `Bearer ${token}`,
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+      },
+      timeout: 8000
+    });
+    if (res.data && res.status === 200) {
+      return res.data;
+    }
+  } catch (httpErr) {}
+
+  // 2. Fallback otomatis ke WebSocket Gateway (miniapp.anichin.bio)
+  try {
+    const wsRes = await sendWsRequest(source, endpoint, params);
+    if (wsRes && wsRes.data) {
+      return wsRes.data;
+    }
+  } catch (wsErr) {}
+
+  return null;
 }
 
 /**
@@ -168,6 +204,8 @@ function normalizeDramaList(raw) {
     items = raw;
   } else if (raw.items && Array.isArray(raw.items)) {
     items = raw.items;
+  } else if (raw.rows && Array.isArray(raw.rows)) {
+    items = raw.rows;
   } else if (raw.data && Array.isArray(raw.data)) {
     items = raw.data;
   } else if (raw.list && Array.isArray(raw.list)) {
@@ -176,8 +214,6 @@ function normalizeDramaList(raw) {
     items = raw.results;
   } else if (raw.books && Array.isArray(raw.books)) {
     items = raw.books;
-  } else if (raw.rows && Array.isArray(raw.rows)) {
-    items = raw.rows;
   }
 
   return items.map(item => {
@@ -250,7 +286,11 @@ function normalizeDramaDetail(raw, fallbackId = '') {
       const epNum = Number(ep.episodeNumber || ep.episode_number || ep.ep || ep.chapter_index || ep.chapter_id || (index + 1));
       const epTitle = ep.title || ep.name || ep.chapter_title || `Episode ${epNum}`;
       const isLocked = Boolean(ep.isLocked || ep.is_locked || ep.is_lock || false);
-      const videoUrl = ep.videoUrl || ep.video_url || ep.url || ep.play_url || ep.hls_url || ep.m3u8 || '';
+      let videoUrl = ep.videoUrl || ep.video_url || ep.url || ep.play_url || ep.hls_url || ep.m3u8 || '';
+      if (videoUrl.startsWith('/api/')) {
+        const token = getToken();
+        videoUrl = `${ANICHIN_API_URL}${videoUrl}${videoUrl.includes('?') ? '&' : '?'}token=${token}`;
+      }
       return {
         episodeNumber: epNum,
         title: epTitle,
@@ -296,38 +336,40 @@ function normalizeDramaDetail(raw, fallbackId = '') {
 function normalizeEpisodeStream(raw, source, id, epNum) {
   if (!raw) return null;
   const data = raw.data || raw;
+  const token = getToken();
 
   let videoUrl = '';
   let qualities = [];
   let subtitles = [];
 
-  const token = getToken();
   if (typeof data === 'string' && (data.startsWith('http://') || data.startsWith('https://'))) {
     videoUrl = data;
   } else {
     videoUrl = data.videoUrl || data.video_url || data.url || data.play_url || data.hls_url || data.m3u8 || data.stream_url || '';
     if (videoUrl.startsWith('/api/')) {
-      videoUrl = `${ANICHIN_BASE_URL}${videoUrl}${videoUrl.includes('?') ? '&' : '?'}token=${token}`;
+      videoUrl = `${ANICHIN_API_URL}${videoUrl}${videoUrl.includes('?') ? '&' : '?'}token=${token}`;
     }
 
     if (Array.isArray(data.qualities) && data.qualities.length > 0) {
-      qualities = data.qualities.map(q => ({
-        label: q.label || q.name || q.resolution || `${q.height || ''}p`,
-        url: (q.url || q.video_url || q.play_url || '').startsWith('/api/') ? `${ANICHIN_BASE_URL}${q.url || q.video_url || q.play_url}${(q.url || q.video_url || q.play_url).includes('?') ? '&' : '?'}token=${token}` : (q.url || q.video_url || q.play_url || ''),
-        isDefault: Boolean(q.isDefault || q.default || false)
-      })).filter(q => q.url);
+      qualities = data.qualities.map(q => {
+        let qUrl = q.url || q.video_url || q.play_url || '';
+        if (qUrl.startsWith('/api/')) qUrl = `${ANICHIN_API_URL}${qUrl}${qUrl.includes('?') ? '&' : '?'}token=${token}`;
+        return {
+          label: q.label || q.name || q.resolution || `${q.height || ''}p`,
+          url: qUrl,
+          isDefault: Boolean(q.isDefault || q.default || false)
+        };
+      }).filter(q => q.url);
     } else if (Array.isArray(data.qualityList) && data.qualityList.length > 0) {
-      qualities = data.qualityList.map(q => ({
-        label: q.label || q.name || `${q.quality || ''}`,
-        url: q.url || q.videoUrl || '',
-        isDefault: Boolean(q.isDefault)
-      })).filter(q => q.url);
-    } else if (Array.isArray(data.videos) && data.videos.length > 0) {
-      qualities = data.videos.map(v => ({
-        label: v.quality || v.resolution || 'Auto',
-        url: v.url || v.video_url || '',
-        isDefault: Boolean(v.default)
-      })).filter(q => q.url);
+      qualities = data.qualityList.map(q => {
+        let qUrl = q.url || q.videoUrl || '';
+        if (qUrl.startsWith('/api/')) qUrl = `${ANICHIN_API_URL}${qUrl}${qUrl.includes('?') ? '&' : '?'}token=${token}`;
+        return {
+          label: q.label || q.name || `${q.quality || ''}`,
+          url: qUrl,
+          isDefault: Boolean(q.isDefault)
+        };
+      }).filter(q => q.url);
     }
 
     if (Array.isArray(data.subtitles) && data.subtitles.length > 0) {
@@ -359,7 +401,6 @@ function normalizeEpisodeStream(raw, source, id, epNum) {
   };
 }
 
-// Helper
 function getSources() {
   return Object.entries(SOURCES).map(([key, val]) => ({
     key,
@@ -377,7 +418,24 @@ async function getFeed(source = 'dramawave', type = 'trending', page = 1) {
     return cached.data;
   }
 
-  // 1. Ambil data dari Sansekai Suite (API 2) jika didukung sebagai cadangan
+  // 1. Ambil data dari Anichin (Direct HTTP api.anichin.bio -> WS fallback)
+  let anichinItems = [];
+  const params = {};
+  if (type === 'foryou' || type === 'latest' || type === 'new' || type === 'romance') {
+    params.page = String(page);
+  }
+
+  const rawData = await callAnichinApi(source, type, params);
+  if (rawData) {
+    anichinItems = normalizeDramaList(rawData);
+  }
+
+  if (anichinItems.length === 0) {
+    const trendingData = await callAnichinApi(source, 'trending', {});
+    if (trendingData) anichinItems = normalizeDramaList(trendingData);
+  }
+
+  // 2. Ambil data dari Sansekai jika didukung sebagai cadangan
   let sansekaiItems = [];
   const SANSEKAI_SOURCES = ['freereels', 'shortmax', 'reelshort', 'dramanova', 'dramabox'];
 
@@ -395,30 +453,7 @@ async function getFeed(source = 'dramawave', type = 'trending', page = 1) {
     } catch (e) {}
   }
 
-  // 2. Ambil data dari Anichin WebSocket (API 1)
-  let anichinItems = [];
-  let path = type;
-  const params = {};
-  if (type === 'foryou' || type === 'latest' || type === 'new' || type === 'romance') {
-    params.page = String(page);
-  }
-
-  try {
-    const res = await sendWsRequest(source, path, params);
-    anichinItems = normalizeDramaList(res.data);
-  } catch (err) {
-    try {
-      const res = await sendWsRequest(source, 'trending', {});
-      anichinItems = normalizeDramaList(res.data);
-    } catch (err2) {
-      try {
-        const res = await sendWsRequest(source, 'foryou', { page: '1' });
-        anichinItems = normalizeDramaList(res.data);
-      } catch (err3) {}
-    }
-  }
-
-  // 3. PENGGABUNGAN & DEDUPLIKASI (Merge & Gap-Fill)
+  // 3. PENGGABUNGAN & DEDUPLIKASI
   const mergedItems = [...anichinItems];
   const seenTitles = new Set(anichinItems.map(it => (it.title || '').toLowerCase().trim()));
   const seenIds = new Set(anichinItems.map(it => String(it.id)));
@@ -453,44 +488,21 @@ async function searchDramas(source = 'dramawave', query = '') {
 
   let items = [];
 
-  // 1. Cari di provider yang sedang aktif
-  try {
-    const res = await sendWsRequest(source === 'all' ? 'dramawave' : source, 'search', { query: query.trim() });
-    const wsItems = normalizeDramaList(res.data).map(item => ({ ...item, source: resolveActualSource(item.id, source) }));
-    if (wsItems && wsItems.length > 0) {
-      items.push(...wsItems);
-    }
-  } catch (err) {}
+  // 1. Cari via Anichin
+  const rawSearch = await callAnichinApi(source === 'all' ? 'dramawave' : source, 'search', { query: query.trim() });
+  if (rawSearch) {
+    const normalized = normalizeDramaList(rawSearch).map(item => ({ ...item, source: resolveActualSource(item.id, source) }));
+    if (normalized.length > 0) items.push(...normalized);
+  }
 
-  // 2. Jika provider didukung Sansekai, cari juga via Sansekai provider search
+  // 2. Jika Sansekai didukung, cari juga
   const SANSEKAI_SOURCES = ['freereels', 'shortmax', 'reelshort', 'dramanova'];
   if (SANSEKAI_SOURCES.includes(source)) {
     try {
       const { searchSansekai } = require('./sansekai_providers');
       const sItems = await searchSansekai(source, query.trim());
-      if (sItems && sItems.length > 0) {
-        items.push(...sItems);
-      }
+      if (sItems && sItems.length > 0) items.push(...sItems);
     } catch (e) {}
-  }
-
-  // 3. Jika pencarian global 'all' atau jika provider aktif menghasilkan < 2 drama, cari di provider utama lain
-  if (source === 'all' || items.length < 2) {
-    const fallbackSources = ['dramawave', 'dramabox', 'shortmax', 'netshort', 'freereels', 'reelshort', 'goodshort', 'idrama']
-      .filter(s => s !== source);
-
-    const searchPromises = fallbackSources.map(s => {
-      return sendWsRequest(s, 'search', { query: query.trim() })
-        .then(r => normalizeDramaList(r.data).map(item => ({ ...item, source: resolveActualSource(item.id, s) })))
-        .catch(() => []);
-    });
-
-    const fallbackResults = await Promise.allSettled(searchPromises);
-    fallbackResults.forEach(r => {
-      if (r.status === 'fulfilled' && Array.isArray(r.value)) {
-        items.push(...r.value);
-      }
-    });
   }
 
   // Deduplikasi items
@@ -513,28 +525,14 @@ async function searchDramas(source = 'dramawave', query = '') {
   return result;
 }
 
-/**
- * Deteksi provider sumber asli berdasarkan pola ID drama
- */
 function resolveActualSource(id, requestedSource) {
   const str = String(id || '');
 
-  // 1. DramaBox: 11 digit dimulai dari 420 (e.g. 42000007806)
   if (/^420\d{8}$/.test(str)) return 'dramabox';
-
-  // 2. GoodShort: 11 digit dimulai dari 310 (e.g. 31001188126)
   if (/^310\d{8}$/.test(str)) return 'goodshort';
-
-  // 3. iDrama: 12 digit dimulai dari 160 (e.g. 160000641712)
   if (/^160\d{9}$/.test(str)) return 'idrama';
-
-  // 4. NetShort: 19 digit ID (e.g. 2034157133506805762)
   if (/^\d{19}$/.test(str)) return 'netshort';
-
-  // 5. ReelShort: 24 hex characters ObjectId (e.g. 699d1eefa3a7262cff05534b)
   if (/^[a-f0-9]{24}$/i.test(str)) return 'reelshort';
-
-  // 6. DramaWave: 10 alfanumerik (e.g. LeMYdgoXZM)
   if (/^[A-Za-z0-9]{10}$/.test(str) && !/^\d+$/.test(str)) return 'dramawave';
 
   if (requestedSource && requestedSource !== 'all') return requestedSource;
@@ -553,13 +551,13 @@ async function getDramaDetail(source = 'dramawave', id) {
 
   let detail = null;
 
-  // 1. Coba API 1 (Anichin WebSocket)
-  try {
-    const res = await sendWsRequest(source, 'detail', { id: String(id) });
-    detail = normalizeDramaDetail(res.data, id);
-  } catch (err) {}
+  // 1. Coba Anichin API (HTTP api.anichin.bio -> WS fallback)
+  const rawDetail = await callAnichinApi(source, 'detail', { id: String(id) });
+  if (rawDetail) {
+    detail = normalizeDramaDetail(rawDetail, id);
+  }
 
-  // 2. Jika API 1 gagal atau episode kosong, Coba API 2 (Sansekai Multi-Provider / DramaBox AllEpisode)
+  // 2. Sansekai Multi-Provider fallback
   if (!detail || !detail.episodes || detail.episodes.length === 0) {
     if (source === 'dramabox' || /^420\d{8}$/.test(String(id))) {
       try {
@@ -580,7 +578,7 @@ async function getDramaDetail(source = 'dramawave', id) {
     }
   }
 
-  // 3. Fallback ke known drama metadata dari pencarian/katalog
+  // 3. Fallback ke known metadata
   if (!detail || !detail.episodes || detail.episodes.length === 0) {
     const known = knownDramaMetadata.get(String(id));
     if (known) {
@@ -610,54 +608,9 @@ async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
 
   let streamData = null;
 
-  // --- Strategi Dual-API Automatic Fallback ---
-
-  // 1. Khusus DramaBox
+  // 1. DramaBox VIP Decrypt (> Ep 20)
   if (source === 'dramabox' || /^420\d{8}$/.test(String(id))) {
-    // A. Coba Sansekai VIP Decrypt untuk Ep > 20
     if (epNum > 20) {
-      try {
-        const { getDramaBoxEpisodeStream } = require('./dramabox_sansekai');
-        const dbRes = await getDramaBoxEpisodeStream(id, epNum);
-        if (dbRes && dbRes.videoUrl) {
-          streamData = {
-            success: true,
-            source: 'dramabox',
-            id,
-            episodeNumber: epNum,
-            videoUrl: dbRes.videoUrl,
-            qualities: dbRes.qualities || [{ label: '1080p Full HD', url: dbRes.videoUrl, isDefault: true }],
-            subtitles: []
-          };
-        }
-      } catch (e) {}
-    }
-
-    // B. Coba Anichin HLS CDN
-    if (!streamData || !streamData.videoUrl) {
-      try {
-        const axios = require('axios');
-        const token = getToken();
-        const masterUrl = `${ANICHIN_BASE_URL}/api/dramabox/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&token=${token}`;
-        const masterRes = await axios.get(masterUrl, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: 5000 });
-        const lines = masterRes.data.split('\n');
-        const directMediaUrl = lines.find(l => l.startsWith('http'));
-        if (directMediaUrl) {
-          streamData = {
-            success: true,
-            source: 'dramabox',
-            id,
-            episodeNumber: epNum,
-            videoUrl: directMediaUrl.trim(),
-            qualities: [{ label: '720p HD', url: directMediaUrl.trim(), isDefault: true }],
-            subtitles: []
-          };
-        }
-      } catch (e) {}
-    }
-
-    // C. Fallback ke Sansekai Stream jika Anichin gagal
-    if (!streamData || !streamData.videoUrl) {
       try {
         const { getDramaBoxEpisodeStream } = require('./dramabox_sansekai');
         const dbRes = await getDramaBoxEpisodeStream(id, epNum);
@@ -676,7 +629,7 @@ async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
     }
   }
 
-  // 2. DramaWave / FreeReels: Ambil master stream dari detail drama
+  // 2. DramaWave / FreeReels: Ambil master stream resmi dari detail drama
   if (!streamData && (source === 'dramawave' || source === 'freereels')) {
     try {
       const detail = await getDramaDetail(source, id);
@@ -702,8 +655,8 @@ async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
   if (!streamData && source === 'shortmax') {
     try {
       const token = getToken();
-      const hls720 = `${ANICHIN_BASE_URL}/api/shortmax/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=720p&token=${token}`;
-      const hls480 = `${ANICHIN_BASE_URL}/api/shortmax/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=480p&token=${token}`;
+      const hls720 = `${ANICHIN_API_URL}/api/shortmax/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=720p&token=${token}`;
+      const hls480 = `${ANICHIN_API_URL}/api/shortmax/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=480p&token=${token}`;
       streamData = {
         success: true,
         source: 'shortmax',
@@ -719,18 +672,18 @@ async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
     } catch (e) {}
   }
 
-  // 4. Provider Umum: Coba API 1 (Anichin WebSocket)
+  // 4. Provider Umum: Coba Anichin API (HTTP api.anichin.bio -> WS fallback)
   if (!streamData) {
-    try {
-      const res = await sendWsRequest(source, 'episode', { id: String(id), ep: String(epNum) });
-      const wsStream = normalizeEpisodeStream(res.data, source, id, epNum);
-      if (wsStream && wsStream.videoUrl) {
-        streamData = wsStream;
+    const rawEp = await callAnichinApi(source, 'episode', { id: String(id), ep: String(epNum) });
+    if (rawEp) {
+      const normalized = normalizeEpisodeStream(rawEp, source, id, epNum);
+      if (normalized && normalized.videoUrl) {
+        streamData = normalized;
       }
-    } catch (err) {}
+    }
   }
 
-  // 5. Fallback ke Detail Episode Video URL jika wsStream gagal
+  // 5. Fallback ke Detail Episode Video URL jika belum dapat
   if (!streamData || !streamData.videoUrl) {
     try {
       const detail = await getDramaDetail(source, id);
@@ -751,7 +704,7 @@ async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
     } catch (e) {}
   }
 
-  // 4. Fallback ke API 2 (Sansekai Provider Episode Stream) jika API 1 gagal
+  // 6. Fallback ke Sansekai Provider Episode Stream jika Anichin gagal
   if (!streamData || !streamData.videoUrl) {
     try {
       const { getSansekaiEpisodeStream } = require('./sansekai_providers');
