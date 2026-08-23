@@ -647,6 +647,7 @@ async function initApp() {
   renderContinueWatchingBanner();
   initInfiniteScroll();
   initPlayerEventListeners();
+  initDraggableSubtitle();
   hideSplashScreen();
 
   // Handle URL deep-link (e.g. ?source=dramawave&id=QCJvQG2LLD&ep=26)
@@ -2030,11 +2031,18 @@ function populateSubtitleOptions(subtitles) {
 
 function changeSubtitle(subUrl) {
   const video = el('playerVideo');
+  const subOverlay = el('playerSubtitleOverlay');
+  const subTextNode = el('subtitleTextNode');
   if (!video) return;
 
   // Bersihkan track subtitle
   while (video.getElementsByTagName('track').length > 0) {
     video.removeChild(video.getElementsByTagName('track')[0]);
+  }
+
+  if (subOverlay) {
+    subOverlay.classList.add('hidden');
+    if (subTextNode) subTextNode.innerHTML = '';
   }
 
   if (subUrl === 'none' || !subUrl) return;
@@ -2049,14 +2057,116 @@ function changeSubtitle(subUrl) {
   track.src = `/api/stream/subtitle?url=${encodeURIComponent(subUrl)}`;
   video.appendChild(track);
 
-  // Aktifkan text track
+  const handleCues = (textTrack) => {
+    if (!textTrack) return;
+    textTrack.mode = 'hidden';
+    textTrack.oncuechange = () => {
+      if (!subOverlay || !subTextNode) return;
+      const cues = textTrack.activeCues;
+      if (cues && cues.length > 0) {
+        let text = Array.from(cues).map(c => c.text).join('\n');
+        subTextNode.innerHTML = escapeHtml(text).replace(/\n/g, '<br>');
+        subOverlay.classList.remove('hidden');
+      } else {
+        subTextNode.innerHTML = '';
+        subOverlay.classList.add('hidden');
+      }
+    };
+  };
+
+  track.addEventListener('load', () => {
+    try {
+      handleCues(track.track);
+    } catch (e) {}
+  });
+
   setTimeout(() => {
     if (video.textTracks && video.textTracks.length > 0) {
       for (let i = 0; i < video.textTracks.length; i++) {
-        video.textTracks[i].mode = 'showing';
+        handleCues(video.textTracks[i]);
       }
     }
   }, 300);
+}
+
+function initDraggableSubtitle() {
+  const subOverlay = el('playerSubtitleOverlay');
+  const container = el('videoContainer');
+  if (!subOverlay || !container) return;
+
+  // Pulihkan posisi subtitle yang tersimpan sebelumnya
+  try {
+    const savedBottom = localStorage.getItem('dracin_sub_pos_bottom');
+    if (savedBottom) {
+      subOverlay.style.bottom = `${savedBottom}px`;
+    }
+  } catch (e) {}
+
+  let isDragging = false;
+  let startY = 0;
+  let startBottom = 85;
+
+  const onStart = (clientY) => {
+    isDragging = true;
+    startY = clientY;
+    const computed = window.getComputedStyle(subOverlay);
+    startBottom = parseFloat(computed.bottom) || 85;
+    subOverlay.style.transition = 'none';
+  };
+
+  const onMove = (clientY) => {
+    if (!isDragging) return;
+    const deltaY = startY - clientY;
+    const containerRect = container.getBoundingClientRect();
+    const maxBottom = Math.max(containerRect.height - 70, 150);
+    const minBottom = 25;
+    let newBottom = Math.min(Math.max(startBottom + deltaY, minBottom), maxBottom);
+    subOverlay.style.bottom = `${newBottom}px`;
+  };
+
+  const onEnd = () => {
+    if (!isDragging) return;
+    isDragging = false;
+    subOverlay.style.transition = '';
+    const currentBottom = parseFloat(subOverlay.style.bottom);
+    if (!isNaN(currentBottom)) {
+      try {
+        localStorage.setItem('dracin_sub_pos_bottom', Math.round(currentBottom));
+      } catch (e) {}
+    }
+  };
+
+  // Mouse Events
+  subOverlay.addEventListener('mousedown', (e) => {
+    e.stopPropagation();
+    onStart(e.clientY);
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (isDragging) onMove(e.clientY);
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (isDragging) onEnd();
+  });
+
+  // Touch Events (Mobile Drag)
+  subOverlay.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      e.stopPropagation();
+      onStart(e.touches[0].clientY);
+    }
+  }, { passive: false });
+
+  window.addEventListener('touchmove', (e) => {
+    if (isDragging && e.touches.length === 1) {
+      onMove(e.touches[0].clientY);
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchend', () => {
+    if (isDragging) onEnd();
+  });
 }
 
 function populateQualityOptions(qualities) {

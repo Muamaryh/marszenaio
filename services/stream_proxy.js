@@ -154,7 +154,7 @@ async function handleStreamProxy(req, res) {
 function srtToVtt(srtText) {
   let vtt = "WEBVTT\n\n";
   let content = srtText.replace(/\r\n|\r/g, '\n');
-  content = content.replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2');
+  content = content.replace(/(\d{2}:\d{2}:\d{2}),(\d{3}) --> (\d{2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2 --> $3.$4 line:82% position:50% align:center');
   vtt += content;
   return vtt;
 }
