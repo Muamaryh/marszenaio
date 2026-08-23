@@ -2121,12 +2121,12 @@ function updateActiveSubtitle(curTime) {
 function changeSubPosition(val) {
   const subOverlay = el('playerSubtitleOverlay');
   if (!subOverlay) return;
-  const num = parseInt(val) || 130;
-  subOverlay.style.bottom = `${num}px`;
+  const posVal = String(val).includes('%') ? val : `${val}px`;
+  subOverlay.style.bottom = posVal;
   try {
-    localStorage.setItem('dracin_sub_pos_bottom', num);
+    localStorage.setItem('dracin_sub_pos_bottom', posVal);
   } catch (e) {}
-  showToast(`Posisi subtitle: ${num}px (bisa juga digeser bebas)`);
+  showToast(`Posisi subtitle: ${posVal}`);
 }
 
 function initDraggableSubtitle() {
@@ -2134,30 +2134,30 @@ function initDraggableSubtitle() {
   const container = el('videoContainer');
   if (!subOverlay || !container) return;
 
-  // Default posisi tengah-bawah nyaman untuk drama pendek vertical (130px)
-  let savedBottom = 130;
+  // Default posisi tengah-bawah nyaman untuk drama pendek vertical (24%)
+  let savedBottom = '24%';
   try {
     const stored = localStorage.getItem('dracin_sub_pos_bottom');
-    if (stored) savedBottom = parseInt(stored) || 130;
+    if (stored) savedBottom = stored;
   } catch (e) {}
 
-  subOverlay.style.bottom = `${savedBottom}px`;
+  subOverlay.style.bottom = String(savedBottom).includes('%') || String(savedBottom).includes('px') ? savedBottom : `${savedBottom}px`;
   const select = el('subPositionSelect');
   if (select) {
     const opts = Array.from(select.options);
-    const match = opts.find(o => Math.abs(parseInt(o.value) - savedBottom) < 30);
+    const match = opts.find(o => o.value === savedBottom);
     if (match) select.value = match.value;
   }
 
   let isDragging = false;
   let startY = 0;
-  let startBottom = savedBottom;
+  let startBottomPx = 150;
 
   const onStart = (clientY) => {
     isDragging = true;
     startY = clientY;
     const computed = window.getComputedStyle(subOverlay);
-    startBottom = parseFloat(computed.bottom) || 130;
+    startBottomPx = parseFloat(computed.bottom) || 150;
     subOverlay.style.transition = 'none';
   };
 
@@ -2165,20 +2165,21 @@ function initDraggableSubtitle() {
     if (!isDragging) return;
     const deltaY = startY - clientY;
     const containerRect = container.getBoundingClientRect();
-    const maxBottom = Math.max(containerRect.height - 80, 200);
+    const maxBottom = Math.max(containerRect.height - 80, 250);
     const minBottom = 30;
-    let newBottom = Math.min(Math.max(startBottom + deltaY, minBottom), maxBottom);
-    subOverlay.style.bottom = `${newBottom}px`;
+    let newBottomPx = Math.min(Math.max(startBottomPx + deltaY, minBottom), maxBottom);
+    const pct = Math.round((newBottomPx / containerRect.height) * 100);
+    subOverlay.style.bottom = `${pct}%`;
   };
 
   const onEnd = () => {
     if (!isDragging) return;
     isDragging = false;
     subOverlay.style.transition = '';
-    const currentBottom = parseFloat(subOverlay.style.bottom);
-    if (!isNaN(currentBottom)) {
+    const pctVal = subOverlay.style.bottom;
+    if (pctVal) {
       try {
-        localStorage.setItem('dracin_sub_pos_bottom', Math.round(currentBottom));
+        localStorage.setItem('dracin_sub_pos_bottom', pctVal);
       } catch (e) {}
     }
   };
