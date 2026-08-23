@@ -34,6 +34,37 @@
   --font: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
 }
 
+/* ========================================================
+   DARK THEME PALETTE (NEO-BRUTALIST NIGHT MODE)
+   ======================================================== */
+[data-theme="dark"], body.dark-theme {
+  --bg-canvas: #101014;
+  --bg-card: #18181f;
+  --black: #000000;
+  --primary: #ffb84d;
+  --primary-hover: #ffa31a;
+  --accent-pink: #ff5277;
+  --accent-mint: #25d38f;
+  --accent-blue: #47b5ff;
+  --accent-purple: #b985ff;
+  --accent-yellow: #ffd738;
+  --text-main: #f4f4f6;
+  --text-muted: #9ca3af;
+  
+  --border-thick: 2.5px solid #2d2d3a;
+  --border-sm: 2px solid #2d2d3a;
+  --shadow-sm: 2px 2px 0px #000000;
+  --shadow-md: 4px 4px 0px #000000;
+  --shadow-lg: 6px 6px 0px #000000;
+  --shadow-hover: 5px 5px 0px #000000;
+}
+
+[data-theme="dark"] body, body.dark-theme {
+  background-color: var(--bg-canvas);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1.5px, transparent 1.5px);
+  color: var(--text-main);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -2951,5 +2982,282 @@ body.theater-open .bottom-nav-bar {
   transform: translateY(100%);
   pointer-events: none;
   opacity: 0;
+}
+
+/* ========================================================
+   THEME TOGGLE BUTTON & DARK MODE COMPONENT OVERRIDES
+   ======================================================== */
+.btn-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--bg-card);
+  border: var(--border-thick);
+  box-shadow: var(--shadow-sm);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: var(--transition);
+  color: var(--text-main);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.btn-theme-toggle:hover {
+  transform: translate(-2px, -2px) rotate(15deg);
+  box-shadow: var(--shadow-hover);
+  background: var(--accent-yellow);
+}
+
+.btn-theme-toggle:active {
+  transform: translate(1px, 1px);
+  box-shadow: none;
+}
+
+[data-theme="dark"] .btn-theme-toggle {
+  background: #1e1e28;
+  border-color: #2e2e3d;
+  box-shadow: 2px 2px 0px #000000;
+}
+
+[data-theme="dark"] .btn-theme-toggle:hover {
+  background: var(--accent-purple);
+  color: #000000;
+  box-shadow: 4px 4px 0px #000000;
+}
+
+/* --- Dark Theme Navbar & Header --- */
+[data-theme="dark"] .navbar {
+  background: #14141a;
+  border-bottom-color: #242430;
+}
+
+[data-theme="dark"] .brand-logo-wrap {
+  background: #1e1e28;
+  border-color: #2e2e3d;
+}
+
+[data-theme="dark"] .brand-text {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .brand-badge {
+  background: #272732;
+  border-color: #383847;
+  color: var(--primary);
+}
+
+[data-theme="dark"] .btn-provider-trigger {
+  background: #1e1e28;
+  border-color: #2e2e3d;
+  color: #f4f4f6;
+  box-shadow: 2px 2px 0px #000000;
+}
+
+[data-theme="dark"] .btn-provider-trigger:hover {
+  background: #252533;
+  box-shadow: 4px 4px 0px #000000;
+}
+
+[data-theme="dark"] .btn-install-app {
+  background: #25d38f;
+  color: #000000;
+  box-shadow: 2px 2px 0px #000000;
+}
+
+/* --- Dark Theme Category Tabs --- */
+[data-theme="dark"] .feed-tab-btn {
+  background: #18181f;
+  border-color: #272732;
+  color: #f4f4f6;
+  box-shadow: 2px 2px 0px #000000;
+}
+
+[data-theme="dark"] .feed-tab-btn:hover {
+  background: #22222c;
+  box-shadow: 4px 4px 0px #000000;
+}
+
+[data-theme="dark"] .feed-tab-btn.active {
+  background: var(--primary);
+  color: #000000;
+  border-color: #000000;
+  box-shadow: 4px 4px 0px #000000;
+}
+
+[data-theme="dark"] .feed-tab-btn.btn-random-tab {
+  background: #231926;
+  border-color: #3d2542;
+  color: #ff85a1;
+}
+
+[data-theme="dark"] .feed-tab-btn.btn-random-tab:hover {
+  background: var(--accent-pink);
+  color: #000000;
+}
+
+/* --- Dark Theme Search Inputs & Modals --- */
+[data-theme="dark"] .feed-search-box input,
+[data-theme="dark"] .search-box-popup input {
+  background: #18181f;
+  border-color: #272732;
+  color: #f4f4f6;
+}
+
+[data-theme="dark"] .feed-search-box input::placeholder,
+[data-theme="dark"] .search-box-popup input::placeholder {
+  color: #6b7280;
+}
+
+[data-theme="dark"] .feed-search-box svg,
+[data-theme="dark"] .search-box-popup svg {
+  color: #9ca3af;
+}
+
+[data-theme="dark"] .search-modal-window {
+  background: #14141a;
+  border-color: #272732;
+  color: #f4f4f6;
+}
+
+[data-theme="dark"] .search-modal-header {
+  background: #14141a;
+  border-bottom-color: #272732;
+}
+
+[data-theme="dark"] .search-modal-close {
+  background: #1e1e28;
+  border-color: #2e2e3d;
+  color: #f4f4f6;
+}
+
+[data-theme="dark"] .quick-tag-btn,
+[data-theme="dark"] .sqt-chip {
+  background: #1e1e28;
+  border-color: #2e2e3d;
+  color: #f4f4f6;
+}
+
+[data-theme="dark"] .quick-tag-btn:hover,
+[data-theme="dark"] .sqt-chip:hover {
+  background: var(--primary);
+  color: #000000;
+}
+
+/* --- Dark Theme Provider Selector Modal --- */
+[data-theme="dark"] .provider-modal-card {
+  background: #14141a;
+  border-color: #272732;
+  color: #f4f4f6;
+}
+
+[data-theme="dark"] .provider-modal-head {
+  border-bottom-color: #272732;
+}
+
+[data-theme="dark"] .pm-close-btn {
+  background: #1e1e28;
+  border-color: #2e2e3d;
+  color: #f4f4f6;
+}
+
+[data-theme="dark"] .provider-select-card {
+  background: #18181f;
+  border-color: #272732;
+  color: #f4f4f6;
+  box-shadow: 2px 2px 0px #000000;
+}
+
+[data-theme="dark"] .provider-select-card:hover {
+  background: #22222c;
+  box-shadow: 4px 4px 0px #000000;
+}
+
+[data-theme="dark"] .provider-select-card.active {
+  background: #262016;
+  border-color: var(--primary);
+}
+
+[data-theme="dark"] .psc-name {
+  color: #f4f4f6;
+}
+
+[data-theme="dark"] .psc-desc {
+  color: #9ca3af;
+}
+
+/* --- Dark Theme Drama Cards --- */
+[data-theme="dark"] .drama-card {
+  background: #18181f;
+  border-color: #272732;
+  box-shadow: 4px 4px 0px #000000;
+}
+
+[data-theme="dark"] .drama-card:hover {
+  border-color: var(--primary);
+  box-shadow: 6px 6px 0px #000000;
+}
+
+[data-theme="dark"] .card-title {
+  color: #f4f4f6;
+}
+
+[data-theme="dark"] .card-fav-btn {
+  background: rgba(24, 24, 31, 0.92);
+  border-color: #272732;
+  color: #9ca3af;
+}
+
+[data-theme="dark"] .card-fav-btn.active {
+  background: #3b1822;
+  border-color: #ff5277;
+  color: #ff5277;
+}
+
+[data-theme="dark"] .card-fav-del-btn {
+  background: #1e1e28;
+  border-color: #ff5277;
+  color: #ff5277;
+}
+
+[data-theme="dark"] .card-tag {
+  background: #242430;
+  border-color: #343444;
+  color: #d4d4d8;
+}
+
+/* --- Dark Theme Bottom Navigation Bar --- */
+[data-theme="dark"] .bottom-nav-bar {
+  background: #14141a;
+  border-top-color: #242430;
+}
+
+[data-theme="dark"] .bnav-btn {
+  color: #9ca3af;
+}
+
+[data-theme="dark"] .bnav-label {
+  color: #9ca3af;
+}
+
+[data-theme="dark"] .bnav-btn.active .bnav-label {
+  color: var(--primary);
+}
+
+/* --- Dark Theme Empty States, Banner, & Cards --- */
+[data-theme="dark"] .empty-state-box,
+[data-theme="dark"] .continue-watching-card,
+[data-theme="dark"] .drama-synopsis-card,
+[data-theme="dark"] .btn-clear-action {
+  background: #18181f;
+  border-color: #272732;
+  color: #f4f4f6;
+}
+
+[data-theme="dark"] .app-footer {
+  border-top-color: #242430;
+  color: #9ca3af;
 }
 

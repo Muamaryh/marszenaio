@@ -487,9 +487,40 @@ function hideSplashScreen() {
   }
 }
 
+// ===== THEME CONTROLLER (DARK & LIGHT MODE) =====
+
+function initTheme() {
+  const savedTheme = localStorage.getItem('dracin_theme');
+  const systemPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+  applyTheme(initialTheme);
+}
+
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.body.classList.add('dark-theme');
+    if (el('themeIcon')) el('themeIcon').textContent = '☀️';
+    if (el('btnThemeToggle')) el('btnThemeToggle').title = 'Ubah ke Tema Terang (Light Mode)';
+  } else {
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.body.classList.remove('dark-theme');
+    if (el('themeIcon')) el('themeIcon').textContent = '🌙';
+    if (el('btnThemeToggle')) el('btnThemeToggle').title = 'Ubah ke Tema Gelap (Dark Mode)';
+  }
+  localStorage.setItem('dracin_theme', theme);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'light';
+  const next = current === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+}
+
 // ===== 1. INITIALIZATION & SOURCES =====
 
 async function initApp() {
+  initTheme();
   // Purge any stale client session cache
   try {
     sessionStorage.clear();
