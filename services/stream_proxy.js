@@ -55,7 +55,27 @@ async function handleStreamProxy(req, res) {
         return `${baseUrl}${rawUri}`;
       };
 
-      // Rewrite relative URLs di dalam playlist agar melalui proxy & pastikan audio aktif
+      // Cek apakah ini playlist video-only DramaWave yang terpisah dari audio track-nya
+      const isMediaOnly = !m3u8Content.includes('#EXT-X-STREAM-INF') && m3u8Content.includes('#EXT-X-MAP');
+      const isDramaWave = targetUrl.includes('mydramawave.com') || targetUrl.includes('dramawave');
+
+      if (isDramaWave && isMediaOnly && req.query.is_media !== '1' && /_(\d+)\.m3u8$/.test(targetUrl)) {
+        const audioUrl = targetUrl.replace(/_(\d+)\.m3u8$/, '_0_1.aac.m3u8');
+        const masterM3u8 = [
+          '#EXTM3U',
+          '#EXT-X-VERSION:6',
+          '#EXT-X-INDEPENDENT-SEGMENTS',
+          `#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="default-audio",NAME="Indonesian",DEFAULT=YES,AUTOSELECT=YES,CHANNELS="2",URI="/api/stream/proxy?url=${encodeURIComponent(audioUrl)}"`,
+          `#EXT-X-STREAM-INF:BANDWIDTH=1800000,AVERAGE-BANDWIDTH=1000000,CODECS="avc1.640032,mp4a.40.2",RESOLUTION=720x1280,AUDIO="default-audio"`,
+          `/api/stream/proxy?url=${encodeURIComponent(targetUrl)}&is_media=1`
+        ].join('\n');
+
+        res.setHeader('Content-Type', 'application/vnd.apple.mpegurl; charset=utf-8');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Headers', '*');
+        res.setHeader('Cache-Control', 'public, max-age=60');
+        return res.send(masterM3u8);
+      }
       let hasEnabledAudio = false;
       const rewritten = m3u8Content.split('\n').map(line => {
         let trimmed = line.trim();

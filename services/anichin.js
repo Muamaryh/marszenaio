@@ -32,6 +32,7 @@ let wsReady = false;
 let reqCounter = 0;
 const pendingCallbacks = new Map();
 const memoryCache = new Map();
+const knownDramaMetadata = new Map();
 const CACHE_TTL_FEED_MS = 10 * 60 * 1000; // 10 menit
 const CACHE_TTL_DETAIL_MS = 30 * 60 * 1000; // 30 menit
 const CACHE_TTL_EPISODE_MS = 15 * 60 * 1000; // 15 menit
@@ -185,6 +186,10 @@ function normalizeDramaList(raw) {
     const episodes = Number(item.episodes || item.total_episodes || item.total_episode || item.chapter_count || item.total_count || item.total_chapter || (item.episode_list?.length) || 0);
     const tags = Array.isArray(item.tags) ? item.tags : (item.categoryNames || item.categories || item.genres || []);
 
+    if (id && title) {
+      knownDramaMetadata.set(id, { title, cover, synopsis, episodes, tags });
+    }
+
     return {
       id,
       title,
@@ -205,10 +210,12 @@ function normalizeDramaDetail(raw, dramaId) {
   const dramaObj = d.drama || d.detail || d.info || d;
 
   const id = String(dramaObj.id || dramaObj.dramaId || dramaObj.book_id || dramaId || '');
-  const title = dramaObj.title || dramaObj.name || dramaObj.book_name || dramaObj.drama_name || 'Short Drama';
-  const cover = dramaObj.cover || dramaObj.poster || dramaObj.cover_url || dramaObj.cover_image_url || dramaObj.cover_image || dramaObj.vertical_cover || dramaObj.posterImg || dramaObj.thumb || dramaObj.image || '';
-  const synopsis = dramaObj.synopsis || dramaObj.description || dramaObj.desc || dramaObj.intro || '';
-  const tags = Array.isArray(dramaObj.tags) ? dramaObj.tags : (dramaObj.categoryNames || dramaObj.categories || []);
+  const known = knownDramaMetadata.get(String(id || dramaId));
+
+  const title = (dramaObj.title && dramaObj.title !== 'Short Drama' ? dramaObj.title : '') || dramaObj.name || dramaObj.book_name || dramaObj.drama_name || known?.title || 'Short Drama';
+  const cover = dramaObj.cover || dramaObj.poster || dramaObj.cover_url || dramaObj.cover_image_url || dramaObj.cover_image || dramaObj.vertical_cover || dramaObj.posterImg || dramaObj.thumb || dramaObj.image || known?.cover || '';
+  const synopsis = dramaObj.synopsis || dramaObj.description || dramaObj.desc || dramaObj.intro || known?.synopsis || '';
+  const tags = Array.isArray(dramaObj.tags) ? dramaObj.tags : (dramaObj.categoryNames || dramaObj.categories || known?.tags || []);
 
   let rawEpisodes = [];
   if (Array.isArray(d.episodes)) rawEpisodes = d.episodes;
@@ -230,7 +237,7 @@ function normalizeDramaDetail(raw, dramaId) {
       };
     });
   } else {
-    const totalCount = Number(dramaObj.episodes || dramaObj.total_episodes || dramaObj.chapter_count || 30);
+    const totalCount = Number(dramaObj.episodes || dramaObj.total_episodes || dramaObj.chapter_count || known?.episodes || 30);
     for (let i = 1; i <= (totalCount > 0 ? totalCount : 30); i++) {
       episodes.push({
         number: i,
@@ -519,6 +526,14 @@ async function getDramaDetail(source = 'dramawave', id) {
           detail = sDetail.drama;
         }
       } catch (e) {}
+    }
+  }
+
+  // 3. Fallback ke known drama metadata dari pencarian/katalog
+  if (!detail || !detail.episodes || detail.episodes.length === 0) {
+    const known = knownDramaMetadata.get(String(id));
+    if (known) {
+      detail = normalizeDramaDetail({ data: { id, ...known } }, id);
     }
   }
 
