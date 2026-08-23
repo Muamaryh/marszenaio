@@ -1897,6 +1897,15 @@ function setupVideoPlayer(data, sessionId, startTime = 0) {
         setupHlsQualities(manifestData.levels);
       }
       setupHlsAudioTracks(hls.audioTracks);
+      if (hls.audioTracks && hls.audioTracks.length > 0) {
+        const indoIdx = hls.audioTracks.findIndex(t => {
+          const s = ((t.name || '') + ' ' + (t.lang || '')).toLowerCase();
+          return s.includes('id') || s.includes('indo') || s.includes('bahasa');
+        });
+        if (indoIdx !== -1) {
+          hls.audioTrack = indoIdx;
+        }
+      }
       video.muted = false;
       video.volume = 1;
       applyResumePosition();
@@ -1911,9 +1920,24 @@ function setupVideoPlayer(data, sessionId, startTime = 0) {
 
     hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, (event, audioData) => {
       if (sessionId !== playbackSessionId) return;
-      setupHlsAudioTracks(audioData.audioTracks || hls.audioTracks);
+      const tracks = audioData.audioTracks || hls.audioTracks || [];
+      setupHlsAudioTracks(tracks);
+      if (tracks.length > 0) {
+        const indoIdx = tracks.findIndex(t => {
+          const s = ((t.name || '') + ' ' + (t.lang || '')).toLowerCase();
+          return s.includes('id') || s.includes('indo') || s.includes('bahasa');
+        });
+        if (indoIdx !== -1) {
+          hls.audioTrack = indoIdx;
+        }
+      }
       video.muted = false;
       video.volume = 1;
+    });
+
+    hls.on(Hls.Events.AUDIO_TRACK_SWITCHED, (event, data) => {
+      const select = el('audioTrackSelect');
+      if (select && typeof data.id === 'number') select.value = data.id;
     });
 
     hls.on(Hls.Events.AUDIO_TRACK_LOADED, () => {
