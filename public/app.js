@@ -1762,6 +1762,7 @@ async function playEpisode(source, dramaId, epNum, sessionId = null, startTime =
   if (el('btnPrevEp')) el('btnPrevEp').disabled = (epNum <= 1);
   if (el('btnNextEp')) el('btnNextEp').disabled = (epNum >= appState.totalEpisodes);
 
+  if (el('videoLoaderText')) el('videoLoaderText').textContent = `Memuat Episode ${epNum}...`;
   show('videoLoader');
   hide('bigPlayOverlay');
 
