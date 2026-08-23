@@ -1940,6 +1940,11 @@ body {
   pointer-events: none;
 }
 
+.video-container.controls-hidden .player-subtitle-overlay {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
 .video-container.controls-hidden {
   cursor: none;
 }

@@ -2,7 +2,7 @@
  * MARSZTREAM - Service Worker (PWA Shell Caching)
  */
 
-const CACHE_NAME = 'marsztream-pwa-v13';
+const CACHE_NAME = 'marsztream-pwa-v14';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

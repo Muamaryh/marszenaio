@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=5.5.0">
+  <link rel="stylesheet" href="style.css?v=6.0.0">
   <!-- HLS.js for HLS streaming support -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
 </head>
@@ -322,11 +322,6 @@
                 </button>
               </div>
 
-              <!-- Draggable & Repositionable Subtitle Overlay -->
-              <div id="playerSubtitleOverlay" class="player-subtitle-overlay hidden" title="Geser / Tarik untuk Mengatur Posisi Subtitle">
-                <span class="subtitle-text" id="subtitleTextNode"></span>
-              </div>
-
               <!-- Bottom Controls Bar (SeekBar, Duration, Speed, Quality, Subtitle, Fullscreen) -->
               <div class="fs-bottom-bar" onclick="event.stopPropagation()">
                 <!-- Seek Bar -->
@@ -393,6 +388,11 @@
                   </div>
                 </div>
               </div>
+            </div>
+
+            <!-- Draggable & Repositionable Subtitle Overlay (Independent of Controls Visibility) -->
+            <div id="playerSubtitleOverlay" class="player-subtitle-overlay hidden" title="Geser / Tarik untuk Mengatur Posisi Subtitle">
+              <span class="subtitle-text" id="subtitleTextNode"></span>
             </div>
 
             <!-- Fullscreen In-Video Slide-Out Episode Drawer -->
@@ -479,6 +479,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=5.5.0"></script>
+  <script src="app.js?v=6.0.0"></script>
 </body>
 </html>
