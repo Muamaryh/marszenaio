@@ -1863,7 +1863,7 @@ function setupVideoPlayer(data, sessionId, startTime = 0) {
     } catch (e) {}
   };
 
-  const isM3u8 = streamUrl.includes('.m3u8') || streamUrl.includes('/hls');
+  const isM3u8 = (streamUrl.includes('.m3u8') || streamUrl.includes('/hls')) && !streamUrl.includes('melolo');
 
   if (isM3u8 && window.Hls && Hls.isSupported()) {
     const proxiedM3u8Url = streamUrl.startsWith('/api/') 
@@ -1977,6 +1977,8 @@ function setupVideoPlayer(data, sessionId, startTime = 0) {
     // Direct MP4 / Native Video
     const shouldProxy = (
       streamUrl.startsWith('http://') ||
+      streamUrl.includes('anichin.bio') ||
+      streamUrl.includes('melolo') ||
       streamUrl.includes('dramahue.com') ||
       streamUrl.includes('dramaboxdb.com') ||
       streamUrl.includes('sansekai.my.id') ||
