@@ -3028,6 +3028,70 @@ body.theater-open .bottom-nav-bar {
   box-shadow: 4px 4px 0px #000000;
 }
 
+/* --- Dark Theme Hero Section --- */
+[data-theme="dark"] .hero-title {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .hero-sub {
+  color: #a1a1aa !important;
+}
+
+[data-theme="dark"] .hero-badge {
+  background: #252533;
+  border-color: #383847;
+  color: var(--primary);
+  box-shadow: 2px 2px 0px #000000;
+}
+
+/* --- Dark Theme Continue Watching Banner --- */
+[data-theme="dark"] .continue-watching-card {
+  background: #18181f !important;
+  border-color: #272732 !important;
+  box-shadow: 4px 4px 0px #000000;
+}
+
+[data-theme="dark"] .cw-title {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .cw-source-badge {
+  background: #272732;
+  border-color: #383847;
+  color: var(--primary);
+}
+
+[data-theme="dark"] .cw-progress-track {
+  background: #272732;
+  border-color: #383847;
+}
+
+[data-theme="dark"] .cw-ep-text {
+  color: #a1a1aa;
+}
+
+[data-theme="dark"] .btn-cw-play {
+  background: var(--primary);
+  color: #000000 !important;
+  border-color: #000000;
+}
+
+/* --- Dark Theme Feed Header & Label --- */
+[data-theme="dark"] .feed-header {
+  border-bottom-color: #272732;
+}
+
+[data-theme="dark"] .feed-label {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .feed-count-badge {
+  background: #1e1e28 !important;
+  border-color: #2e2e3d !important;
+  color: #a1a1aa !important;
+  box-shadow: 1.5px 1.5px 0px #000000;
+}
+
 /* --- Dark Theme Navbar & Header --- */
 [data-theme="dark"] .navbar {
   background: #14141a;
@@ -3099,16 +3163,21 @@ body.theater-open .bottom-nav-bar {
 }
 
 /* --- Dark Theme Search Inputs & Modals --- */
-[data-theme="dark"] .feed-search-box input,
-[data-theme="dark"] .search-box-popup input {
+[data-theme="dark"] .feed-search-box {
   background: #18181f;
   border-color: #272732;
-  color: #f4f4f6;
+  box-shadow: 2px 2px 0px #000000;
+}
+
+[data-theme="dark"] .feed-search-box input,
+[data-theme="dark"] .search-box-popup input {
+  background: transparent;
+  color: #ffffff !important;
 }
 
 [data-theme="dark"] .feed-search-box input::placeholder,
 [data-theme="dark"] .search-box-popup input::placeholder {
-  color: #6b7280;
+  color: #71717a !important;
 }
 
 [data-theme="dark"] .feed-search-box svg,
@@ -3123,7 +3192,7 @@ body.theater-open .bottom-nav-bar {
 }
 
 [data-theme="dark"] .search-modal-header {
-  background: #14141a;
+  background: #18181f;
   border-bottom-color: #272732;
 }
 
@@ -3148,19 +3217,37 @@ body.theater-open .bottom-nav-bar {
 
 /* --- Dark Theme Provider Selector Modal --- */
 [data-theme="dark"] .provider-modal-card {
-  background: #14141a;
-  border-color: #272732;
+  background: #14141a !important;
+  border-color: #272732 !important;
   color: #f4f4f6;
 }
 
 [data-theme="dark"] .provider-modal-head {
-  border-bottom-color: #272732;
+  background: #18181f !important;
+  border-bottom-color: #272732 !important;
+  color: #f4f4f6;
 }
 
+[data-theme="dark"] .provider-modal-title h3 {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .pmt-sub {
+  color: #a1a1aa !important;
+}
+
+[data-theme="dark"] .provider-modal-close,
 [data-theme="dark"] .pm-close-btn {
-  background: #1e1e28;
-  border-color: #2e2e3d;
-  color: #f4f4f6;
+  background: #1e1e28 !important;
+  border-color: #2e2e3d !important;
+  color: #f4f4f6 !important;
+  box-shadow: 1.5px 1.5px 0px #000000;
+}
+
+[data-theme="dark"] .provider-modal-close:hover,
+[data-theme="dark"] .pm-close-btn:hover {
+  background: #ff5e6a !important;
+  color: #ffffff !important;
 }
 
 [data-theme="dark"] .provider-select-card {
@@ -3181,11 +3268,11 @@ body.theater-open .bottom-nav-bar {
 }
 
 [data-theme="dark"] .psc-name {
-  color: #f4f4f6;
+  color: #f4f4f6 !important;
 }
 
 [data-theme="dark"] .psc-desc {
-  color: #9ca3af;
+  color: #9ca3af !important;
 }
 
 /* --- Dark Theme Drama Cards --- */
@@ -3201,7 +3288,7 @@ body.theater-open .bottom-nav-bar {
 }
 
 [data-theme="dark"] .card-title {
-  color: #f4f4f6;
+  color: #f4f4f6 !important;
 }
 
 [data-theme="dark"] .card-fav-btn {
@@ -3248,7 +3335,6 @@ body.theater-open .bottom-nav-bar {
 
 /* --- Dark Theme Empty States, Banner, & Cards --- */
 [data-theme="dark"] .empty-state-box,
-[data-theme="dark"] .continue-watching-card,
 [data-theme="dark"] .drama-synopsis-card,
 [data-theme="dark"] .btn-clear-action {
   background: #18181f;
