@@ -865,14 +865,16 @@ body {
   flex-shrink: 0;
 }
 
-.quick-tag-label {
+.quick-tag-label,
+.sqt-label {
   font-size: 0.72rem;
   font-weight: 800;
   color: var(--text-muted);
   white-space: nowrap;
 }
 
-.quick-tag-btn {
+.quick-tag-btn,
+.sqt-chip {
   background: #ffffff;
   border: var(--border-sm);
   box-shadow: 1px 1px 0px var(--black);
@@ -886,7 +888,8 @@ body {
   transition: var(--transition);
 }
 
-.quick-tag-btn:hover {
+.quick-tag-btn:hover,
+.sqt-chip:hover {
   background: var(--primary);
   transform: translate(-1px, -1px);
   box-shadow: 2px 2px 0px var(--black);
@@ -898,16 +901,6 @@ body {
   -webkit-overflow-scrolling: touch;
   flex: 1;
   min-height: 220px;
-}
-  height: 22px;
-  border-radius: 6px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.72rem;
-  flex-shrink: 0;
-  border: 1.5px solid var(--black);
-  box-shadow: 1px 1px 0px var(--black);
 }
 
 .source-fallback-dot {
