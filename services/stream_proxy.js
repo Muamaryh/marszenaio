@@ -20,13 +20,12 @@ async function handleStreamProxy(req, res) {
   }
 
   try {
-    const isMeloloDirectMp4 = targetUrl.includes('melolo/hls');
-    const isM3u8 = !isMeloloDirectMp4 && (targetUrl.includes('.m3u8') || targetUrl.includes('m3u8') || (targetUrl.includes('/hls') && !targetUrl.includes('melolo')));
+    const isM3u8 = targetUrl.includes('.m3u8') || targetUrl.includes('m3u8') || req.path.endsWith('.m3u8');
 
-    const token = process.env.ANICHIN_API_KEY || 'dk_live_faedb6c9a57c892d64e3091e30773900';
+    const token = process.env.ANICHIN_API_KEY || 'ANICHIN-A5A16A417FC3EBA15BE691F2B9AA6DA1';
     const headers = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Referer': targetUrl.includes('sansekai.my.id') ? 'https://api.sansekai.my.id/' : (targetUrl.includes('dramabox') ? 'https://www.dramaboxdb.com/' : 'https://priv-api.anichin.bio/')
+      'Referer': targetUrl.includes('sansekai.my.id') ? 'https://api.sansekai.my.id/' : (targetUrl.includes('dramabox') ? 'https://www.dramaboxdb.com/' : 'https://miniapp.anichin.bio/')
     };
 
     if (targetUrl.includes('anichin.bio')) {

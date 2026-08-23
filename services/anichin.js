@@ -1,35 +1,28 @@
 /**
  * DracinHub - Anichin Short Drama Service
  * WebSocket multiplexing gateway ke Anichin Official API (miniapp.anichin.bio)
+ * Mendukung 12 Provider Resmi dengan API Key #1
  */
 
 const WebSocket = require('ws');
 
 const ANICHIN_WS_URL = 'wss://miniapp.anichin.bio/ws';
 const ANICHIN_BASE_URL = 'https://miniapp.anichin.bio';
-const ANICHIN_PRIV_API_URL = 'https://priv-api.anichin.bio/api';
-const DEFAULT_TOKEN = 'dk_live_faedb6c9a57c892d64e3091e30773900';
+const DEFAULT_TOKEN = 'ANICHIN-A5A16A417FC3EBA15BE691F2B9AA6DA1';
 
 const SOURCES = {
-  dramabox:   { name: 'DramaBox',   id: '42000007806', badge: 'Popular', desc: 'Provider drama box nomor 1 di Asia', icon: 'https://dramaboxdb.com/favicon.ico' },
-  melolo:     { name: 'Melolo',     id: '7522723499182394385', badge: 'Multi-Bitrate', desc: 'Pilihan resolusi 720p, 540p, 360p', icon: 'https://melolo.com/favicon.ico' },
-  pinedrama:  { name: 'PineDrama',  id: 'pinedrama', badge: 'TikTok HD', desc: 'Drama pendek viral & dubbing Indonesia', icon: 'https://pinedrama.com/favicon.ico' },
-  netshort:   { name: 'NetShort',   id: '2034157133506805762', badge: 'Direct MP4', desc: 'Kualitas original MP4 dengan sulih suara Indonesia', icon: 'https://netshort.com/favicon.ico' },
-  shortmax:   { name: 'ShortMax',   id: '18854', badge: 'Trending', desc: 'Katalog ribuan drama pendek bertema CEO & Reinkarnasi', icon: 'https://akamai-static.shorttv.live/favicon.ico' },
-  flickreels: { name: 'FlickReels', id: '5672', badge: 'Top Rank', desc: 'Serial drama rating tinggi', icon: 'https://flickreels.com/favicon.ico' },
-  reelshort:  { name: 'ReelShort',  id: '699d1eefa3a7262cff05534b', badge: 'Hot', desc: 'Drama pendek romantis dan billionaire viral', icon: 'https://www.reelshort.com/favicon.ico' },
-  goodshort:  { name: 'GoodShort',  id: '31001188126', badge: 'Recom', desc: 'Drama pilihan terfavorit penonton', icon: 'https://goodshort.com/favicon.ico' },
-  dramabite:  { name: 'DramaBite',  id: '15384', badge: 'Fresh', desc: 'Update drama baru setiap hari', icon: 'https://dramabite.com/favicon.ico' },
-  idrama:     { name: 'iDrama',     id: '160000641712', badge: 'Viral', desc: 'Koleksi drama pendek Asia terpopuler', icon: 'https://idrama.com/favicon.ico' },
-  starshort:  { name: 'StarShort',  id: 'j0NM', badge: 'Popular', desc: 'Serial drama pendek bintang viral', icon: 'https://starshort.com/favicon.ico' },
-  flareflow:  { name: 'FlareFlow',  id: '746751', badge: 'HD & Sub', desc: 'Drama romantis & aksi trending terbaru', icon: 'https://flareflow.tv/favicon.ico' },
-  moboreels:  { name: 'MoboReels',  id: '41896322', badge: 'Trending', desc: 'Drama pendek pilihan trending penonton', icon: 'https://moboreels.com/favicon.ico' },
-  dramanova:  { name: 'DramaNova',  id: '102062', badge: 'Romance / 18+', desc: 'Drama romantis & dewasa', icon: 'https://dramanova.com/favicon.ico' },
-  dramawave:  { name: 'DramaWave',  id: 'LeMYdgoXZM', badge: 'HD & Subtitle', desc: 'Direct M3U8 streaming dengan 20+ subtitle multi-bahasa', icon: 'https://video-v6.mydramawave.com/favicon.ico' },
-  freereels:  { name: 'FreeReels',  id: '51bAUXzvfP', badge: 'Gratis & Sub', desc: 'Direct stream cepat dengan subtitle Indonesia', icon: 'https://freereels.com/favicon.ico' },
-  iqiyi:      { name: 'iQIYI',      id: 'iqiyi', badge: 'VIP HD', desc: 'Koleksi drama pendek eksklusif iQIYI', icon: 'https://static.iqiyi.com/favicon.ico' },
-  stardustv:  { name: 'StardustTV', id: '146', badge: 'HD', desc: 'Koleksi drama pendek Stardust', icon: 'https://stardustv.com/favicon.ico' },
-  wetv:       { name: 'WeTV',       id: 'wetv', badge: 'Official', desc: 'Drama & serial WeTV resmi', icon: 'https://wetv.vip/favicon.ico' }
+  dramabox:   { name: 'DramaBox',   id: '42000007806', badge: 'Popular', desc: 'Provider drama box nomor 1 di Asia', icon: '/assets/logos/dramabox.png' },
+  reelshort:  { name: 'ReelShort',  id: '699d1eefa3a7262cff05534b', badge: 'Hot', desc: 'Drama pendek romantis dan billionaire viral', icon: '/assets/logos/reelshort.png' },
+  shortmax:   { name: 'ShortMax',   id: '18854', badge: 'Trending', desc: 'Katalog ribuan drama pendek bertema CEO & Reinkarnasi', icon: '/assets/logos/shortmax.png' },
+  netshort:   { name: 'NetShort',   id: '2034157133506805762', badge: 'Direct MP4', desc: 'Kualitas original MP4 dengan sulih suara Indonesia', icon: '/assets/logos/netshort.png' },
+  goodshort:  { name: 'GoodShort',  id: '31001188126', badge: 'Recom', desc: 'Drama pilihan terfavorit penonton', icon: '/assets/logos/goodshort.png' },
+  dramawave:  { name: 'DramaWave',  id: 'LeMYdgoXZM', badge: 'HD & Subtitle', desc: 'Direct M3U8 streaming dengan 20+ subtitle multi-bahasa', icon: '/assets/logos/dramawave.png' },
+  flickreels: { name: 'FlickReels', id: '5672', badge: 'Top Rank', desc: 'Serial drama rating tinggi', icon: '/assets/logos/flickreels.png' },
+  freereels:  { name: 'FreeReels',  id: '51bAUXzvfP', badge: 'Gratis & Sub', desc: 'Direct stream cepat dengan subtitle Indonesia', icon: '/assets/logos/freereels.png' },
+  idrama:     { name: 'iDrama',     id: '160000641712', badge: 'Viral', desc: 'Koleksi drama pendek Asia terpopuler', icon: '/assets/logos/idrama.png' },
+  dramanova:  { name: 'DramaNova',  id: '102062', badge: 'Romance / 18+', desc: 'Drama romantis & dewasa', icon: '/assets/logos/dramanova.png' },
+  starshort:  { name: 'StarShort',  id: 'j0NM', badge: 'Popular', desc: 'Serial drama pendek bintang viral', icon: '/assets/logos/starshort.png' },
+  dramabite:  { name: 'DramaBite',  id: '15384', badge: 'Fresh', desc: 'Update drama baru setiap hari', icon: '/assets/logos/dramabite.png' }
 };
 
 let ws = null;
@@ -43,32 +36,8 @@ const CACHE_TTL_DETAIL_MS = 30 * 60 * 1000; // 30 menit
 const CACHE_TTL_EPISODE_MS = 15 * 60 * 1000; // 15 menit
 const CACHE_TTL_SEARCH_MS = 5 * 60 * 1000; // 5 menit
 
-const axios = require('axios');
-
 function getToken() {
   return process.env.ANICHIN_API_KEY || DEFAULT_TOKEN;
-}
-
-const privApiClient = axios.create({
-  baseURL: ANICHIN_PRIV_API_URL,
-  timeout: 12000
-});
-
-async function fetchFromPrivApi(source, endpoint, params = {}) {
-  try {
-    const token = getToken();
-    const res = await privApiClient.get(`/${source}/${endpoint}`, {
-      params,
-      headers: {
-        'X-API-Key': token,
-        'Authorization': `Bearer ${token}`,
-        'User-Agent': 'Mozilla/5.0'
-      }
-    });
-    return res.data;
-  } catch (err) {
-    return null;
-  }
 }
 let authResolvers = [];
 
@@ -139,8 +108,10 @@ function waitForWsReady(timeoutMs = 12000) {
   initWebSocket();
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
-      authResolvers = authResolvers.filter(f => f !== onReady);
-      reject(new Error('Server drama sedang sibuk, silakan coba sesaat lagi.'));
+      const idx = authResolvers.indexOf(onReady);
+      if (idx !== -1) authResolvers.splice(idx, 1);
+      if (wsReady) resolve();
+      else reject(new Error('Koneksi ke server gateway Anichin timeout'));
     }, timeoutMs);
 
     const onReady = () => {
@@ -201,21 +172,36 @@ function normalizeDramaList(raw) {
     items = raw.data;
   } else if (raw.list && Array.isArray(raw.list)) {
     items = raw.list;
-  } else if (raw.data && raw.data.list && Array.isArray(raw.data.list)) {
-    items = raw.data.list;
-  } else if (raw.data && raw.data.items && Array.isArray(raw.data.items)) {
-    items = raw.data.items;
+  } else if (raw.results && Array.isArray(raw.results)) {
+    items = raw.results;
+  } else if (raw.books && Array.isArray(raw.books)) {
+    items = raw.books;
+  } else if (raw.rows && Array.isArray(raw.rows)) {
+    items = raw.rows;
   }
 
   return items.map(item => {
-    const id = String(item.id || item.dramaId || item.drama_id || item.book_id || item.bookId || item.album_id || item.content_id || item.albumId || '');
-    const title = item.title || item.name || item.book_name || item.drama_name || item.dramaName || 'Short Drama';
-    const cover = item.cover || item.poster || item.cover_url || item.cover_image_url || item.cover_image || item.vertical_cover || item.posterImg || item.thumb || item.thumb_url || item.thumbnail || item.image || item.image_url || item.pic || item.horizontal_cover || item.cover_path || item.banner || '';
-    const synopsis = item.synopsis || item.description || item.desc || item.intro || item.summary || '';
-    const episodes = Number(item.episodes || item.total_episodes || item.total_episode || item.chapter_count || item.total_count || item.total_chapter || (item.episode_list?.length) || 0);
-    const tags = Array.isArray(item.tags) ? item.tags : (item.categoryNames || item.categories || item.genres || []);
+    const id = String(
+      item.id || item.book_id || item.bookId || item.shortPlayId ||
+      item.dramaId || item.key || item.series_id || item.collection_id || ''
+    );
+    const title = item.title || item.name || item.book_name || item.book_title || item.dramaName || 'Tanpa Judul';
+    const cover = item.cover || item.cover_url || item.coverUrl || item.thumb_url || item.book_pic || item.posterImg || item.img || '';
+    const synopsis = item.synopsis || item.description || item.abstract || item.book_desc || item.desc || item.dramaIntroduction || '';
+    const episodes = Number(item.episodes || item.total_episodes || item.total_episode || item.total_chapter || item.chapter_count || item.totalEpisode || 0);
 
-    if (id && title) {
+    let tags = [];
+    if (Array.isArray(item.tags)) {
+      tags = item.tags.map(t => typeof t === 'string' ? t : (t.name || t.tag_name || '')).filter(Boolean);
+    } else if (typeof item.tags === 'string' && item.tags.trim()) {
+      tags = item.tags.split(',').map(s => s.trim()).filter(Boolean);
+    } else if (Array.isArray(item.tag_list)) {
+      tags = item.tag_list.map(t => t.tag_name || t.name || t).filter(Boolean);
+    } else if (Array.isArray(item.tagNames)) {
+      tags = item.tagNames.filter(Boolean);
+    }
+
+    if (id && title && title !== 'Tanpa Judul') {
       knownDramaMetadata.set(id, { title, cover, synopsis, episodes, tags });
     }
 
@@ -226,55 +212,70 @@ function normalizeDramaList(raw) {
       synopsis,
       episodes,
       tags,
-      isCompleted: item.isCompleted === '1' || item.isCompleted === true || item.status === 'completed' || item.is_finish === 1
+      isCompleted: Boolean(item.isCompleted || item.is_completed || item.finished)
     };
-  }).filter(d => d.id && d.title);
+  }).filter(item => item.id && item.title);
 }
 
 /**
- * Normalisasi detail drama dan episode list
+ * Normalisasi detail drama dan daftar episode
  */
-function normalizeDramaDetail(raw, dramaId) {
-  const d = raw?.data || raw || {};
-  const dramaObj = d.drama || d.detail || d.info || d;
+function normalizeDramaDetail(raw, fallbackId = '') {
+  if (!raw) return null;
+  const data = raw.data || raw;
 
-  const id = String(dramaObj.id || dramaObj.dramaId || dramaObj.book_id || dramaId || '');
-  const known = knownDramaMetadata.get(String(id || dramaId));
-
-  const title = (dramaObj.title && dramaObj.title !== 'Short Drama' ? dramaObj.title : '') || dramaObj.name || dramaObj.book_name || dramaObj.drama_name || known?.title || 'Short Drama';
-  const cover = dramaObj.cover || dramaObj.poster || dramaObj.cover_url || dramaObj.cover_image_url || dramaObj.cover_image || dramaObj.vertical_cover || dramaObj.posterImg || dramaObj.thumb || dramaObj.image || known?.cover || '';
-  const synopsis = dramaObj.synopsis || dramaObj.description || dramaObj.desc || dramaObj.intro || known?.synopsis || '';
-  const tags = Array.isArray(dramaObj.tags) ? dramaObj.tags : (dramaObj.categoryNames || dramaObj.categories || known?.tags || []);
+  const id = String(
+    data.id || data.book_id || data.bookId || data.shortPlayId ||
+    data.dramaId || data.key || data.series_id || fallbackId || ''
+  );
+  const title = data.title || data.name || data.book_name || data.book_title || data.dramaName || 'Tanpa Judul';
+  const cover = data.cover || data.cover_url || data.coverUrl || data.thumb_url || data.book_pic || data.posterImg || '';
+  const synopsis = data.synopsis || data.description || data.abstract || data.book_desc || data.desc || data.dramaIntroduction || '';
+  const totalEpisodes = Number(data.totalEpisodes || data.episodes || data.total_episodes || data.total_episode || data.total_chapter || data.chapter_count || data.totalEpisode || 0);
 
   let rawEpisodes = [];
-  if (Array.isArray(d.episodes)) rawEpisodes = d.episodes;
-  else if (Array.isArray(d.episode_list)) rawEpisodes = d.episode_list;
-  else if (Array.isArray(d.chapters)) rawEpisodes = d.chapters;
-  else if (Array.isArray(d.list)) rawEpisodes = d.list;
-  else if (Array.isArray(dramaObj.episodes)) rawEpisodes = dramaObj.episodes;
+  if (Array.isArray(data.episodes)) {
+    rawEpisodes = data.episodes;
+  } else if (Array.isArray(data.episode_list)) {
+    rawEpisodes = data.episode_list;
+  } else if (Array.isArray(data.chapter_list)) {
+    rawEpisodes = data.chapter_list;
+  } else if (Array.isArray(data.list)) {
+    rawEpisodes = data.list;
+  }
 
   let episodes = [];
   if (rawEpisodes.length > 0) {
-    episodes = rawEpisodes.map((ep, idx) => {
-      const epNum = Number(ep.episodeNumber || ep.number || ep.chapter_index || ep.index || idx + 1);
-      const epTitle = ep.episodeTitle || ep.title || ep.name || `Episode ${epNum}`;
+    episodes = rawEpisodes.map((ep, index) => {
+      const epNum = Number(ep.episodeNumber || ep.episode_number || ep.ep || ep.chapter_index || ep.chapter_id || (index + 1));
+      const epTitle = ep.title || ep.name || ep.chapter_title || `Episode ${epNum}`;
+      const isLocked = Boolean(ep.isLocked || ep.is_locked || ep.is_lock || false);
+      const videoUrl = ep.videoUrl || ep.video_url || ep.url || ep.play_url || ep.hls_url || ep.m3u8 || '';
       return {
-        number: epNum,
+        episodeNumber: epNum,
         title: epTitle,
-        locked: Boolean(ep.locked && ep.locked !== '0'),
-        videoUrl: ep.videoUrl || ep.url || ''
+        isLocked,
+        videoUrl
       };
     });
-  } else {
-    const totalCount = Number(dramaObj.episodes || dramaObj.total_episodes || dramaObj.chapter_count || known?.episodes || 30);
-    for (let i = 1; i <= (totalCount > 0 ? totalCount : 30); i++) {
+  } else if (totalEpisodes > 0) {
+    for (let i = 1; i <= totalEpisodes; i++) {
       episodes.push({
-        number: i,
+        episodeNumber: i,
         title: `Episode ${i}`,
-        locked: false,
+        isLocked: false,
         videoUrl: ''
       });
     }
+  }
+
+  let tags = [];
+  if (Array.isArray(data.tags)) {
+    tags = data.tags.map(t => typeof t === 'string' ? t : (t.name || t.tag_name || '')).filter(Boolean);
+  } else if (typeof data.tags === 'string' && data.tags.trim()) {
+    tags = data.tags.split(',').map(s => s.trim()).filter(Boolean);
+  } else if (Array.isArray(data.tag_list)) {
+    tags = data.tag_list.map(t => t.tag_name || t.name || t).filter(Boolean);
   }
 
   return {
@@ -282,59 +283,79 @@ function normalizeDramaDetail(raw, dramaId) {
     title,
     cover,
     synopsis,
+    totalEpisodes: episodes.length || totalEpisodes,
+    episodes,
     tags,
-    totalEpisodes: episodes.length,
-    episodes
+    isCompleted: Boolean(data.isCompleted || data.is_completed || data.finished)
   };
 }
 
 /**
- * Normalisasi stream video
+ * Normalisasi stream episode video
  */
-function normalizeEpisodeStream(raw, source, dramaId, ep) {
-  const d = raw?.data || raw || {};
-  let videoUrl = d.videoUrl || d.url || d.hls || d.m3u8 || d.play_url || d.stream_url || '';
+function normalizeEpisodeStream(raw, source, id, epNum) {
+  if (!raw) return null;
+  const data = raw.data || raw;
 
-  // Quality list jika ada
+  let videoUrl = '';
   let qualities = [];
-  if (Array.isArray(d.qualityList)) {
-    qualities = d.qualityList.map(q => ({
-      label: q.label || `${q.bitrate || ''}`,
-      url: q.url.startsWith('/') ? `${ANICHIN_BASE_URL}${q.url}` : q.url,
-      isDefault: q.isDefault || false
-    }));
-  }
-
-  // Subtitles jika ada
   let subtitles = [];
-  if (Array.isArray(d.subtitles)) {
-    subtitles = d.subtitles.map(s => ({
-      label: s.label || s.language || 'Sub',
-      language: s.language || 'id',
-      url: s.url
-    }));
+
+  if (typeof data === 'string' && (data.startsWith('http://') || data.startsWith('https://'))) {
+    videoUrl = data;
+  } else {
+    videoUrl = data.videoUrl || data.video_url || data.url || data.play_url || data.hls_url || data.m3u8 || data.stream_url || '';
+
+    if (Array.isArray(data.qualities) && data.qualities.length > 0) {
+      qualities = data.qualities.map(q => ({
+        label: q.label || q.name || q.resolution || `${q.height || ''}p`,
+        url: q.url || q.video_url || q.play_url || '',
+        isDefault: Boolean(q.isDefault || q.default || false)
+      })).filter(q => q.url);
+    } else if (Array.isArray(data.qualityList) && data.qualityList.length > 0) {
+      qualities = data.qualityList.map(q => ({
+        label: q.label || q.name || `${q.quality || ''}`,
+        url: q.url || q.videoUrl || '',
+        isDefault: Boolean(q.isDefault)
+      })).filter(q => q.url);
+    } else if (Array.isArray(data.videos) && data.videos.length > 0) {
+      qualities = data.videos.map(v => ({
+        label: v.quality || v.resolution || 'Auto',
+        url: v.url || v.video_url || '',
+        isDefault: Boolean(v.default)
+      })).filter(q => q.url);
+    }
+
+    if (Array.isArray(data.subtitles) && data.subtitles.length > 0) {
+      subtitles = data.subtitles.map(s => ({
+        language: s.language || s.lang || s.name || 'Unknown',
+        code: s.code || s.lang_code || s.srclang || 'id',
+        url: s.url || s.subtitle_url || s.src || '',
+        format: s.format || (s.url && s.url.endsWith('.vtt') ? 'vtt' : 'srt')
+      })).filter(s => s.url);
+    } else if (Array.isArray(data.captionList) && data.captionList.length > 0) {
+      subtitles = data.captionList.map(c => ({
+        language: c.language || c.lang || 'Unknown',
+        code: c.code || c.lang_code || 'id',
+        url: c.url || '',
+        format: 'vtt'
+      })).filter(s => s.url);
+    }
   }
 
-  if (videoUrl && videoUrl.startsWith('/')) {
-    // Relative video url dari Anichin
-    videoUrl = `${ANICHIN_BASE_URL}${videoUrl}`;
-  }
-
-  if (!videoUrl) {
-    videoUrl = `${ANICHIN_BASE_URL}/api/${source}/hls?id=${encodeURIComponent(dramaId)}&ep=${encodeURIComponent(ep)}`;
+  if (!videoUrl && qualities.length > 0) {
+    const def = qualities.find(q => q.isDefault) || qualities[0];
+    videoUrl = def.url;
   }
 
   return {
-    success: true,
-    episodeNumber: Number(d.episodeNumber || d.number || ep),
     videoUrl,
     qualities,
     subtitles
   };
 }
 
-// ===== EXPORTED SERVICE METHODS =====
-
+// Helper
 function getSources() {
   return Object.entries(SOURCES).map(([key, val]) => ({
     key,
@@ -352,9 +373,9 @@ async function getFeed(source = 'dramawave', type = 'trending', page = 1) {
     return cached.data;
   }
 
-  // 1. Ambil data dari Sansekai Suite (API 2) jika didukung
+  // 1. Ambil data dari Sansekai Suite (API 2) jika didukung sebagai cadangan
   let sansekaiItems = [];
-  const SANSEKAI_SOURCES = ['pinedrama', 'melolo', 'freereels', 'shortmax', 'reelshort', 'dramanova', 'dramabox'];
+  const SANSEKAI_SOURCES = ['freereels', 'shortmax', 'reelshort', 'dramanova', 'dramabox'];
 
   if (source === 'dramabox') {
     try {
@@ -370,41 +391,30 @@ async function getFeed(source = 'dramawave', type = 'trending', page = 1) {
     } catch (e) {}
   }
 
-  // 2. Ambil data dari Anichin (API 1 - Private REST / WebSocket)
+  // 2. Ambil data dari Anichin WebSocket (API 1)
   let anichinItems = [];
-  if (source === 'pinedrama') {
-    try {
-      const pRes = await fetchFromPrivApi('pinedrama', type === 'foryou' ? 'foryou' : 'trending', { page: String(page), count: 15, lang: 'id' });
-      const rawList = pRes?.items || pRes?.list || pRes?.data || pRes || [];
-      if (Array.isArray(rawList) && rawList.length > 0) {
-        anichinItems = normalizeDramaList(rawList);
-      }
-    } catch (e) {}
-  } else {
-    let path = type;
-    const params = {};
-    if (type === 'foryou' || type === 'latest' || type === 'new' || type === 'romance') {
-      params.page = String(page);
-    }
+  let path = type;
+  const params = {};
+  if (type === 'foryou' || type === 'latest' || type === 'new' || type === 'romance') {
+    params.page = String(page);
+  }
 
+  try {
+    const res = await sendWsRequest(source, path, params);
+    anichinItems = normalizeDramaList(res.data);
+  } catch (err) {
     try {
-      const res = await sendWsRequest(source, path, params);
+      const res = await sendWsRequest(source, 'trending', {});
       anichinItems = normalizeDramaList(res.data);
-    } catch (err) {
+    } catch (err2) {
       try {
-        const res = await sendWsRequest(source, 'trending', {});
+        const res = await sendWsRequest(source, 'foryou', { page: '1' });
         anichinItems = normalizeDramaList(res.data);
-      } catch (err2) {
-        try {
-          const res = await sendWsRequest(source, 'foryou', { page: '1' });
-          anichinItems = normalizeDramaList(res.data);
-        } catch (err3) {}
-      }
+      } catch (err3) {}
     }
   }
 
   // 3. PENGGABUNGAN & DEDUPLIKASI (Merge & Gap-Fill)
-  // Mulai dengan anichinItems, lalu tambahkan item dari sansekaiItems yang belum ada
   const mergedItems = [...anichinItems];
   const seenTitles = new Set(anichinItems.map(it => (it.title || '').toLowerCase().trim()));
   const seenIds = new Set(anichinItems.map(it => String(it.id)));
@@ -440,26 +450,16 @@ async function searchDramas(source = 'dramawave', query = '') {
   let items = [];
 
   // 1. Cari di provider yang sedang aktif
-  if (source === 'pinedrama') {
-    try {
-      const pRes = await fetchFromPrivApi('pinedrama', 'search', { q: query.trim(), page: 1, count: 20, lang: 'id' });
-      const rawList = pRes?.items || pRes?.list || pRes?.data || pRes || [];
-      if (Array.isArray(rawList) && rawList.length > 0) {
-        items.push(...normalizeDramaList(rawList).map(item => ({ ...item, source: 'pinedrama' })));
-      }
-    } catch (e) {}
-  } else {
-    try {
-      const res = await sendWsRequest(source === 'all' ? 'dramawave' : source, 'search', { query: query.trim() });
-      const wsItems = normalizeDramaList(res.data).map(item => ({ ...item, source: resolveActualSource(item.id, source) }));
-      if (wsItems && wsItems.length > 0) {
-        items.push(...wsItems);
-      }
-    } catch (err) {}
-  }
+  try {
+    const res = await sendWsRequest(source === 'all' ? 'dramawave' : source, 'search', { query: query.trim() });
+    const wsItems = normalizeDramaList(res.data).map(item => ({ ...item, source: resolveActualSource(item.id, source) }));
+    if (wsItems && wsItems.length > 0) {
+      items.push(...wsItems);
+    }
+  } catch (err) {}
 
   // 2. Jika provider didukung Sansekai, cari juga via Sansekai provider search
-  const SANSEKAI_SOURCES = ['pinedrama', 'melolo', 'freereels', 'shortmax', 'reelshort', 'dramanova'];
+  const SANSEKAI_SOURCES = ['freereels', 'shortmax', 'reelshort', 'dramanova'];
   if (SANSEKAI_SOURCES.includes(source)) {
     try {
       const { searchSansekai } = require('./sansekai_providers');
@@ -472,7 +472,7 @@ async function searchDramas(source = 'dramawave', query = '') {
 
   // 3. Jika pencarian global 'all' atau jika provider aktif menghasilkan < 2 drama, cari di provider utama lain
   if (source === 'all' || items.length < 2) {
-    const fallbackSources = ['dramawave', 'dramabox', 'shortmax', 'melolo', 'netshort', 'freereels', 'reelshort', 'pinedrama']
+    const fallbackSources = ['dramawave', 'dramabox', 'shortmax', 'netshort', 'freereels', 'reelshort', 'goodshort', 'idrama']
       .filter(s => s !== source);
 
     const searchPromises = fallbackSources.map(s => {
@@ -489,47 +489,49 @@ async function searchDramas(source = 'dramawave', query = '') {
     });
   }
 
-  // Deduplicate items
-  const seen = new Set();
-  const dedupedItems = items.filter(it => {
-    const key = (it.title || '').toLowerCase().trim();
-    if (!key || seen.has(key) || seen.has(it.id)) return false;
-    seen.add(key);
-    seen.add(it.id);
-    return true;
-  });
+  // Deduplikasi items
+  const uniqueItems = [];
+  const seenIds = new Set();
+  const seenTitles = new Set();
 
-  const result = { success: true, source, query, items: dedupedItems };
+  for (const item of items) {
+    const idKey = String(item.id);
+    const titleKey = (item.title || '').toLowerCase().trim();
+    if (!seenIds.has(idKey) && !seenTitles.has(titleKey)) {
+      seenIds.add(idKey);
+      seenTitles.add(titleKey);
+      uniqueItems.push(item);
+    }
+  }
+
+  const result = { success: true, source, query, items: uniqueItems };
   memoryCache.set(cacheKey, { timestamp: Date.now(), data: result });
   return result;
 }
 
+/**
+ * Deteksi provider sumber asli berdasarkan pola ID drama
+ */
 function resolveActualSource(id, requestedSource) {
-  if (!id) return requestedSource || 'dramawave';
-  const str = String(id).trim();
+  const str = String(id || '');
 
-  // Pattern detection based on provider-specific ID formats:
-  // 1. ReelShort: 24-character hexadecimal ObjectId (e.g. 686b831298c9395bc70495f1)
-  if (/^[0-9a-f]{24}$/i.test(str)) return 'reelshort';
-
-  // 2. DramaBox: 11 digits starting with 420 (e.g. 42000003451)
+  // 1. DramaBox: 11 digit dimulai dari 420 (e.g. 42000007806)
   if (/^420\d{8}$/.test(str)) return 'dramabox';
 
-  // 3. GoodShort: 11 digits starting with 310 or 320 (e.g. 31001345253)
-  if (/^3[12]\d{9}$/.test(str)) return 'goodshort';
+  // 2. GoodShort: 11 digit dimulai dari 310 (e.g. 31001188126)
+  if (/^310\d{8}$/.test(str)) return 'goodshort';
 
-  // 4. PineDrama / NetShort / Melolo: 19 digits
-  if (/^\d{19}$/.test(str)) {
-    if (requestedSource === 'pinedrama') return 'pinedrama';
-    if (requestedSource === 'melolo') return 'melolo';
-    return 'netshort';
-  }
+  // 3. iDrama: 12 digit dimulai dari 160 (e.g. 160000641712)
+  if (/^160\d{9}$/.test(str)) return 'idrama';
 
-  // 5. ShortMax / FlareFlow: integer IDs like 8151 / 460235
-  if (/^\d{1,6}$/.test(str)) {
-    if (requestedSource === 'flareflow') return 'flareflow';
-    if (requestedSource === 'shortmax') return 'shortmax';
-  }
+  // 4. NetShort: 19 digit ID (e.g. 2034157133506805762)
+  if (/^\d{19}$/.test(str)) return 'netshort';
+
+  // 5. ReelShort: 24 hex characters ObjectId (e.g. 699d1eefa3a7262cff05534b)
+  if (/^[a-f0-9]{24}$/i.test(str)) return 'reelshort';
+
+  // 6. DramaWave: 10 alfanumerik (e.g. LeMYdgoXZM)
+  if (/^[A-Za-z0-9]{10}$/.test(str) && !/^\d+$/.test(str)) return 'dramawave';
 
   if (requestedSource && requestedSource !== 'all') return requestedSource;
   return 'dramawave';
@@ -547,20 +549,11 @@ async function getDramaDetail(source = 'dramawave', id) {
 
   let detail = null;
 
-  // 1. Coba API 1 (PineDrama via priv-api, lainnya via Anichin WebSocket)
-  if (source === 'pinedrama') {
-    try {
-      const pRes = await fetchFromPrivApi('pinedrama', 'detail', { id: String(id), lang: 'id' });
-      if (pRes && (pRes.title || pRes.id || pRes.drama)) {
-        detail = normalizeDramaDetail(pRes.drama || pRes, id);
-      }
-    } catch (e) {}
-  } else {
-    try {
-      const res = await sendWsRequest(source, 'detail', { id: String(id) });
-      detail = normalizeDramaDetail(res.data, id);
-    } catch (err) {}
-  }
+  // 1. Coba API 1 (Anichin WebSocket)
+  try {
+    const res = await sendWsRequest(source, 'detail', { id: String(id) });
+    detail = normalizeDramaDetail(res.data, id);
+  } catch (err) {}
 
   // 2. Jika API 1 gagal atau episode kosong, Coba API 2 (Sansekai Multi-Provider / DramaBox AllEpisode)
   if (!detail || !detail.episodes || detail.episodes.length === 0) {
@@ -679,27 +672,7 @@ async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
     }
   }
 
-  // 2. Melolo Server-Side Decrypted MP4 Stream (Method 1 Anichin DRM Guide)
-  if (source === 'melolo') {
-    const token = getToken();
-    const cleanUrl = `${ANICHIN_PRIV_API_URL}/melolo/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&lang=id&api_key=${token}`;
-    streamData = {
-      success: true,
-      source: 'melolo',
-      id,
-      episodeNumber: epNum,
-      videoUrl: cleanUrl,
-      qualities: [
-        { label: '720p HD', url: `${ANICHIN_PRIV_API_URL}/melolo/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=720p&lang=id&api_key=${token}`, isDefault: true },
-        { label: '540p', url: `${ANICHIN_PRIV_API_URL}/melolo/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=540p&lang=id&api_key=${token}` },
-        { label: '480p', url: `${ANICHIN_PRIV_API_URL}/melolo/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=480p&lang=id&api_key=${token}` },
-        { label: '360p', url: `${ANICHIN_PRIV_API_URL}/melolo/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=360p&lang=id&api_key=${token}` }
-      ],
-      subtitles: []
-    };
-  }
-
-  // 3. ShortMax HLS
+  // 2. ShortMax HLS
   if (!streamData && source === 'shortmax') {
     try {
       streamData = {
@@ -715,18 +688,8 @@ async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
     } catch (e) {}
   }
 
-  // 4. Khusus PineDrama: Coba priv-api
-  if (!streamData && source === 'pinedrama') {
-    try {
-      const pEp = await fetchFromPrivApi('pinedrama', 'episode', { id: String(id), ep: String(epNum), lang: 'id' });
-      if (pEp && (pEp.videoUrl || pEp.url)) {
-        streamData = normalizeEpisodeStream(pEp, 'pinedrama', id, epNum);
-      }
-    } catch (e) {}
-  }
-
-  // 5. Provider Umum: Coba API 1 (Anichin WebSocket)
-  if (!streamData && source !== 'pinedrama') {
+  // 3. Provider Umum: Coba API 1 (Anichin WebSocket)
+  if (!streamData) {
     try {
       const res = await sendWsRequest(source, 'episode', { id: String(id), ep: String(epNum) });
       const wsStream = normalizeEpisodeStream(res.data, source, id, epNum);
@@ -776,5 +739,5 @@ module.exports = {
   searchDramas,
   getDramaDetail,
   getDramaEpisode,
-  ANICHIN_BASE_URL
+  resolveActualSource
 };
