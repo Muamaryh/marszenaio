@@ -3198,49 +3198,65 @@ body.theater-open .bottom-nav-bar {
   color: #9ca3af;
 }
 
-[data-theme="dark"] .search-modal-window {
-  background: #14141a;
-  border-color: #272732;
-  color: #f4f4f6;
+[data-theme="dark"] .search-modal-window,
+.dark-theme .search-modal-window,
+body.dark-theme .search-modal-window {
+  background: #14141a !important;
+  border-color: #272732 !important;
+  color: #f4f4f6 !important;
 }
 
-[data-theme="dark"] .search-modal-header {
-  background: #18181f;
-  border-bottom-color: #272732;
+[data-theme="dark"] .search-modal-header,
+.dark-theme .search-modal-header,
+body.dark-theme .search-modal-header {
+  background: #18181f !important;
+  border-bottom-color: #272732 !important;
 }
 
-[data-theme="dark"] .search-modal-close {
-  background: #1e1e28;
-  border-color: #2e2e3d;
-  color: #f4f4f6;
+[data-theme="dark"] .search-modal-close,
+.dark-theme .search-modal-close {
+  background: #1e1e28 !important;
+  border-color: #2e2e3d !important;
+  color: #f4f4f6 !important;
 }
 
-[data-theme="dark"] .search-quick-tags {
+[data-theme="dark"] .search-quick-tags,
+.dark-theme .search-quick-tags,
+[data-theme="dark"] #searchQuickTags,
+.dark-theme #searchQuickTags,
+body.dark-theme #searchQuickTags {
   background: #18181f !important;
   border-bottom-color: #272732 !important;
 }
 
 [data-theme="dark"] .quick-tag-label,
-[data-theme="dark"] .sqt-label {
+.dark-theme .quick-tag-label,
+[data-theme="dark"] .sqt-label,
+.dark-theme .sqt-label {
   color: #a1a1aa !important;
 }
 
 [data-theme="dark"] .quick-tag-btn,
-[data-theme="dark"] .sqt-chip {
+.dark-theme .quick-tag-btn,
+[data-theme="dark"] .sqt-chip,
+.dark-theme .sqt-chip {
   background: #1e1e28 !important;
   border-color: #2e2e3d !important;
   color: #f4f4f6 !important;
-  box-shadow: 1px 1px 0px #000000;
+  box-shadow: 1px 1px 0px #000000 !important;
 }
 
 [data-theme="dark"] .quick-tag-btn:hover,
-[data-theme="dark"] .sqt-chip:hover {
+.dark-theme .quick-tag-btn:hover,
+[data-theme="dark"] .sqt-chip:hover,
+.dark-theme .sqt-chip:hover {
   background: var(--primary) !important;
   color: #000000 !important;
   border-color: #000000 !important;
 }
 
-[data-theme="dark"] .search-modal-body {
+[data-theme="dark"] .search-modal-body,
+.dark-theme .search-modal-body {
   background: #14141a !important;
 }
 

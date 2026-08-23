@@ -461,22 +461,16 @@ function showGlobalToast(msg, duration = 2200) {
 }
 
 function initBackNavigation() {
-  // Replace initial state with home view
+  // Inisialisasi history step #home agar Android APK WebView tidak langsung menutup Activity
   try {
-    history.replaceState({ view: 'home' }, '');
+    history.pushState({ view: 'root' }, '', window.location.pathname + '#home');
   } catch (e) {}
 
   window.addEventListener('popstate', (event) => {
-    if (isInternalHistoryAction) {
-      isInternalHistoryAction = false;
-      return;
-    }
-
-    // 1. Jika Episode Drawer Fullscreen sedang terbuka -> tutup drawer saja
+    // 1. Jika Episode Drawer Fullscreen sedang terbuka -> tutup drawer
     const fsDrawer = el('fullscreenEpDrawer');
     if (fsDrawer && !fsDrawer.classList.contains('hidden')) {
       hide('fullscreenEpDrawer');
-      try { history.pushState({ view: 'theater' }, ''); } catch (e) {}
       return;
     }
 
@@ -508,26 +502,27 @@ function initBackNavigation() {
       if (hInput) hInput.value = '';
       hide('headerSearchClear');
       loadFeed();
-      try { history.pushState({ view: 'home' }, ''); } catch (e) {}
       return;
     }
 
     // 6. Jika sedang berada di tab sekunder (Favorit / Riwayat Nonton) -> kembali ke '✨ Untuk Anda'
     if (appState.currentFeedType === 'favorites' || appState.currentFeedType === 'history') {
       setFeedType('foryou');
-      try { history.pushState({ view: 'home' }, ''); } catch (e) {}
       return;
     }
 
     // 7. Pengguna berada di Halaman Utama (Root): Ketuk 2x untuk keluar dari aplikasi
     const now = Date.now();
-    if (now - lastBackTapTime < 2200) {
+    if (now - lastBackTapTime < 2500) {
       // Izinkan keluar aplikasi (biarkan default back terjadi atau keluar)
+      try { window.close(); } catch (e) {}
       history.back();
     } else {
       lastBackTapTime = now;
-      try { history.pushState({ view: 'home' }, ''); } catch (e) {}
-      showGlobalToast('📲 <strong>Ketuk sekali lagi</strong> untuk menutup aplikasi', 2200);
+      try {
+        history.pushState({ view: 'root' }, '', window.location.pathname + '#home');
+      } catch (e) {}
+      showGlobalToast('📲 <strong>Ketuk 2 kali</strong> untuk menutup aplikasi', 2200);
     }
   });
 }
@@ -789,7 +784,7 @@ function initDesktopSearch() {
 }
 
 function openProviderModal() {
-  try { history.pushState({ view: 'provider' }, ''); } catch (e) {}
+  try { history.pushState({ view: 'provider' }, '', window.location.pathname + '#provider'); } catch (e) {}
   renderProviderModalGrid();
   show('providerModal');
 }
@@ -1031,7 +1026,7 @@ async function loadPopularSearchTags() {
 }
 
 function openSearchModal() {
-  try { history.pushState({ view: 'search' }, ''); } catch (e) {}
+  try { history.pushState({ view: 'search' }, '', window.location.pathname + '#search'); } catch (e) {}
   show('searchModalOverlay');
   loadPopularSearchTags();
   const input = el('popupSearchInput');
@@ -1573,7 +1568,7 @@ function initInfiniteScroll() {
 let playbackSessionId = 0;
 
 async function openDrama(source, dramaId, fallbackTitle = '', startEpisode = null) {
-  try { history.pushState({ view: 'theater', id: dramaId }, ''); } catch (e) {}
+  try { history.pushState({ view: 'theater', id: dramaId }, '', window.location.pathname + '#player'); } catch (e) {}
   source = resolveActualSource(dramaId, source);
   const currentSession = ++playbackSessionId;
   document.body.classList.add('theater-open');
