@@ -1310,8 +1310,19 @@ async function loadFeed(isAppend = false) {
   }
 
   try {
-    const url = `/api/drama/feed?source=${encodeURIComponent(appState.currentSource)}&type=${encodeURIComponent(appState.currentFeedType)}&page=${appState.currentPage}`;
-    const data = await fetchWithClientCache(url, 10 * 60 * 1000);
+    const isSearch = Boolean(appState.currentQuery && appState.currentQuery.trim());
+    let url;
+
+    if (isSearch) {
+      url = `/api/drama/search?source=${encodeURIComponent(appState.currentSource)}&query=${encodeURIComponent(appState.currentQuery.trim())}`;
+      if (el('currentFeedTitle')) {
+        el('currentFeedTitle').textContent = `🔍 Hasil Pencarian: "${appState.currentQuery.trim()}"`;
+      }
+    } else {
+      url = `/api/drama/feed?source=${encodeURIComponent(appState.currentSource)}&type=${encodeURIComponent(appState.currentFeedType)}&page=${appState.currentPage}`;
+    }
+
+    const data = await fetchWithClientCache(url, isSearch ? 2 * 60 * 1000 : 10 * 60 * 1000);
     
     hide('dramaCatalogLoader');
     hide('infiniteScrollLoader');

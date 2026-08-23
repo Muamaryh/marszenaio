@@ -386,49 +386,33 @@ async function searchDramas(source = 'dramawave', query = '') {
 
   let items = [];
 
-  if (source === 'pinedrama') {
-    try {
-      const axios = require('axios');
-      const res = await axios.get(`https://api.sansekai.my.id/api/pinedrama/search`, {
-        params: { query: query.trim() },
-        headers: { 'User-Agent': 'Mozilla/5.0' },
-        timeout: 15000
-      });
-      const collections = res.data?.collections || res.data?.data?.collections || res.data?.data?.list || res.data?.data || [];
-      items = collections.map(c => ({
-        id: String(c.collection_id || c.id),
-        title: c.title || 'Short Drama',
-        cover: c.cover || (Array.isArray(c.cover_urls) ? c.cover_urls[0] : ''),
-        synopsis: c.description || '',
-        episodes: Number(c.total_episodes || 0),
-        tags: Array.isArray(c.tags) ? c.tags : [],
-        isCompleted: true,
-        source: 'pinedrama'
-      }));
-    } catch (e) {
-      items = [];
+  // 1. Cari di provider yang sedang aktif
+  try {
+    const res = await sendWsRequest(source === 'all' ? 'dramawave' : source, 'search', { query: query.trim() });
+    const wsItems = normalizeDramaList(res.data).map(item => ({ ...item, source: resolveActualSource(item.id, source) }));
+    if (wsItems && wsItems.length > 0) {
+      items.push(...wsItems);
     }
-  } else if (source === 'all') {
-    // Global search across main providers
-    const allSources = ['dramawave', 'shortmax', 'melolo', 'netshort', 'reelshort', 'dramabox', 'goodshort', 'freereels', 'flareflow', 'pinedrama'];
-    const searchPromises = allSources.map(s => {
-      if (s === 'pinedrama') {
-        const axios = require('axios');
-        return axios.get(`https://api.sansekai.my.id/api/pinedrama/search`, {
-          params: { query: query.trim() },
-          headers: { 'User-Agent': 'Mozilla/5.0' },
-          timeout: 10000
-        }).then(r => (r.data?.collections || []).map(c => ({
-          id: String(c.collection_id || c.id),
-          title: c.title || 'Short Drama',
-          cover: c.cover || '',
-          synopsis: c.description || '',
-          episodes: Number(c.total_episodes || 0),
-          tags: Array.isArray(c.tags) ? c.tags : [],
-          isCompleted: true,
-          source: 'pinedrama'
-        }))).catch(() => []);
+  } catch (err) {}
+
+  // 2. Jika provider didukung Sansekai, cari juga via Sansekai provider search
+  const SANSEKAI_SOURCES = ['pinedrama', 'melolo', 'freereels', 'shortmax', 'reelshort', 'dramanova'];
+  if (SANSEKAI_SOURCES.includes(source)) {
+    try {
+      const { searchSansekai } = require('./sansekai_providers');
+      const sItems = await searchSansekai(source, query.trim());
+      if (sItems && sItems.length > 0) {
+        items.push(...sItems);
       }
+    } catch (e) {}
+  }
+
+  // 3. Jika pencarian global 'all' atau jika provider aktif menghasilkan < 2 drama, cari di provider utama lain
+  if (source === 'all' || items.length < 2) {
+    const fallbackSources = ['dramawave', 'dramabox', 'shortmax', 'melolo', 'netshort', 'freereels', 'reelshort', 'pinedrama']
+      .filter(s => s !== source);
+
+    const searchPromises = fallbackSources.map(s => {
       return sendWsRequest(s, 'search', { query: query.trim() })
         .then(r => normalizeDramaList(r.data).map(item => ({ ...item, source: resolveActualSource(item.id, s) })))
         .catch(() => []);
@@ -440,14 +424,6 @@ async function searchDramas(source = 'dramawave', query = '') {
         items.push(...r.value);
       }
     });
-  } else {
-    // Pencarian ketat khusus provider yang sedang aktif (tidak mencampur provider lain)
-    try {
-      const res = await sendWsRequest(source, 'search', { query: query.trim() });
-      items = normalizeDramaList(res.data).map(item => ({ ...item, source: resolveActualSource(item.id, source) }));
-    } catch (err) {
-      items = [];
-    }
   }
 
   // Deduplicate items
