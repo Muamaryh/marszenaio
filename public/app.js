@@ -1646,6 +1646,13 @@ async function openDrama(source, dramaId, fallbackTitle = '', startEpisode = nul
     appState.hlsPlayer = null;
   }
 
+  // Reset subtitle state
+  currentSubtitlesList = [];
+  const initSubOverlay = el('playerSubtitleOverlay');
+  const initSubText = el('subtitleTextNode');
+  if (initSubOverlay) initSubOverlay.classList.add('hidden');
+  if (initSubText) initSubText.innerHTML = '';
+
   // Populate placeholder state
   if (el('theaterDramaTitle')) el('theaterDramaTitle').textContent = fallbackTitle || 'Memuat drama...';
   if (el('fsDramaTitle')) el('fsDramaTitle').textContent = fallbackTitle || 'Memuat drama...';
@@ -1999,18 +2006,34 @@ function setupVideoPlayer(data, sessionId, startTime = 0) {
 
 function populateSubtitleOptions(subtitles) {
   const select = el('subtitleSelect');
-  if (!select) return;
-  select.innerHTML = '<option value="none">Subtitle: Mati</option>';
+  if (select) {
+    select.innerHTML = '<option value="none">Subtitle: Mati</option>';
+  }
+
+  // SELALU reset dan bersihkan subtitle lama dari memori & layar
+  currentSubtitlesList = [];
+  const subOverlay = el('playerSubtitleOverlay');
+  const subTextNode = el('subtitleTextNode');
+  if (subOverlay) subOverlay.classList.add('hidden');
+  if (subTextNode) subTextNode.innerHTML = '';
+
+  const video = el('playerVideo');
+  if (video) {
+    while (video.getElementsByTagName('track').length > 0) {
+      video.removeChild(video.getElementsByTagName('track')[0]);
+    }
+  }
 
   if (!subtitles || subtitles.length === 0) {
-    select.disabled = true;
+    if (select) select.disabled = true;
     return;
   }
 
-  select.disabled = false;
+  if (select) select.disabled = false;
   let autoSelectedId = null;
 
   subtitles.forEach((sub, idx) => {
+    if (!select) return;
     const opt = document.createElement('option');
     opt.value = sub.url;
     opt.textContent = sub.label || sub.language || `Sub ${idx + 1}`;
@@ -2790,6 +2813,14 @@ function closeTheater(fromPopState = false) {
     appState.hlsPlayer = null;
   }
 
+  // Bersihkan subtitle state
+  currentSubtitlesList = [];
+  const subOverlay = el('playerSubtitleOverlay');
+  const subTextNode = el('subtitleTextNode');
+  if (subOverlay) subOverlay.classList.add('hidden');
+  if (subTextNode) subTextNode.innerHTML = '';
+
+  appState.activeDrama = null;
   const container = el('videoContainer');
   if (container) container.classList.remove('is-fullscreen');
 
