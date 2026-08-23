@@ -1856,7 +1856,7 @@ function setupVideoPlayer(data, sessionId, startTime = 0) {
     } catch (e) {}
   };
 
-  const isM3u8 = (streamUrl.includes('.m3u8') || streamUrl.includes('/hls')) && !streamUrl.includes('melolo');
+  const isM3u8 = streamUrl.includes('.m3u8') || streamUrl.includes('/hls');
 
   if (isM3u8 && window.Hls && Hls.isSupported()) {
     const proxiedM3u8Url = streamUrl.startsWith('/api/') 
@@ -1968,21 +1968,7 @@ function setupVideoPlayer(data, sessionId, startTime = 0) {
     });
   } else {
     // Direct MP4 / Native Video
-    const shouldProxy = !streamUrl.includes('anichin.bio') && (
-      streamUrl.startsWith('http://') ||
-      streamUrl.includes('dramahue.com') ||
-      streamUrl.includes('dramaboxdb.com') ||
-      streamUrl.includes('sansekai.my.id') ||
-      streamUrl.includes('bytedrama.com') ||
-      streamUrl.includes('melolostatic.com') ||
-      streamUrl.includes('goodreels.com') ||
-      streamUrl.includes('shorttv.live') ||
-      streamUrl.includes('crazymaplestudios.com') ||
-      streamUrl.includes('kwcdn.com') ||
-      streamUrl.includes('kjcdn.com') ||
-      streamUrl.includes('alicdn.com') ||
-      streamUrl.includes('txmfvideo')
-    );
+    const shouldProxy = !streamUrl.startsWith('/') && !streamUrl.startsWith(window.location.origin);
 
     const playUrl = shouldProxy
       ? `/api/stream/proxy?url=${encodeURIComponent(streamUrl)}`

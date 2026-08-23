@@ -301,15 +301,19 @@ function normalizeEpisodeStream(raw, source, id, epNum) {
   let qualities = [];
   let subtitles = [];
 
+  const token = getToken();
   if (typeof data === 'string' && (data.startsWith('http://') || data.startsWith('https://'))) {
     videoUrl = data;
   } else {
     videoUrl = data.videoUrl || data.video_url || data.url || data.play_url || data.hls_url || data.m3u8 || data.stream_url || '';
+    if (videoUrl.startsWith('/api/')) {
+      videoUrl = `${ANICHIN_BASE_URL}${videoUrl}${videoUrl.includes('?') ? '&' : '?'}token=${token}`;
+    }
 
     if (Array.isArray(data.qualities) && data.qualities.length > 0) {
       qualities = data.qualities.map(q => ({
         label: q.label || q.name || q.resolution || `${q.height || ''}p`,
-        url: q.url || q.video_url || q.play_url || '',
+        url: (q.url || q.video_url || q.play_url || '').startsWith('/api/') ? `${ANICHIN_BASE_URL}${q.url || q.video_url || q.play_url}${(q.url || q.video_url || q.play_url).includes('?') ? '&' : '?'}token=${token}` : (q.url || q.video_url || q.play_url || ''),
         isDefault: Boolean(q.isDefault || q.default || false)
       })).filter(q => q.url);
     } else if (Array.isArray(data.qualityList) && data.qualityList.length > 0) {
@@ -672,44 +676,79 @@ async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
     }
   }
 
-  // 2. ShortMax HLS
+  // 2. DramaWave / FreeReels: Ambil master stream dari detail drama
+  if (!streamData && (source === 'dramawave' || source === 'freereels')) {
+    try {
+      const detail = await getDramaDetail(source, id);
+      const epIndex = epNum - 1;
+      const epData = detail?.drama?.episodes?.[epIndex];
+      const masterUrl = epData?.videoUrl || epData?.url || epData?.play_url ||
+                        epData?.hls_url || epData?.m3u8 || epData?.stream_url;
+      if (masterUrl) {
+        streamData = {
+          success: true,
+          source,
+          id,
+          episodeNumber: epNum,
+          videoUrl: masterUrl,
+          qualities: [{ label: '1080p Full HD', url: masterUrl, isDefault: true }],
+          subtitles: []
+        };
+      }
+    } catch (e) {}
+  }
+
+  // 3. ShortMax HLS (dengan Token)
   if (!streamData && source === 'shortmax') {
     try {
+      const token = getToken();
+      const hls720 = `${ANICHIN_BASE_URL}/api/shortmax/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=720p&token=${token}`;
+      const hls480 = `${ANICHIN_BASE_URL}/api/shortmax/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=480p&token=${token}`;
       streamData = {
         success: true,
+        source: 'shortmax',
+        id,
         episodeNumber: epNum,
-        videoUrl: `${ANICHIN_BASE_URL}/api/shortmax/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=720p`,
+        videoUrl: hls720,
         qualities: [
-          { label: '720p HD', url: `${ANICHIN_BASE_URL}/api/shortmax/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=720p`, isDefault: true },
-          { label: '480p', url: `${ANICHIN_BASE_URL}/api/shortmax/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=480p` }
+          { label: '720p HD', url: hls720, isDefault: true },
+          { label: '480p', url: hls480 }
         ],
         subtitles: []
       };
     } catch (e) {}
   }
 
-  // 3. Provider Umum: Coba API 1 (Anichin WebSocket)
+  // 4. Provider Umum: Coba API 1 (Anichin WebSocket)
   if (!streamData) {
     try {
       const res = await sendWsRequest(source, 'episode', { id: String(id), ep: String(epNum) });
       const wsStream = normalizeEpisodeStream(res.data, source, id, epNum);
       if (wsStream && wsStream.videoUrl) {
         streamData = wsStream;
-
-        if (source === 'dramawave') {
-          try {
-            const detail = await getDramaDetail(source, id);
-            const epIndex = epNum - 1;
-            const epData = detail?.drama?.episodes?.[epIndex];
-            const masterUrl = epData?.videoUrl || epData?.url || epData?.play_url ||
-                              epData?.hls_url || epData?.m3u8 || epData?.stream_url;
-            if (masterUrl && masterUrl.includes('.m3u8')) {
-              streamData.videoUrl = masterUrl;
-            }
-          } catch (e) {}
-        }
       }
     } catch (err) {}
+  }
+
+  // 5. Fallback ke Detail Episode Video URL jika wsStream gagal
+  if (!streamData || !streamData.videoUrl) {
+    try {
+      const detail = await getDramaDetail(source, id);
+      const epIndex = epNum - 1;
+      const epData = detail?.drama?.episodes?.[epIndex];
+      const directUrl = epData?.videoUrl || epData?.url || epData?.play_url || epData?.stream_url;
+      if (directUrl) {
+        streamData = {
+          success: true,
+          source,
+          id,
+          episodeNumber: epNum,
+          videoUrl: directUrl,
+          qualities: [{ label: 'HD', url: directUrl, isDefault: true }],
+          subtitles: []
+        };
+      }
+    } catch (e) {}
   }
 
   // 4. Fallback ke API 2 (Sansekai Provider Episode Stream) jika API 1 gagal

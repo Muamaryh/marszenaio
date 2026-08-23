@@ -23,9 +23,18 @@ async function handleStreamProxy(req, res) {
     const isM3u8 = targetUrl.includes('.m3u8') || targetUrl.includes('m3u8') || req.path.endsWith('.m3u8');
 
     const token = process.env.ANICHIN_API_KEY || 'ANICHIN-A5A16A417FC3EBA15BE691F2B9AA6DA1';
+    let referer = 'https://miniapp.anichin.bio/';
+    if (targetUrl.includes('sansekai.my.id')) referer = 'https://api.sansekai.my.id/';
+    else if (targetUrl.includes('mydramawave.com')) referer = 'https://mydramawave.com/';
+    else if (targetUrl.includes('dramabox')) referer = 'https://www.dramaboxdb.com/';
+    else if (targetUrl.includes('crazymaplestudios.com')) referer = 'https://www.reelshort.com/';
+    else if (targetUrl.includes('netshort.com')) referer = 'https://netshort.com/';
+    else if (targetUrl.includes('idrama.video')) referer = 'https://idrama.com/';
+    else if (targetUrl.includes('bytedrama.com')) referer = 'https://dramanova.com/';
+
     const headers = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Referer': targetUrl.includes('sansekai.my.id') ? 'https://api.sansekai.my.id/' : (targetUrl.includes('dramabox') ? 'https://www.dramaboxdb.com/' : 'https://miniapp.anichin.bio/')
+      'Referer': referer
     };
 
     if (targetUrl.includes('anichin.bio')) {
