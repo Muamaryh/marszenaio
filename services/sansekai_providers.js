@@ -220,6 +220,206 @@ async function getSansekaiFeed(source, type = 'foryou', page = 1) {
 }
 
 /**
+ * Detail Resolver untuk Provider Sansekai
+ */
+async function getSansekaiDetail(source, id) {
+  const cacheKey = `sansekai_detail_${source}_${id}`;
+  const cached = providerCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_DETAIL) {
+    return cached.data;
+  }
+
+  try {
+    let detail = null;
+
+    if (source === 'pinedrama') {
+      const res = await client.get('/pinedrama/detail', { params: { collection_id: id } });
+      const d = res.data?.collection || res.data?.data || res.data || {};
+      const total = Number(d.total_episodes || 0) || 1;
+      const eps = [];
+      for (let i = 1; i <= total; i++) {
+        eps.push({ episodeNumber: i, title: `Episode ${i}`, isLocked: false });
+      }
+      detail = {
+        id: String(id),
+        title: d.title || 'PineDrama Drama',
+        description: d.description || '',
+        cover: (Array.isArray(d.cover_urls) ? d.cover_urls[0] : d.cover) || '',
+        totalEpisodes: total,
+        episodes: eps,
+        isCompleted: true
+      };
+    } else if (source === 'freereels') {
+      const res = await client.get('/freereels/detailAndAllEpisode', { params: { key: id } });
+      const d = res.data?.data || res.data || {};
+      const episodeList = Array.isArray(d.episodes) ? d.episodes : (Array.isArray(d.episode_list) ? d.episode_list : []);
+      const total = episodeList.length || Number(d.total_episodes || 1);
+      const eps = [];
+      for (let i = 1; i <= total; i++) {
+        eps.push({ episodeNumber: i, title: `Episode ${i}`, isLocked: false });
+      }
+      detail = {
+        id: String(id),
+        title: d.title || 'FreeReels Drama',
+        description: d.desc || d.description || '',
+        cover: d.cover || '',
+        totalEpisodes: total,
+        episodes: eps,
+        isCompleted: true
+      };
+    } else if (source === 'shortmax') {
+      const res = await client.get('/shortmax/detail', { params: { shortPlayId: id } });
+      const d = res.data?.data || res.data || {};
+      const total = Number(d.totalEpisode || d.total_episodes || 1);
+      const eps = [];
+      for (let i = 1; i <= total; i++) {
+        eps.push({ episodeNumber: i, title: `Episode ${i}`, isLocked: false });
+      }
+      detail = {
+        id: String(id),
+        title: d.name || d.title || 'ShortMax Drama',
+        description: d.description || d.desc || '',
+        cover: d.cover || '',
+        totalEpisodes: total,
+        episodes: eps,
+        isCompleted: true
+      };
+    } else if (source === 'reelshort') {
+      const res = await client.get('/reelshort/detail', { params: { book_id: id } });
+      const d = res.data?.data || res.data || {};
+      const total = Number(d.total_chapter || d.total_episodes || 1);
+      const eps = [];
+      for (let i = 1; i <= total; i++) {
+        eps.push({ episodeNumber: i, title: `Episode ${i}`, isLocked: false });
+      }
+      detail = {
+        id: String(id),
+        title: d.book_title || d.title || 'ReelShort Drama',
+        description: d.book_desc || d.desc || '',
+        cover: d.book_pic || d.cover || '',
+        totalEpisodes: total,
+        episodes: eps,
+        isCompleted: true
+      };
+    } else if (source === 'melolo') {
+      const res = await client.get('/melolo/detail', { params: { book_id: id } });
+      const d = res.data?.data || res.data || {};
+      const total = Number(d.total_episode || d.chapter_count || 1);
+      const eps = [];
+      for (let i = 1; i <= total; i++) {
+        eps.push({ episodeNumber: i, title: `Episode ${i}`, isLocked: false });
+      }
+      detail = {
+        id: String(id),
+        title: d.book_name || d.title || 'Melolo Drama',
+        description: d.abstract || d.desc || '',
+        cover: d.thumb_url || d.cover || '',
+        totalEpisodes: total,
+        episodes: eps,
+        isCompleted: true
+      };
+    } else if (source === 'dramanova') {
+      const res = await client.get('/dramanova/detail', { params: { dramaId: id } });
+      const d = res.data?.data || res.data || {};
+      const total = Number(d.totalEpisode || d.total_episodes || 1);
+      const eps = [];
+      for (let i = 1; i <= total; i++) {
+        eps.push({ episodeNumber: i, title: `Episode ${i}`, isLocked: false });
+      }
+      detail = {
+        id: String(id),
+        title: d.dramaName || d.title || 'DramaNova Drama',
+        description: d.dramaIntroduction || d.description || '',
+        cover: d.posterImg || d.cover || '',
+        totalEpisodes: total,
+        episodes: eps,
+        isCompleted: true
+      };
+    }
+
+    if (detail) {
+      const result = { success: true, source, drama: detail };
+      providerCache.set(cacheKey, { timestamp: Date.now(), data: result });
+      return result;
+    }
+  } catch (err) {
+    console.error(`Sansekai detail error [${source}:${id}]:`, err.message);
+  }
+  return null;
+}
+
+/**
+ * Episode Stream Resolver untuk Provider Sansekai (Cadangan Episode Stream)
+ */
+async function getSansekaiEpisodeStream(source, id, ep = 1) {
+  const cacheKey = `sansekai_ep_${source}_${id}_${ep}`;
+  const cached = providerCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_EPISODE) {
+    return cached.data;
+  }
+
+  try {
+    let videoUrl = '';
+    const epNum = Number(ep);
+
+    if (source === 'pinedrama') {
+      const res = await client.get('/pinedrama/episode', {
+        params: { collection_id: String(id), episodeNumber: epNum }
+      });
+      const d = res.data || {};
+      videoUrl = d.best_url || d.main?.indo_hd_cdn_urls?.[0] || d.main?.indo_cdn_urls?.[0] || d.stream_url || '';
+    } else if (source === 'shortmax') {
+      const res = await client.get('/shortmax/episode', {
+        params: { shortPlayId: String(id), episodeNumber: epNum }
+      });
+      videoUrl = res.data?.video_url || res.data?.url || res.data?.stream_url || res.data?.data?.videoUrl || res.data?.data?.url || '';
+    } else if (source === 'reelshort') {
+      const res = await client.get('/reelshort/episode', {
+        params: { book_id: String(id), episodeNumber: epNum, chapter_index: epNum }
+      });
+      videoUrl = res.data?.video_url || res.data?.url || res.data?.stream_url || res.data?.data?.url || '';
+    } else if (source === 'melolo') {
+      const res = await client.get('/melolo/episode', {
+        params: { book_id: String(id), episodeNumber: epNum, chapter_id: epNum }
+      });
+      videoUrl = res.data?.video_url || res.data?.url || res.data?.data?.url || res.data?.data?.videoUrl || '';
+    } else if (source === 'freereels') {
+      const res = await client.get('/freereels/detailAndAllEpisode', {
+        params: { key: String(id) }
+      });
+      const eps = res.data?.data?.episodes || res.data?.episodes || [];
+      if (eps.length >= epNum) {
+        const item = eps[epNum - 1];
+        videoUrl = item?.video_url || item?.url || item?.stream_url || '';
+      }
+    } else if (source === 'dramanova') {
+      const res = await client.get('/dramanova/getvideo', {
+        params: { dramaId: String(id), episodeNumber: epNum }
+      });
+      videoUrl = res.data?.video_url || res.data?.url || res.data?.data?.videoUrl || res.data?.data?.url || '';
+    }
+
+    if (videoUrl) {
+      const result = {
+        success: true,
+        source,
+        id: String(id),
+        episodeNumber: epNum,
+        videoUrl,
+        qualities: [{ label: '1080p HD Direct Stream', url: videoUrl, isDefault: true }],
+        subtitles: []
+      };
+      providerCache.set(cacheKey, { timestamp: Date.now(), data: result });
+      return result;
+    }
+  } catch (err) {
+    console.error(`Sansekai episode stream error [${source}:${id}:ep${ep}]:`, err.message);
+  }
+
+  return null;
+}
+
+/**
  * Search Resolver untuk Provider Khusus Sansekai
  */
 async function searchSansekai(source, query) {
@@ -271,6 +471,8 @@ async function searchSansekai(source, query) {
 
 module.exports = {
   getSansekaiFeed,
+  getSansekaiDetail,
+  getSansekaiEpisodeStream,
   searchSansekai,
   getRandomIp
 };

@@ -316,57 +316,66 @@ async function getFeed(source = 'dramawave', type = 'trending', page = 1) {
     return cached.data;
   }
 
-  // Khusus DramaBox (Multi-category suite: foryou, trending, vip, dubindo, latest, randomdrama)
+  // 1. Ambil data dari Sansekai Suite (API 2) jika didukung
+  let sansekaiItems = [];
+  const SANSEKAI_SOURCES = ['pinedrama', 'melolo', 'freereels', 'shortmax', 'reelshort', 'dramanova', 'dramabox'];
+
   if (source === 'dramabox') {
     try {
       const { getDramaBoxFeed } = require('./dramabox_sansekai');
       const dbFeed = await getDramaBoxFeed(type, page);
-      if (dbFeed && dbFeed.items && dbFeed.items.length > 0) {
-        memoryCache.set(cacheKey, { timestamp: Date.now(), data: dbFeed });
-        return dbFeed;
-      }
+      if (dbFeed && Array.isArray(dbFeed.items)) sansekaiItems = dbFeed.items;
     } catch (e) {}
-  }
-
-  // Khusus Provider Sansekai (PineDrama, Melolo, FreeReels, ShortMax, ReelShort, DramaNova)
-  const SANSEKAI_SOURCES = ['pinedrama', 'melolo', 'freereels', 'shortmax', 'reelshort', 'dramanova'];
-  if (SANSEKAI_SOURCES.includes(source)) {
+  } else if (SANSEKAI_SOURCES.includes(source)) {
     try {
       const { getSansekaiFeed } = require('./sansekai_providers');
       const sFeed = await getSansekaiFeed(source, type, page);
-      if (sFeed && sFeed.items && sFeed.items.length > 0) {
-        memoryCache.set(cacheKey, { timestamp: Date.now(), data: sFeed });
-        return sFeed;
-      }
+      if (sFeed && Array.isArray(sFeed.items)) sansekaiItems = sFeed.items;
     } catch (e) {}
   }
 
-  let path = type;
-  const params = {};
-  if (type === 'foryou' || type === 'latest' || type === 'new' || type === 'romance') {
-    params.page = String(page);
-  }
+  // 2. Ambil data dari Anichin WebSocket (API 1)
+  let anichinItems = [];
+  if (source !== 'pinedrama') {
+    let path = type;
+    const params = {};
+    if (type === 'foryou' || type === 'latest' || type === 'new' || type === 'romance') {
+      params.page = String(page);
+    }
 
-  let res;
-  try {
-    res = await sendWsRequest(source, path, params);
-  } catch (err) {
-    // Fallback otomatis jika provider tidak support feed type tertentu
     try {
-      res = await sendWsRequest(source, 'trending', {});
-      path = 'trending';
-    } catch (err2) {
+      const res = await sendWsRequest(source, path, params);
+      anichinItems = normalizeDramaList(res.data);
+    } catch (err) {
       try {
-        res = await sendWsRequest(source, 'foryou', { page: '1' });
-        path = 'foryou';
-      } catch (err3) {
-        return { success: true, source, type, page, items: [] };
+        const res = await sendWsRequest(source, 'trending', {});
+        anichinItems = normalizeDramaList(res.data);
+      } catch (err2) {
+        try {
+          const res = await sendWsRequest(source, 'foryou', { page: '1' });
+          anichinItems = normalizeDramaList(res.data);
+        } catch (err3) {}
       }
     }
   }
 
-  const items = normalizeDramaList(res.data);
-  const result = { success: true, source, type: path, page, items };
+  // 3. PENGGABUNGAN & DEDUPLIKASI (Merge & Gap-Fill)
+  // Mulai dengan anichinItems, lalu tambahkan item dari sansekaiItems yang belum ada
+  const mergedItems = [...anichinItems];
+  const seenTitles = new Set(anichinItems.map(it => (it.title || '').toLowerCase().trim()));
+  const seenIds = new Set(anichinItems.map(it => String(it.id)));
+
+  for (const sItem of sansekaiItems) {
+    const tKey = (sItem.title || '').toLowerCase().trim();
+    if (!seenTitles.has(tKey) && !seenIds.has(String(sItem.id))) {
+      seenTitles.add(tKey);
+      seenIds.add(String(sItem.id));
+      mergedItems.push(sItem);
+    }
+  }
+
+  const finalItems = mergedItems.length > 0 ? mergedItems : sansekaiItems;
+  const result = { success: true, source, type, page, items: finalItems };
 
   memoryCache.set(cacheKey, { timestamp: Date.now(), data: result });
   return result;
@@ -482,43 +491,42 @@ async function getDramaDetail(source = 'dramawave', id) {
     return cached.data;
   }
 
-  // Khusus PineDrama
-  if (source === 'pinedrama') {
-    const axios = require('axios');
-    const res = await axios.get(`https://api.sansekai.my.id/api/pinedrama/detail`, {
-      params: { collection_id: String(id) },
-      headers: { 'User-Agent': 'Mozilla/5.0' },
-      timeout: 15000
-    });
-    const d = res.data || {};
-    const totalEpisodes = Number(d.total_episodes || 1);
-    const episodes = [];
-    for (let i = 1; i <= totalEpisodes; i++) {
-      episodes.push({
-        id: String(i),
-        number: i,
-        title: `Episode ${i}`,
-        isLocked: false
-      });
-    }
-    const detail = {
-      id: String(id),
-      title: d.title || 'Short Drama',
-      description: d.description || '',
-      cover: (Array.isArray(d.cover_urls) ? d.cover_urls[0] : d.cover) || '',
-      totalEpisodes,
-      episodes,
-      isCompleted: true
-    };
-    const result = { success: true, source: 'pinedrama', drama: detail };
-    memoryCache.set(cacheKey, { timestamp: Date.now(), data: result });
-    return result;
+  let detail = null;
+
+  // 1. Coba API 1 (Anichin WebSocket)
+  if (source !== 'pinedrama') {
+    try {
+      const res = await sendWsRequest(source, 'detail', { id: String(id) });
+      detail = normalizeDramaDetail(res.data, id);
+    } catch (err) {}
   }
 
-  const res = await sendWsRequest(source, 'detail', { id: String(id) });
-  const detail = normalizeDramaDetail(res.data, id);
-  const result = { success: true, source, drama: detail };
+  // 2. Jika API 1 gagal atau episode kosong, Coba API 2 (Sansekai Multi-Provider / DramaBox AllEpisode)
+  if (!detail || !detail.episodes || detail.episodes.length === 0) {
+    if (source === 'dramabox' || /^420\d{8}$/.test(String(id))) {
+      try {
+        const { getDramaBoxAllEpisodes } = require('./dramabox_sansekai');
+        const dbDetail = await getDramaBoxAllEpisodes(id);
+        if (dbDetail && dbDetail.episodes && dbDetail.episodes.length > 0) {
+          detail = dbDetail;
+        }
+      } catch (e) {}
+    } else {
+      try {
+        const { getSansekaiDetail } = require('./sansekai_providers');
+        const sDetail = await getSansekaiDetail(source, id);
+        if (sDetail && sDetail.drama) {
+          detail = sDetail.drama;
+        }
+      } catch (e) {}
+    }
+  }
 
+  if (!detail) {
+    throw new Error(`Detail drama tidak ditemukan untuk id: ${id}`);
+  }
+
+  const result = { success: true, source, drama: detail };
   memoryCache.set(cacheKey, { timestamp: Date.now(), data: result });
   return result;
 }
@@ -526,48 +534,25 @@ async function getDramaDetail(source = 'dramawave', id) {
 async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
   if (!id) throw new Error('ID drama tidak boleh kosong');
   source = resolveActualSource(id, source);
+  const epNum = Number(ep) || 1;
 
-  const cacheKey = `ep_${source}_${id}_${ep}`;
+  const cacheKey = `ep_${source}_${id}_${epNum}`;
   const cached = memoryCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL_EPISODE_MS) {
     return cached.data;
   }
 
-  let streamData;
+  let streamData = null;
 
-  // Khusus PineDrama
-  if (source === 'pinedrama') {
-    try {
-      const axios = require('axios');
-      const res = await axios.get(`https://api.sansekai.my.id/api/pinedrama/episode`, {
-        params: { collection_id: String(id), episodeNumber: Number(ep) },
-        headers: { 'User-Agent': 'Mozilla/5.0' },
-        timeout: 15000
-      });
-      const d = res.data || {};
-      const bestUrl = d.best_url || d.main?.indo_hd_cdn_urls?.[0] || d.main?.indo_cdn_urls?.[0] || d.stream_url || '';
-      if (!bestUrl) throw new Error(`Video stream tidak ditemukan untuk episode ${ep}`);
+  // --- Strategi Dual-API Automatic Fallback ---
 
-      streamData = {
-        success: true,
-        source: 'pinedrama',
-        id: String(id),
-        episodeNumber: Number(ep),
-        videoUrl: bestUrl,
-        qualities: [{ label: '1080p HD (Dub/Sub Indo)', url: bestUrl, isDefault: true }],
-        subtitles: []
-      };
-    } catch (err) {
-      console.error('PineDrama episode stream error:', err.message);
-    }
-  } else if (source === 'dramabox' || /^420\d{8}$/.test(String(id))) {
-    const epNum = Number(ep);
-
-    // Untuk Episode 21 ke atas (VIP DramaBox), langsung gunakan Sansekai Decrypt Resolver agar instan 0ms
+  // 1. Khusus DramaBox
+  if (source === 'dramabox' || /^420\d{8}$/.test(String(id))) {
+    // A. Coba Sansekai VIP Decrypt untuk Ep > 20
     if (epNum > 20) {
       try {
         const { getDramaBoxEpisodeStream } = require('./dramabox_sansekai');
-        const dbRes = await getDramaBoxEpisodeStream(id, ep);
+        const dbRes = await getDramaBoxEpisodeStream(id, epNum);
         if (dbRes && dbRes.videoUrl) {
           streamData = {
             success: true,
@@ -575,106 +560,107 @@ async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
             id,
             episodeNumber: epNum,
             videoUrl: dbRes.videoUrl,
-            qualities: dbRes.qualities?.map(q => ({ label: q.quality, url: q.url, isDefault: q.quality.includes('1080') })) || [{ label: '1080p Full HD', url: dbRes.videoUrl, isDefault: true }],
+            qualities: dbRes.qualities || [{ label: '1080p Full HD', url: dbRes.videoUrl, isDefault: true }],
             subtitles: []
           };
         }
-      } catch (dbErr) {
-        console.error('DramaBox Sansekai VIP resolver error:', dbErr.message);
-      }
-    } else {
-      // Episode 1 - 20 gunakan Anichin Direct CDN
+      } catch (e) {}
+    }
+
+    // B. Coba Anichin HLS CDN
+    if (!streamData || !streamData.videoUrl) {
       try {
         const axios = require('axios');
         const token = getToken();
-        const masterUrl = `${ANICHIN_BASE_URL}/api/dramabox/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(ep)}&token=${token}`;
+        const masterUrl = `${ANICHIN_BASE_URL}/api/dramabox/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&token=${token}`;
         const masterRes = await axios.get(masterUrl, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: 5000 });
         const lines = masterRes.data.split('\n');
-        const qualities = [];
-
-        for (let i = 0; i < lines.length; i++) {
-          if (lines[i].includes('#EXT-X-STREAM-INF')) {
-            const qMatch = lines[i].match(/NAME="([^"]+)"/);
-            const qLabel = qMatch ? qMatch[1] : 'HD';
-            let nextLine = lines[i + 1] ? lines[i + 1].trim() : '';
-            if (nextLine) {
-              nextLine = nextLine.replace(/api_key=[^&]+/, `api_key=${token}`);
-              const subUrl = nextLine.startsWith('http') ? nextLine : `${ANICHIN_BASE_URL}${nextLine}`;
-              try {
-                const subRes = await axios.get(subUrl, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: 4000 });
-                const subLines = subRes.data.split('\n');
-                const directMediaUrl = subLines.find(l => l.startsWith('http'));
-                if (directMediaUrl) {
-                  qualities.push({
-                    label: qLabel,
-                    url: directMediaUrl.trim(),
-                    isDefault: qLabel.includes('720')
-                  });
-                }
-              } catch (e) {}
-            }
-          }
-        }
-
-        const def = qualities.find(q => q.isDefault) || qualities[0];
-        if (def && def.url) {
+        const directMediaUrl = lines.find(l => l.startsWith('http'));
+        if (directMediaUrl) {
           streamData = {
             success: true,
             source: 'dramabox',
             id,
             episodeNumber: epNum,
-            videoUrl: def.url,
-            qualities: qualities.length > 0 ? qualities : [{ label: '720p HD', url: def.url, isDefault: true }],
+            videoUrl: directMediaUrl.trim(),
+            qualities: [{ label: '720p HD', url: directMediaUrl.trim(), isDefault: true }],
             subtitles: []
           };
         }
-      } catch (err) {
-        // Fallback ke Sansekai jika Anichin error di episode 1-20
-        try {
-          const { getDramaBoxEpisodeStream } = require('./dramabox_sansekai');
-          const dbRes = await getDramaBoxEpisodeStream(id, ep);
-          if (dbRes && dbRes.videoUrl) {
-            streamData = {
-              success: true,
-              source: 'dramabox',
-              id,
-              episodeNumber: epNum,
-              videoUrl: dbRes.videoUrl,
-              qualities: dbRes.qualities?.map(q => ({ label: q.quality, url: q.url, isDefault: q.quality.includes('1080') })) || [{ label: '1080p Full HD', url: dbRes.videoUrl, isDefault: true }],
-              subtitles: []
-            };
-          }
-        } catch (e) {}
-      }
+      } catch (e) {}
     }
-  } else if (source === 'shortmax') {
-    streamData = {
-      success: true,
-      episodeNumber: Number(ep),
-      videoUrl: `${ANICHIN_BASE_URL}/api/shortmax/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(ep)}&q=720p`,
-      qualities: [
-        { label: '720p', url: `${ANICHIN_BASE_URL}/api/shortmax/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(ep)}&q=720p`, isDefault: true },
-        { label: '480p', url: `${ANICHIN_BASE_URL}/api/shortmax/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(ep)}&q=480p` }
-      ],
-      subtitles: []
-    };
-  }
 
-  if (!streamData) {
-    const res = await sendWsRequest(source, 'episode', { id: String(id), ep: String(ep) });
-    streamData = normalizeEpisodeStream(res.data, source, id, ep);
-
-    if (source === 'dramawave') {
-      // Pastikan DramaWave menggunakan Master Playlist (h264-*.m3u8) agar audio & video tersinkronisasi penuh dengan suara
+    // C. Fallback ke Sansekai Stream jika Anichin gagal
+    if (!streamData || !streamData.videoUrl) {
       try {
-        const detail = await getDramaDetail(source, id);
-        const epIndex = Number(ep) - 1;
-        const masterUrl = detail?.drama?.episodes?.[epIndex]?.videoUrl;
-        if (masterUrl && masterUrl.includes('.m3u8')) {
-          streamData.videoUrl = masterUrl;
+        const { getDramaBoxEpisodeStream } = require('./dramabox_sansekai');
+        const dbRes = await getDramaBoxEpisodeStream(id, epNum);
+        if (dbRes && dbRes.videoUrl) {
+          streamData = {
+            success: true,
+            source: 'dramabox',
+            id,
+            episodeNumber: epNum,
+            videoUrl: dbRes.videoUrl,
+            qualities: dbRes.qualities || [{ label: '1080p Full HD', url: dbRes.videoUrl, isDefault: true }],
+            subtitles: []
+          };
         }
       } catch (e) {}
     }
+  }
+
+  // 2. ShortMax HLS
+  if (!streamData && source === 'shortmax') {
+    try {
+      streamData = {
+        success: true,
+        episodeNumber: epNum,
+        videoUrl: `${ANICHIN_BASE_URL}/api/shortmax/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=720p`,
+        qualities: [
+          { label: '720p HD', url: `${ANICHIN_BASE_URL}/api/shortmax/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=720p`, isDefault: true },
+          { label: '480p', url: `${ANICHIN_BASE_URL}/api/shortmax/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=480p` }
+        ],
+        subtitles: []
+      };
+    } catch (e) {}
+  }
+
+  // 3. Provider Umum: Coba API 1 (Anichin WebSocket)
+  if (!streamData && source !== 'pinedrama') {
+    try {
+      const res = await sendWsRequest(source, 'episode', { id: String(id), ep: String(epNum) });
+      const wsStream = normalizeEpisodeStream(res.data, source, id, epNum);
+      if (wsStream && wsStream.videoUrl) {
+        streamData = wsStream;
+
+        if (source === 'dramawave') {
+          try {
+            const detail = await getDramaDetail(source, id);
+            const epIndex = epNum - 1;
+            const masterUrl = detail?.drama?.episodes?.[epIndex]?.videoUrl;
+            if (masterUrl && masterUrl.includes('.m3u8')) {
+              streamData.videoUrl = masterUrl;
+            }
+          } catch (e) {}
+        }
+      }
+    } catch (err) {}
+  }
+
+  // 4. Fallback ke API 2 (Sansekai Provider Episode Stream) jika API 1 gagal
+  if (!streamData || !streamData.videoUrl) {
+    try {
+      const { getSansekaiEpisodeStream } = require('./sansekai_providers');
+      const sRes = await getSansekaiEpisodeStream(source, id, epNum);
+      if (sRes && sRes.videoUrl) {
+        streamData = sRes;
+      }
+    } catch (err) {}
+  }
+
+  if (!streamData || !streamData.videoUrl) {
+    throw new Error(`Video stream tidak tersedia untuk episode ${epNum}`);
   }
 
   const result = { success: true, source, id, ...streamData };
