@@ -809,12 +809,10 @@ function openProviderModal() {
 }
 
 function closeProviderModal(fromPopState = false) {
-  if (!fromPopState) {
-    const provModal = el('providerModal');
-    if (provModal && !provModal.classList.contains('hidden')) {
-      isInternalHistoryAction = true;
-      try { history.back(); } catch (e) {}
-    }
+  if (!fromPopState && window.location.hash === '#provider') {
+    try {
+      history.replaceState({ view: 'root' }, '', window.location.pathname + '#home');
+    } catch (e) {}
   }
   hide('providerModal');
 }
@@ -1061,12 +1059,10 @@ function openSearchModal() {
 }
 
 function closeSearchModal(fromPopState = false) {
-  if (!fromPopState) {
-    const searchModal = el('searchModalOverlay');
-    if (searchModal && !searchModal.classList.contains('hidden')) {
-      isInternalHistoryAction = true;
-      try { history.back(); } catch (e) {}
-    }
+  if (!fromPopState && window.location.hash === '#search') {
+    try {
+      history.replaceState({ view: 'root' }, '', window.location.pathname + '#home');
+    } catch (e) {}
   }
   hide('searchModalOverlay');
 }
@@ -1216,7 +1212,8 @@ function appendSearchGrid(dramas, targetContainerId = 'popupSearchGrid') {
     `;
 
     card.onclick = () => {
-      closeSearchModal(true);
+      appState.openedFromSearch = true;
+      hide('searchModalOverlay');
       openDrama(actualSrc, d.id, d.title);
     };
     grid.appendChild(card);
@@ -1670,13 +1667,20 @@ async function openDrama(source, dramaId, fallbackTitle = '', startEpisode = nul
     if (data.success && data.drama) {
       const d = data.drama;
       d.source = source;
+      if (!d.title || d.title === 'Short Drama' || d.title.trim() === '') {
+        d.title = fallbackTitle || 'Short Drama';
+      }
+      if (!d.synopsis || d.synopsis.trim() === '' || d.synopsis === 'Tidak ada sinopsis tersedia.') {
+        d.synopsis = fallbackTitle ? `Drama pendek ${fallbackTitle} kualitas HD dengan audio jernih dan subtitle Indonesia.` : 'Tonton streaming drama pendek terlengkap dengan kualitas HD dan subtitle Indonesia.';
+      }
+
       appState.activeDrama = d;
       appState.totalEpisodes = d.totalEpisodes || (d.episodes?.length) || 1;
       appState.episodesList = d.episodes || [];
 
       if (el('theaterDramaTitle')) el('theaterDramaTitle').textContent = d.title;
       if (el('fsDramaTitle')) el('fsDramaTitle').textContent = d.title;
-      if (el('theaterSynopsisText')) el('theaterSynopsisText').textContent = d.synopsis || 'Tidak ada sinopsis tersedia.';
+      if (el('theaterSynopsisText')) el('theaterSynopsisText').textContent = d.synopsis;
       if (el('theaterEpisodesTotal')) el('theaterEpisodesTotal').textContent = `${appState.totalEpisodes} Ep`;
       if (el('fsEpisodesTotal')) el('fsEpisodesTotal').textContent = `${appState.totalEpisodes}`;
 
@@ -2525,12 +2529,18 @@ function navigateEpisode(delta) {
 }
 
 function closeTheater(fromPopState = false) {
-  if (!fromPopState) {
-    const theater = el('theaterModal');
-    if (theater && !theater.classList.contains('hidden')) {
-      isInternalHistoryAction = true;
-      try { history.back(); } catch (e) {}
-    }
+  const returnToSearch = Boolean(appState.openedFromSearch);
+  appState.openedFromSearch = false;
+
+  if (returnToSearch) {
+    show('searchModalOverlay');
+    try {
+      history.replaceState({ view: 'search' }, '', window.location.pathname + '#search');
+    } catch (e) {}
+  } else if (!fromPopState && window.location.hash === '#player') {
+    try {
+      history.replaceState({ view: 'root' }, '', window.location.pathname + '#home');
+    } catch (e) {}
   }
 
   const video = el('playerVideo');
