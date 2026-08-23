@@ -3114,15 +3114,28 @@ body.theater-open .bottom-nav-bar {
 }
 
 [data-theme="dark"] .btn-provider-trigger {
-  background: #1e1e28;
-  border-color: #2e2e3d;
-  color: #f4f4f6;
+  background: #1e1e28 !important;
+  border-color: #383847 !important;
+  color: #ffffff !important;
   box-shadow: 2px 2px 0px #000000;
 }
 
 [data-theme="dark"] .btn-provider-trigger:hover {
-  background: #252533;
+  background: #272735 !important;
+  border-color: var(--primary) !important;
   box-shadow: 4px 4px 0px #000000;
+}
+
+[data-theme="dark"] .provider-trigger-name {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .provider-trigger-arrow {
+  color: #a1a1aa !important;
+}
+
+[data-theme="dark"] .btn-provider-trigger:hover .provider-trigger-arrow {
+  color: #ffffff !important;
 }
 
 [data-theme="dark"] .btn-install-app {
