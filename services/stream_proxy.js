@@ -64,6 +64,12 @@ async function handleStreamProxy(req, res) {
       const resolveAbsolute = (rawUri) => {
         if (!rawUri) return rawUri;
         if (rawUri.startsWith('http://') || rawUri.startsWith('https://')) return rawUri;
+        if (rawUri.startsWith('/api/')) {
+          if (rawUri.includes('dk_live_') || targetUrl.includes('priv-api')) {
+            return `https://priv-api.anichin.bio${rawUri}`;
+          }
+          return `https://miniapp.anichin.bio${rawUri}`;
+        }
         if (rawUri.startsWith('/')) return `${urlObj.origin}${rawUri}`;
         return `${baseUrl}${rawUri}`;
       };

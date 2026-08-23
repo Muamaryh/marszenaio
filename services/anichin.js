@@ -615,9 +615,64 @@ async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
 
   let streamData = null;
 
-  // 1. DramaBox VIP Decrypt (> Ep 20)
+  // 1. DramaBox Stream Resolver
   if (source === 'dramabox' || /^420\d{8}$/.test(String(id))) {
-    if (epNum > 20) {
+    // A. Direct MP4 Extractor from Master HLS (Native 720p/540p streaming)
+    try {
+      const token = getToken();
+      const masterRes = await httpClient.get('/dramabox/hls', {
+        params: { id, ep: epNum, token },
+        headers: { 'X-API-Key': token },
+        timeout: 6000
+      });
+
+      if (masterRes.data && typeof masterRes.data === 'string') {
+        const lines = masterRes.data.split('\n');
+        const qualities = [];
+        let currentLabel = '720p HD';
+
+        for (const line of lines) {
+          if (line.includes('NAME="')) {
+            const match = line.match(/NAME="([^"]+)"/);
+            if (match) currentLabel = match[1];
+          } else if (line.trim().startsWith('/') || line.trim().startsWith('http')) {
+            let subUrl = line.trim();
+            if (subUrl.startsWith('/api/')) {
+              subUrl = 'https://priv-api.anichin.bio' + subUrl;
+            } else if (subUrl.startsWith('/')) {
+              subUrl = 'https://api.anichin.bio' + subUrl;
+            }
+
+            try {
+              const variantRes = await axios.get(subUrl, { timeout: 5000 });
+              const mp4Line = variantRes.data.split('\n').find(l => l.trim().startsWith('http'));
+              if (mp4Line) {
+                qualities.push({
+                  label: currentLabel,
+                  url: mp4Line.trim(),
+                  isDefault: qualities.length === 0
+                });
+              }
+            } catch (errVariant) {}
+          }
+        }
+
+        if (qualities.length > 0) {
+          streamData = {
+            success: true,
+            source: 'dramabox',
+            id,
+            episodeNumber: epNum,
+            videoUrl: qualities[0].url,
+            qualities,
+            subtitles: []
+          };
+        }
+      }
+    } catch (e) {}
+
+    // B. Sansekai VIP Decrypt fallback (> Ep 20 or if Anichin MP4 extraction failed)
+    if (!streamData) {
       try {
         const { getDramaBoxEpisodeStream } = require('./dramabox_sansekai');
         const dbRes = await getDramaBoxEpisodeStream(id, epNum);
@@ -662,8 +717,8 @@ async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
   if (!streamData && source === 'shortmax') {
     try {
       const token = getToken();
-      const hls720 = `${ANICHIN_API_URL}/api/shortmax/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=720p&token=${token}`;
-      const hls480 = `${ANICHIN_API_URL}/api/shortmax/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=480p&token=${token}`;
+      const hls720 = `${ANICHIN_API_URL}/shortmax/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=720p&token=${token}`;
+      const hls480 = `${ANICHIN_API_URL}/shortmax/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=480p&token=${token}`;
       streamData = {
         success: true,
         source: 'shortmax',
