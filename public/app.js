@@ -705,7 +705,7 @@ function updateActiveProviderHeader() {
   const cur = appState.sources.find(s => s.key === appState.currentSource) || { key: 'dramawave', name: 'DramaWave' };
   const logoEl = el('activeProviderLogo');
   const nameEl = el('activeProviderName');
-  if (logoEl) logoEl.src = `/assets/logos/${cur.key}.svg?v=2.2.0`;
+  if (logoEl) logoEl.src = `/assets/logos/${cur.key}.svg?v=3.0.0`;
   if (nameEl) nameEl.textContent = cur.name;
 }
 
@@ -718,7 +718,7 @@ function renderSourcesPills() {
     const btn = document.createElement('button');
     btn.className = 'source-btn' + (src.key === appState.currentSource ? ' active' : '');
     btn.dataset.source = src.key;
-    const logoHtml = `<img src="/assets/logos/${src.key}.svg?v=2.2.0" alt="${escapeHtml(src.name)}" class="source-logo-img" onerror="this.src='/assets/icons/icon.svg'"/>`;
+    const logoHtml = `<img src="/assets/logos/${src.key}.svg?v=3.0.0" alt="${escapeHtml(src.name)}" class="source-logo-img" onerror="this.src='/assets/icons/icon.svg'"/>`;
     btn.innerHTML = `
       ${logoHtml}
       <span class="source-name-text">${escapeHtml(src.name)}</span>
@@ -833,7 +833,7 @@ function renderProviderModalGrid() {
     item.className = 'provider-select-card' + (isAct ? ' active' : '');
     item.onclick = () => selectSource(src.key, src.name, src.desc);
 
-    const logoHtml = `<img src="/assets/logos/${src.key}.svg?v=2.2.0" alt="${escapeHtml(src.name)}" class="psc-logo" onerror="this.src='/assets/icons/icon.svg'"/>`;
+    const logoHtml = `<img src="/assets/logos/${src.key}.svg?v=3.0.0" alt="${escapeHtml(src.name)}" class="psc-logo" onerror="this.src='/assets/icons/icon.svg'"/>`;
     const badgeHtml = src.badge ? `<span class="psc-badge">${escapeHtml(src.badge)}</span>` : '';
     const checkHtml = isAct ? `<span class="psc-check">✓ Aktif</span>` : '';
 
