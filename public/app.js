@@ -1975,10 +1975,8 @@ function setupVideoPlayer(data, sessionId, startTime = 0) {
     });
   } else {
     // Direct MP4 / Native Video
-    const shouldProxy = (
+    const shouldProxy = !streamUrl.includes('anichin.bio') && (
       streamUrl.startsWith('http://') ||
-      streamUrl.includes('anichin.bio') ||
-      streamUrl.includes('melolo') ||
       streamUrl.includes('dramahue.com') ||
       streamUrl.includes('dramaboxdb.com') ||
       streamUrl.includes('sansekai.my.id') ||
