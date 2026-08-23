@@ -2031,6 +2031,19 @@ function populateSubtitleOptions(subtitles) {
 
 let currentSubtitlesList = [];
 
+function cleanSubtitleText(text) {
+  if (!text) return '';
+  return text
+    .replace(/\{[^}]+\}/g, '')
+    .replace(/<\/?c(\.[a-zA-Z0-9_\-]+)?>/gi, '')
+    .replace(/<v[^>]*>/gi, '')
+    .replace(/<\/v>/gi, '')
+    .replace(/<\/?(font|b|i|u|span|p|div|strong|em)[^>]*>/gi, '')
+    .replace(/<\d{2}:\d{2}:\d{2}[.,]\d{3}>/g, '')
+    .replace(/<[^>]+>/g, '')
+    .trim();
+}
+
 function parseVttOrSrt(text) {
   const items = [];
   if (!text) return items;
@@ -2057,7 +2070,8 @@ function parseVttOrSrt(text) {
       if (match) {
         const start = timeToSec(match[1].replace(',', '.'));
         const end = timeToSec(match[2].replace(',', '.'));
-        const textLines = lines.slice(timeLineIdx + 1).filter(l => l.trim().length > 0).join('\n');
+        const rawText = lines.slice(timeLineIdx + 1).filter(l => l.trim().length > 0).join('\n');
+        const textLines = cleanSubtitleText(rawText);
         if (textLines) {
           items.push({ start, end, text: textLines });
         }
@@ -2111,8 +2125,13 @@ function updateActiveSubtitle(curTime) {
   const active = currentSubtitlesList.find(s => cur >= s.start && cur <= s.end);
 
   if (active && active.text) {
-    subTextNode.innerHTML = escapeHtml(active.text).replace(/\n/g, '<br>');
-    subOverlay.classList.remove('hidden');
+    const cleaned = cleanSubtitleText(active.text);
+    if (cleaned) {
+      subTextNode.innerHTML = escapeHtml(cleaned).replace(/\n/g, '<br>');
+      subOverlay.classList.remove('hidden');
+    } else {
+      subOverlay.classList.add('hidden');
+    }
   } else {
     subOverlay.classList.add('hidden');
   }
