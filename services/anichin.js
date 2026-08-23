@@ -7,7 +7,8 @@ const WebSocket = require('ws');
 
 const ANICHIN_WS_URL = 'wss://miniapp.anichin.bio/ws';
 const ANICHIN_BASE_URL = 'https://miniapp.anichin.bio';
-const DEFAULT_TOKEN = 'ANICHIN-A5A16A417FC3EBA15BE691F2B9AA6DA1';
+const ANICHIN_PRIV_API_URL = 'https://priv-api.anichin.bio/api';
+const DEFAULT_TOKEN = 'dk_live_faedb6c9a57c892d64e3091e30773900';
 
 const SOURCES = {
   dramawave:  { name: 'DramaWave',  id: 'LeMYdgoXZM', badge: 'HD & Subtitle', desc: 'Direct M3U8 streaming dengan 20+ subtitle multi-bahasa', icon: 'https://video-v6.mydramawave.com/favicon.ico' },
