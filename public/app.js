@@ -1904,7 +1904,9 @@ function setupVideoPlayer(data, sessionId, startTime = 0) {
       if (hls.audioTracks && hls.audioTracks.length > 0) {
         const indoIdx = hls.audioTracks.findIndex(t => {
           const s = ((t.name || '') + ' ' + (t.lang || '')).toLowerCase();
-          return s.includes('id') || s.includes('indo') || s.includes('bahasa');
+          return s.includes('indonesian') || s.includes('indonesia') || s.includes('bahasa') ||
+                 s.includes('indo') || s === 'id' || s.startsWith('id ') || s.endsWith(' id') ||
+                 (t.lang || '').toLowerCase() === 'id' || (t.lang || '').toLowerCase() === 'id-id';
         });
         if (indoIdx !== -1) {
           hls.audioTrack = indoIdx;
@@ -1929,7 +1931,9 @@ function setupVideoPlayer(data, sessionId, startTime = 0) {
       if (tracks.length > 0) {
         const indoIdx = tracks.findIndex(t => {
           const s = ((t.name || '') + ' ' + (t.lang || '')).toLowerCase();
-          return s.includes('id') || s.includes('indo') || s.includes('bahasa');
+          return s.includes('indonesian') || s.includes('indonesia') || s.includes('bahasa') ||
+                 s.includes('indo') || s === 'id' || s.startsWith('id ') || s.endsWith(' id') ||
+                 (t.lang || '').toLowerCase() === 'id' || (t.lang || '').toLowerCase() === 'id-id';
         });
         if (indoIdx !== -1) {
           hls.audioTrack = indoIdx;
@@ -2322,7 +2326,9 @@ function setupHlsAudioTracks(tracks) {
     const nameStr = ((t.name || '') + ' ' + (t.lang || '')).toLowerCase();
     let label = t.name || `Audio ${idx + 1}`;
 
-    if (nameStr.includes('id') || nameStr.includes('indo') || nameStr.includes('bahasa')) {
+    if (nameStr.includes('indonesian') || nameStr.includes('indonesia') || nameStr.includes('bahasa') ||
+        nameStr.includes('indo') || nameStr === 'id' || nameStr.startsWith('id ') || nameStr.endsWith(' id') ||
+        (t.lang || '').toLowerCase() === 'id' || (t.lang || '').toLowerCase() === 'id-id') {
       label = '🇮🇩 Indonesia';
       selectedIdx = idx;
     } else if (nameStr.includes('zh') || nameStr.includes('cn')) {

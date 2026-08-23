@@ -387,10 +387,13 @@ async function getSansekaiEpisodeStream(source, id, ep = 1) {
       const res = await client.get('/freereels/detailAndAllEpisode', {
         params: { key: String(id) }
       });
-      const eps = res.data?.data?.episodes || res.data?.episodes || [];
+      const rawData = res.data?.data || res.data || {};
+      const eps = rawData?.episodes || rawData?.episode_list || rawData?.list || [];
       if (eps.length >= epNum) {
         const item = eps[epNum - 1];
-        videoUrl = item?.video_url || item?.url || item?.stream_url || '';
+        videoUrl = item?.video_url || item?.url || item?.stream_url ||
+                   item?.hls_url || item?.play_url || item?.m3u8 ||
+                   item?.data?.video_url || item?.data?.url || '';
       }
     } else if (source === 'dramanova') {
       const res = await client.get('/dramanova/getvideo', {

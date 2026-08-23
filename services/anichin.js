@@ -658,7 +658,9 @@ async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
           try {
             const detail = await getDramaDetail(source, id);
             const epIndex = epNum - 1;
-            const masterUrl = detail?.drama?.episodes?.[epIndex]?.videoUrl;
+            const epData = detail?.drama?.episodes?.[epIndex];
+            const masterUrl = epData?.videoUrl || epData?.url || epData?.play_url ||
+                              epData?.hls_url || epData?.m3u8 || epData?.stream_url;
             if (masterUrl && masterUrl.includes('.m3u8')) {
               streamData.videoUrl = masterUrl;
             }

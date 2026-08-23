@@ -60,8 +60,17 @@ async function handleStreamProxy(req, res) {
       const isMediaOnly = !m3u8Content.includes('#EXT-X-STREAM-INF') && m3u8Content.includes('#EXT-X-MAP');
       const isDramaWave = targetUrl.includes('mydramawave.com') || targetUrl.includes('dramawave');
 
-      if (isDramaWave && isMediaOnly && req.query.is_media !== '1' && /_(\d+)\.m3u8$/.test(targetUrl)) {
-        const audioUrl = targetUrl.replace(/_(\d+)\.m3u8$/, '_0_1.aac.m3u8');
+      // Synthetic master M3U8: aktif untuk DramaWave media-only playlist dengan berbagai pola URL
+      const dramaWaveVideoMatch = targetUrl.match(/_(\d+)\.m3u8$/) || targetUrl.match(/\/(\d+)\.m3u8$/);
+      if (isDramaWave && isMediaOnly && req.query.is_media !== '1' && dramaWaveVideoMatch) {
+        // Coba beberapa pola audio URL yang umum dipakai DramaWave
+        const audioUrlCandidates = [
+          targetUrl.replace(/_(\d+)\.m3u8$/, '_0_1.aac.m3u8'),
+          targetUrl.replace(/_(\d+)\.m3u8$/, '_audio.m3u8'),
+          targetUrl.replace(/\/(\d+)\.m3u8$/, '/audio.m3u8'),
+        ].filter((u, i, arr) => arr.indexOf(u) === i && u !== targetUrl);
+
+        const audioUrl = audioUrlCandidates[0];
         const masterM3u8 = [
           '#EXTM3U',
           '#EXT-X-VERSION:6',
@@ -78,6 +87,14 @@ async function handleStreamProxy(req, res) {
         return res.send(masterM3u8);
       }
 
+      // Helper: deteksi apakah audio track adalah Bahasa Indonesia
+      const isIndoAudioTrack = (str) => {
+        const s = str.toLowerCase();
+        return s.includes('id-id') || s.includes('language="id"') || s.includes('name="id"') ||
+               s.includes('indonesian') || s.includes('indonesia') || s.includes('bahasa') ||
+               s.includes('indo') || (s.includes('"id"') && s.includes('audio'));
+      };
+
       const rewritten = m3u8Content.split('\n').map(line => {
         let trimmed = line.trim();
         if (!trimmed) return line;
@@ -89,13 +106,13 @@ async function handleStreamProxy(req, res) {
 
         // Pastikan track audio Indonesia diprioritaskan sebagai default (DEFAULT=YES)
         if (trimmed.includes('TYPE=AUDIO')) {
-          const isIndo = trimmed.includes('NAME="id-ID"') || trimmed.includes('LANGUAGE="id"') || trimmed.includes('NAME="id"') || trimmed.includes('id-ID');
+          const isIndo = isIndoAudioTrack(trimmed);
           if (isIndo) {
-            trimmed = trimmed.replace(/DEFAULT=(YES|NO)/, 'DEFAULT=YES').replace(/AUTOSELECT=(YES|NO)/, 'AUTOSELECT=YES');
+            trimmed = trimmed.replace(/DEFAULT=(YES|NO)/i, 'DEFAULT=YES').replace(/AUTOSELECT=(YES|NO)/i, 'AUTOSELECT=YES');
             if (!trimmed.includes('DEFAULT=')) trimmed += ',DEFAULT=YES';
             if (!trimmed.includes('AUTOSELECT=')) trimmed += ',AUTOSELECT=YES';
           } else {
-            trimmed = trimmed.replace(/DEFAULT=(YES|NO)/, 'DEFAULT=NO').replace(/AUTOSELECT=(YES|NO)/, 'AUTOSELECT=NO');
+            trimmed = trimmed.replace(/DEFAULT=(YES|NO)/i, 'DEFAULT=NO').replace(/AUTOSELECT=(YES|NO)/i, 'AUTOSELECT=NO');
           }
         }
 
