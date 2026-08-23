@@ -286,10 +286,10 @@ function normalizeDramaDetail(raw, fallbackId = '') {
       const epNum = Number(ep.episodeNumber || ep.episode_number || ep.ep || ep.chapter_index || ep.chapter_id || (index + 1));
       const epTitle = ep.title || ep.name || ep.chapter_title || `Episode ${epNum}`;
       const isLocked = Boolean(ep.isLocked || ep.is_locked || ep.is_lock || false);
-      let videoUrl = ep.videoUrl || ep.video_url || ep.url || ep.play_url || ep.hls_url || ep.m3u8 || '';
-      if (videoUrl.startsWith('/api/')) {
+      if (videoUrl.startsWith('/api/') || videoUrl.startsWith('/')) {
         const token = getToken();
-        videoUrl = `${ANICHIN_API_URL}${videoUrl}${videoUrl.includes('?') ? '&' : '?'}token=${token}`;
+        const cleanPath = videoUrl.startsWith('/api/') ? videoUrl.substring(4) : videoUrl;
+        videoUrl = `${ANICHIN_API_URL}${cleanPath}${cleanPath.includes('?') ? '&' : '?'}token=${token}`;
       }
       return {
         episodeNumber: epNum,
@@ -346,14 +346,18 @@ function normalizeEpisodeStream(raw, source, id, epNum) {
     videoUrl = data;
   } else {
     videoUrl = data.videoUrl || data.video_url || data.url || data.play_url || data.hls_url || data.m3u8 || data.stream_url || '';
-    if (videoUrl.startsWith('/api/')) {
-      videoUrl = `${ANICHIN_API_URL}${videoUrl}${videoUrl.includes('?') ? '&' : '?'}token=${token}`;
+    if (videoUrl.startsWith('/api/') || videoUrl.startsWith('/')) {
+      const cleanPath = videoUrl.startsWith('/api/') ? videoUrl.substring(4) : videoUrl;
+      videoUrl = `${ANICHIN_API_URL}${cleanPath}${cleanPath.includes('?') ? '&' : '?'}token=${token}`;
     }
 
     if (Array.isArray(data.qualities) && data.qualities.length > 0) {
       qualities = data.qualities.map(q => {
         let qUrl = q.url || q.video_url || q.play_url || '';
-        if (qUrl.startsWith('/api/')) qUrl = `${ANICHIN_API_URL}${qUrl}${qUrl.includes('?') ? '&' : '?'}token=${token}`;
+        if (qUrl.startsWith('/api/') || qUrl.startsWith('/')) {
+          const cleanPath = qUrl.startsWith('/api/') ? qUrl.substring(4) : qUrl;
+          qUrl = `${ANICHIN_API_URL}${cleanPath}${cleanPath.includes('?') ? '&' : '?'}token=${token}`;
+        }
         return {
           label: q.label || q.name || q.resolution || `${q.height || ''}p`,
           url: qUrl,
@@ -363,7 +367,10 @@ function normalizeEpisodeStream(raw, source, id, epNum) {
     } else if (Array.isArray(data.qualityList) && data.qualityList.length > 0) {
       qualities = data.qualityList.map(q => {
         let qUrl = q.url || q.videoUrl || '';
-        if (qUrl.startsWith('/api/')) qUrl = `${ANICHIN_API_URL}${qUrl}${qUrl.includes('?') ? '&' : '?'}token=${token}`;
+        if (qUrl.startsWith('/api/') || qUrl.startsWith('/')) {
+          const cleanPath = qUrl.startsWith('/api/') ? qUrl.substring(4) : qUrl;
+          qUrl = `${ANICHIN_API_URL}${cleanPath}${cleanPath.includes('?') ? '&' : '?'}token=${token}`;
+        }
         return {
           label: q.label || q.name || `${q.quality || ''}`,
           url: qUrl,

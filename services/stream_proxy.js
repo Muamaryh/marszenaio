@@ -20,7 +20,11 @@ async function handleStreamProxy(req, res) {
   }
 
   try {
-    const isM3u8 = targetUrl.includes('.m3u8') || targetUrl.includes('m3u8') || req.path.endsWith('.m3u8');
+    let targetUrl = url;
+    if (targetUrl.includes('api.anichin.bio/api/')) {
+      targetUrl = targetUrl.replace('api.anichin.bio/api/', 'api.anichin.bio/');
+    }
+    const isM3u8 = targetUrl.includes('.m3u8') || targetUrl.includes('m3u8') || targetUrl.includes('/hls') || req.path.endsWith('.m3u8');
 
     const token = process.env.ANICHIN_API_KEY || 'ANICHIN-A5A16A417FC3EBA15BE691F2B9AA6DA1';
     let referer = 'https://api.anichin.bio/';
