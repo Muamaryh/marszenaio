@@ -91,7 +91,9 @@ async function handleStreamProxy(req, res) {
           const isIndo = trimmed.includes('NAME="id-ID"') || trimmed.includes('LANGUAGE="id"') || trimmed.includes('NAME="id"') || trimmed.includes('id-ID');
           if (isIndo) {
             trimmed = trimmed.replace(/DEFAULT=(YES|NO)/, 'DEFAULT=YES').replace(/AUTOSELECT=(YES|NO)/, 'AUTOSELECT=YES');
-          } else if (trimmed.includes('NAME="zh') || trimmed.includes('LANGUAGE="zh')) {
+            if (!trimmed.includes('DEFAULT=')) trimmed += ',DEFAULT=YES';
+            if (!trimmed.includes('AUTOSELECT=')) trimmed += ',AUTOSELECT=YES';
+          } else {
             trimmed = trimmed.replace(/DEFAULT=(YES|NO)/, 'DEFAULT=NO').replace(/AUTOSELECT=(YES|NO)/, 'AUTOSELECT=NO');
           }
         }
