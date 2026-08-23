@@ -439,6 +439,99 @@ function showResumeToastCustom(text) {
   }, 2200);
 }
 
+// ===== NAVIGATION CONTROLLER (HARDWARE / GESTURE BACK & DOUBLE TAP TO EXIT) =====
+
+let lastBackTapTime = 0;
+let isInternalHistoryAction = false;
+
+function showGlobalToast(msg, duration = 2200) {
+  const toast = el('globalAppToast');
+  const textEl = el('globalAppToastText');
+  if (!toast || !textEl) return;
+  textEl.innerHTML = msg;
+  toast.classList.remove('hidden');
+  void toast.offsetWidth; // Trigger reflow for CSS transition
+  toast.classList.add('visible');
+
+  clearTimeout(appState.globalToastTimeout);
+  appState.globalToastTimeout = setTimeout(() => {
+    toast.classList.remove('visible');
+    setTimeout(() => toast.classList.add('hidden'), 260);
+  }, duration);
+}
+
+function initBackNavigation() {
+  // Replace initial state with home view
+  try {
+    history.replaceState({ view: 'home' }, '');
+  } catch (e) {}
+
+  window.addEventListener('popstate', (event) => {
+    if (isInternalHistoryAction) {
+      isInternalHistoryAction = false;
+      return;
+    }
+
+    // 1. Jika Episode Drawer Fullscreen sedang terbuka -> tutup drawer saja
+    const fsDrawer = el('fullscreenEpDrawer');
+    if (fsDrawer && !fsDrawer.classList.contains('hidden')) {
+      hide('fullscreenEpDrawer');
+      try { history.pushState({ view: 'theater' }, ''); } catch (e) {}
+      return;
+    }
+
+    // 2. Jika Theater Modal (Video Player) terbuka -> tutup video player & kembali ke katalog
+    const theater = el('theaterModal');
+    if (theater && !theater.classList.contains('hidden')) {
+      closeTheater(true);
+      return;
+    }
+
+    // 3. Jika Search Modal terbuka -> tutup search modal
+    const searchModal = el('searchModalOverlay');
+    if (searchModal && !searchModal.classList.contains('hidden')) {
+      closeSearchModal(true);
+      return;
+    }
+
+    // 4. Jika Provider Switcher Modal terbuka -> tutup provider modal
+    const provModal = el('providerModal');
+    if (provModal && !provModal.classList.contains('hidden')) {
+      closeProviderModal(true);
+      return;
+    }
+
+    // 5. Jika sedang menampilkan Hasil Pencarian di feed beranda -> bersihkan dan kembali ke feed utama
+    if (appState.currentQuery) {
+      appState.currentQuery = '';
+      const hInput = el('headerSearchInput');
+      if (hInput) hInput.value = '';
+      hide('headerSearchClear');
+      loadFeed();
+      try { history.pushState({ view: 'home' }, ''); } catch (e) {}
+      return;
+    }
+
+    // 6. Jika sedang berada di tab sekunder (Favorit / Riwayat Nonton) -> kembali ke '✨ Untuk Anda'
+    if (appState.currentFeedType === 'favorites' || appState.currentFeedType === 'history') {
+      setFeedType('foryou');
+      try { history.pushState({ view: 'home' }, ''); } catch (e) {}
+      return;
+    }
+
+    // 7. Pengguna berada di Halaman Utama (Root): Ketuk 2x untuk keluar dari aplikasi
+    const now = Date.now();
+    if (now - lastBackTapTime < 2200) {
+      // Izinkan keluar aplikasi (biarkan default back terjadi atau keluar)
+      history.back();
+    } else {
+      lastBackTapTime = now;
+      try { history.pushState({ view: 'home' }, ''); } catch (e) {}
+      showGlobalToast('📲 <strong>Ketuk sekali lagi</strong> untuk menutup aplikasi', 2200);
+    }
+  });
+}
+
 // ===== PWA INSTALLATION HELPER =====
 
 let deferredPrompt = null;
@@ -530,6 +623,7 @@ async function initApp() {
   } catch (e) {}
 
   initPWA();
+  initBackNavigation();
   initPopupSearch();
   initDesktopSearch();
   initSourcesDrag();
@@ -695,11 +789,19 @@ function initDesktopSearch() {
 }
 
 function openProviderModal() {
+  try { history.pushState({ view: 'provider' }, ''); } catch (e) {}
   renderProviderModalGrid();
   show('providerModal');
 }
 
-function closeProviderModal() {
+function closeProviderModal(fromPopState = false) {
+  if (!fromPopState) {
+    const provModal = el('providerModal');
+    if (provModal && !provModal.classList.contains('hidden')) {
+      isInternalHistoryAction = true;
+      try { history.back(); } catch (e) {}
+    }
+  }
   hide('providerModal');
 }
 
@@ -929,6 +1031,7 @@ async function loadPopularSearchTags() {
 }
 
 function openSearchModal() {
+  try { history.pushState({ view: 'search' }, ''); } catch (e) {}
   show('searchModalOverlay');
   loadPopularSearchTags();
   const input = el('popupSearchInput');
@@ -943,7 +1046,14 @@ function openSearchModal() {
   }
 }
 
-function closeSearchModal() {
+function closeSearchModal(fromPopState = false) {
+  if (!fromPopState) {
+    const searchModal = el('searchModalOverlay');
+    if (searchModal && !searchModal.classList.contains('hidden')) {
+      isInternalHistoryAction = true;
+      try { history.back(); } catch (e) {}
+    }
+  }
   hide('searchModalOverlay');
 }
 
@@ -1463,6 +1573,7 @@ function initInfiniteScroll() {
 let playbackSessionId = 0;
 
 async function openDrama(source, dramaId, fallbackTitle = '', startEpisode = null) {
+  try { history.pushState({ view: 'theater', id: dramaId }, ''); } catch (e) {}
   source = resolveActualSource(dramaId, source);
   const currentSession = ++playbackSessionId;
   document.body.classList.add('theater-open');
@@ -2393,7 +2504,15 @@ function navigateEpisode(delta) {
   }
 }
 
-function closeTheater() {
+function closeTheater(fromPopState = false) {
+  if (!fromPopState) {
+    const theater = el('theaterModal');
+    if (theater && !theater.classList.contains('hidden')) {
+      isInternalHistoryAction = true;
+      try { history.back(); } catch (e) {}
+    }
+  }
+
   const video = el('playerVideo');
   if (video && appState.activeDrama && video.currentTime > 0) {
     saveWatchProgress(appState.activeDrama, appState.currentEpisode, video.currentTime, video.duration);

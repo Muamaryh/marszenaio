@@ -3222,17 +3222,68 @@ body.theater-open .bottom-nav-bar {
   color: #f4f4f6;
 }
 
+[data-theme="dark"] .search-quick-tags {
+  background: #18181f !important;
+  border-bottom-color: #272732 !important;
+}
+
+[data-theme="dark"] .quick-tag-label,
+[data-theme="dark"] .sqt-label {
+  color: #a1a1aa !important;
+}
+
 [data-theme="dark"] .quick-tag-btn,
 [data-theme="dark"] .sqt-chip {
-  background: #1e1e28;
-  border-color: #2e2e3d;
-  color: #f4f4f6;
+  background: #1e1e28 !important;
+  border-color: #2e2e3d !important;
+  color: #f4f4f6 !important;
+  box-shadow: 1px 1px 0px #000000;
 }
 
 [data-theme="dark"] .quick-tag-btn:hover,
 [data-theme="dark"] .sqt-chip:hover {
-  background: var(--primary);
-  color: #000000;
+  background: var(--primary) !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+}
+
+[data-theme="dark"] .search-modal-body {
+  background: #14141a !important;
+}
+
+/* --- Global App Toast (Double Back, Notifications) --- */
+.global-app-toast {
+  position: fixed;
+  bottom: 84px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(18, 18, 24, 0.95);
+  color: #ffffff;
+  border: 1.5px solid #383847;
+  padding: 10px 22px;
+  border-radius: var(--radius-full);
+  font-size: 0.86rem;
+  font-weight: 800;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.global-app-toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+[data-theme="light"] .global-app-toast {
+  background: rgba(24, 24, 27, 0.92);
+  color: #ffffff;
+  border-color: #000000;
 }
 
 /* --- Dark Theme Provider Selector Modal --- */
