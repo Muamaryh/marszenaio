@@ -20,8 +20,8 @@ async function handleStreamProxy(req, res) {
   }
 
   try {
-    const targetUrl = url;
-    const isM3u8 = targetUrl.includes('.m3u8') || targetUrl.includes('/hls') || targetUrl.includes('m3u8') || req.path.endsWith('.m3u8');
+    const isMeloloDirectMp4 = targetUrl.includes('melolo/hls');
+    const isM3u8 = !isMeloloDirectMp4 && (targetUrl.includes('.m3u8') || targetUrl.includes('m3u8') || (targetUrl.includes('/hls') && !targetUrl.includes('melolo')));
 
     const token = process.env.ANICHIN_API_KEY || 'dk_live_faedb6c9a57c892d64e3091e30773900';
     const headers = {

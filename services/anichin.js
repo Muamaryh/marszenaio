@@ -43,8 +43,32 @@ const CACHE_TTL_DETAIL_MS = 30 * 60 * 1000; // 30 menit
 const CACHE_TTL_EPISODE_MS = 15 * 60 * 1000; // 15 menit
 const CACHE_TTL_SEARCH_MS = 5 * 60 * 1000; // 5 menit
 
+const axios = require('axios');
+
 function getToken() {
   return process.env.ANICHIN_API_KEY || DEFAULT_TOKEN;
+}
+
+const privApiClient = axios.create({
+  baseURL: ANICHIN_PRIV_API_URL,
+  timeout: 12000
+});
+
+async function fetchFromPrivApi(source, endpoint, params = {}) {
+  try {
+    const token = getToken();
+    const res = await privApiClient.get(`/${source}/${endpoint}`, {
+      params,
+      headers: {
+        'X-API-Key': token,
+        'Authorization': `Bearer ${token}`,
+        'User-Agent': 'Mozilla/5.0'
+      }
+    });
+    return res.data;
+  } catch (err) {
+    return null;
+  }
 }
 let authResolvers = [];
 
@@ -346,9 +370,17 @@ async function getFeed(source = 'dramawave', type = 'trending', page = 1) {
     } catch (e) {}
   }
 
-  // 2. Ambil data dari Anichin WebSocket (API 1)
+  // 2. Ambil data dari Anichin (API 1 - Private REST / WebSocket)
   let anichinItems = [];
-  if (source !== 'pinedrama') {
+  if (source === 'pinedrama') {
+    try {
+      const pRes = await fetchFromPrivApi('pinedrama', type === 'foryou' ? 'foryou' : 'trending', { page: String(page), count: 15, lang: 'id' });
+      const rawList = pRes?.items || pRes?.list || pRes?.data || pRes || [];
+      if (Array.isArray(rawList) && rawList.length > 0) {
+        anichinItems = normalizeDramaList(rawList);
+      }
+    } catch (e) {}
+  } else {
     let path = type;
     const params = {};
     if (type === 'foryou' || type === 'latest' || type === 'new' || type === 'romance') {
@@ -408,13 +440,23 @@ async function searchDramas(source = 'dramawave', query = '') {
   let items = [];
 
   // 1. Cari di provider yang sedang aktif
-  try {
-    const res = await sendWsRequest(source === 'all' ? 'dramawave' : source, 'search', { query: query.trim() });
-    const wsItems = normalizeDramaList(res.data).map(item => ({ ...item, source: resolveActualSource(item.id, source) }));
-    if (wsItems && wsItems.length > 0) {
-      items.push(...wsItems);
-    }
-  } catch (err) {}
+  if (source === 'pinedrama') {
+    try {
+      const pRes = await fetchFromPrivApi('pinedrama', 'search', { q: query.trim(), page: 1, count: 20, lang: 'id' });
+      const rawList = pRes?.items || pRes?.list || pRes?.data || pRes || [];
+      if (Array.isArray(rawList) && rawList.length > 0) {
+        items.push(...normalizeDramaList(rawList).map(item => ({ ...item, source: 'pinedrama' })));
+      }
+    } catch (e) {}
+  } else {
+    try {
+      const res = await sendWsRequest(source === 'all' ? 'dramawave' : source, 'search', { query: query.trim() });
+      const wsItems = normalizeDramaList(res.data).map(item => ({ ...item, source: resolveActualSource(item.id, source) }));
+      if (wsItems && wsItems.length > 0) {
+        items.push(...wsItems);
+      }
+    } catch (err) {}
+  }
 
   // 2. Jika provider didukung Sansekai, cari juga via Sansekai provider search
   const SANSEKAI_SOURCES = ['pinedrama', 'melolo', 'freereels', 'shortmax', 'reelshort', 'dramanova'];
@@ -505,8 +547,15 @@ async function getDramaDetail(source = 'dramawave', id) {
 
   let detail = null;
 
-  // 1. Coba API 1 (Anichin WebSocket)
-  if (source !== 'pinedrama') {
+  // 1. Coba API 1 (PineDrama via priv-api, lainnya via Anichin WebSocket)
+  if (source === 'pinedrama') {
+    try {
+      const pRes = await fetchFromPrivApi('pinedrama', 'detail', { id: String(id), lang: 'id' });
+      if (pRes && (pRes.title || pRes.id || pRes.drama)) {
+        detail = normalizeDramaDetail(pRes.drama || pRes, id);
+      }
+    } catch (e) {}
+  } else {
     try {
       const res = await sendWsRequest(source, 'detail', { id: String(id) });
       detail = normalizeDramaDetail(res.data, id);
@@ -630,7 +679,27 @@ async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
     }
   }
 
-  // 2. ShortMax HLS
+  // 2. Melolo Server-Side Decrypted MP4 Stream (Method 1 Anichin DRM Guide)
+  if (source === 'melolo') {
+    const token = getToken();
+    const cleanUrl = `${ANICHIN_PRIV_API_URL}/melolo/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&lang=id&api_key=${token}`;
+    streamData = {
+      success: true,
+      source: 'melolo',
+      id,
+      episodeNumber: epNum,
+      videoUrl: cleanUrl,
+      qualities: [
+        { label: '720p HD', url: `${ANICHIN_PRIV_API_URL}/melolo/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=720p&lang=id&api_key=${token}`, isDefault: true },
+        { label: '540p', url: `${ANICHIN_PRIV_API_URL}/melolo/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=540p&lang=id&api_key=${token}` },
+        { label: '480p', url: `${ANICHIN_PRIV_API_URL}/melolo/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=480p&lang=id&api_key=${token}` },
+        { label: '360p', url: `${ANICHIN_PRIV_API_URL}/melolo/hls?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(epNum)}&q=360p&lang=id&api_key=${token}` }
+      ],
+      subtitles: []
+    };
+  }
+
+  // 3. ShortMax HLS
   if (!streamData && source === 'shortmax') {
     try {
       streamData = {
@@ -646,7 +715,17 @@ async function getDramaEpisode(source = 'dramawave', id, ep = 1) {
     } catch (e) {}
   }
 
-  // 3. Provider Umum: Coba API 1 (Anichin WebSocket)
+  // 4. Khusus PineDrama: Coba priv-api
+  if (!streamData && source === 'pinedrama') {
+    try {
+      const pEp = await fetchFromPrivApi('pinedrama', 'episode', { id: String(id), ep: String(epNum), lang: 'id' });
+      if (pEp && (pEp.videoUrl || pEp.url)) {
+        streamData = normalizeEpisodeStream(pEp, 'pinedrama', id, epNum);
+      }
+    } catch (e) {}
+  }
+
+  // 5. Provider Umum: Coba API 1 (Anichin WebSocket)
   if (!streamData && source !== 'pinedrama') {
     try {
       const res = await sendWsRequest(source, 'episode', { id: String(id), ep: String(epNum) });
