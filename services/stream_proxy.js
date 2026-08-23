@@ -65,7 +65,7 @@ async function handleStreamProxy(req, res) {
           '#EXTM3U',
           '#EXT-X-VERSION:6',
           '#EXT-X-INDEPENDENT-SEGMENTS',
-          `#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="default-audio",NAME="Indonesian",DEFAULT=YES,AUTOSELECT=YES,CHANNELS="2",URI="/api/stream/proxy?url=${encodeURIComponent(audioUrl)}"`,
+          `#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="default-audio",NAME="Original Audio",DEFAULT=YES,AUTOSELECT=YES,CHANNELS="2",URI="/api/stream/proxy?url=${encodeURIComponent(audioUrl)}"`,
           `#EXT-X-STREAM-INF:BANDWIDTH=1800000,AVERAGE-BANDWIDTH=1000000,CODECS="avc1.640032,mp4a.40.2",RESOLUTION=720x1280,AUDIO="default-audio"`,
           `/api/stream/proxy?url=${encodeURIComponent(targetUrl)}&is_media=1`
         ].join('\n');
@@ -76,7 +76,7 @@ async function handleStreamProxy(req, res) {
         res.setHeader('Cache-Control', 'public, max-age=60');
         return res.send(masterM3u8);
       }
-      let hasEnabledAudio = false;
+
       const rewritten = m3u8Content.split('\n').map(line => {
         let trimmed = line.trim();
         if (!trimmed) return line;
@@ -86,11 +86,13 @@ async function handleStreamProxy(req, res) {
           trimmed = trimmed.replace(/api_key=[^&"\s]+/, `api_key=${token}`);
         }
 
-        // Pastikan track audio Indonesia / pertama diaktifkan (DEFAULT=YES)
+        // Pastikan track audio Indonesia diprioritaskan sebagai default (DEFAULT=YES)
         if (trimmed.includes('TYPE=AUDIO')) {
-          if ((trimmed.includes('NAME="id-ID"') || trimmed.includes('LANGUAGE="id"') || !hasEnabledAudio) && trimmed.includes('DEFAULT=NO')) {
-            trimmed = trimmed.replace('DEFAULT=NO', 'DEFAULT=YES').replace('AUTOSELECT=NO', 'AUTOSELECT=YES');
-            hasEnabledAudio = true;
+          const isIndo = trimmed.includes('NAME="id-ID"') || trimmed.includes('LANGUAGE="id"') || trimmed.includes('NAME="id"') || trimmed.includes('id-ID');
+          if (isIndo) {
+            trimmed = trimmed.replace(/DEFAULT=(YES|NO)/, 'DEFAULT=YES').replace(/AUTOSELECT=(YES|NO)/, 'AUTOSELECT=YES');
+          } else if (trimmed.includes('NAME="zh') || trimmed.includes('LANGUAGE="zh')) {
+            trimmed = trimmed.replace(/DEFAULT=(YES|NO)/, 'DEFAULT=NO').replace(/AUTOSELECT=(YES|NO)/, 'AUTOSELECT=NO');
           }
         }
 

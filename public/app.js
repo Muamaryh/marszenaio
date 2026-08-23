@@ -1882,12 +1882,26 @@ function setupVideoPlayer(data, sessionId, startTime = 0) {
     video.addEventListener('loadedmetadata', onMetaHls, { once: true });
     video.addEventListener('canplay', onMetaHls, { once: true });
 
+    const selectIndonesianAudioTrack = () => {
+      const tracks = hls.audioTracks || [];
+      if (tracks.length > 0) {
+        const indoIdx = tracks.findIndex(t => {
+          const str = ((t.name || '') + ' ' + (t.lang || '')).toLowerCase();
+          return str.includes('id') || str.includes('indo') || str.includes('bahasa');
+        });
+        if (indoIdx !== -1 && hls.audioTrack !== indoIdx) {
+          hls.audioTrack = indoIdx;
+        }
+      }
+    };
+
     hls.on(Hls.Events.MANIFEST_PARSED, (event, manifestData) => {
       if (sessionId !== playbackSessionId) return;
       hide('videoLoader');
       if (manifestData.levels && manifestData.levels.length > 1) {
         setupHlsQualities(manifestData.levels);
       }
+      selectIndonesianAudioTrack();
       video.muted = false;
       video.volume = 1;
       applyResumePosition();
@@ -1902,13 +1916,7 @@ function setupVideoPlayer(data, sessionId, startTime = 0) {
 
     hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, (event, audioData) => {
       if (sessionId !== playbackSessionId) return;
-      if (audioData.audioTracks && audioData.audioTracks.length > 0) {
-        const indoIdx = audioData.audioTracks.findIndex(t => 
-          (t.name || t.lang || '').toLowerCase().includes('id') || 
-          (t.name || t.lang || '').toLowerCase().includes('indo')
-        );
-        hls.audioTrack = (indoIdx !== -1) ? indoIdx : 0;
-      }
+      selectIndonesianAudioTrack();
       video.muted = false;
       video.volume = 1;
     });
