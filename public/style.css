@@ -531,14 +531,14 @@ body {
 }
 
 .source-logo-img {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 6px;
   object-fit: contain;
   flex-shrink: 0;
-  box-shadow: 1px 1px 0px var(--black);
-  border: 1px solid var(--black);
-  background: #ffffff;
+  border: none;
+  background: transparent;
+  box-shadow: none;
 }
 
 .source-name-text {
@@ -711,11 +711,11 @@ body {
   width: 36px;
   height: 36px;
   object-fit: contain;
-  border-radius: 6px;
+  border-radius: 8px;
   flex-shrink: 0;
-  box-shadow: 1px 1px 0px var(--black);
-  border: 1px solid var(--black);
-  background: #ffffff;
+  border: none;
+  background: transparent;
+  box-shadow: none;
 }
 
 .psc-info {
