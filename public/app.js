@@ -439,10 +439,33 @@ function showResumeToastCustom(text) {
   }, 2200);
 }
 
-// ===== NAVIGATION CONTROLLER (HARDWARE / GESTURE BACK & DOUBLE TAP TO EXIT) =====
+// ===== NAVIGATION CONTROLLER (EXIT CONFIRMATION & ANDROID BACK HANDLER) =====
 
-let lastBackTapTime = 0;
-let isInternalHistoryAction = false;
+function openExitModal() {
+  show('exitModalOverlay');
+  try {
+    history.pushState({ view: 'exit' }, '', window.location.pathname + '#exit');
+  } catch (e) {}
+}
+
+function closeExitModal(fromPopState = false) {
+  hide('exitModalOverlay');
+  if (!fromPopState && window.location.hash === '#exit') {
+    try { history.back(); } catch (e) {}
+  }
+}
+
+function confirmExitApp() {
+  hide('exitModalOverlay');
+  try {
+    window.close();
+  } catch (e) {}
+  try {
+    history.go(-2);
+  } catch (e) {
+    history.back();
+  }
+}
 
 function showGlobalToast(msg, duration = 2200) {
   const toast = el('globalAppToast');
@@ -467,6 +490,13 @@ function initBackNavigation() {
   } catch (e) {}
 
   window.addEventListener('popstate', (event) => {
+    // 0. Jika Exit Confirmation Dialog sedang terbuka -> tutup dialog
+    const exitModal = el('exitModalOverlay');
+    if (exitModal && !exitModal.classList.contains('hidden')) {
+      closeExitModal(true);
+      return;
+    }
+
     // 1. Jika Episode Drawer Fullscreen sedang terbuka -> tutup drawer
     const fsDrawer = el('fullscreenEpDrawer');
     if (fsDrawer && !fsDrawer.classList.contains('hidden')) {
@@ -511,19 +541,8 @@ function initBackNavigation() {
       return;
     }
 
-    // 7. Pengguna berada di Halaman Utama (Root): Ketuk 2x untuk keluar dari aplikasi
-    const now = Date.now();
-    if (now - lastBackTapTime < 2500) {
-      // Izinkan keluar aplikasi (biarkan default back terjadi atau keluar)
-      try { window.close(); } catch (e) {}
-      history.back();
-    } else {
-      lastBackTapTime = now;
-      try {
-        history.pushState({ view: 'root' }, '', window.location.pathname + '#home');
-      } catch (e) {}
-      showGlobalToast('📲 <strong>Ketuk 2 kali</strong> untuk menutup aplikasi', 2200);
-    }
+    // 7. Pengguna berada di Halaman Utama (Root): Tekan 1x Kembali -> Tampilkan Dialog Konfirmasi Keluar
+    openExitModal();
   });
 }
 

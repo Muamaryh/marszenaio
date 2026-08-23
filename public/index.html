@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=3.5.0">
+  <link rel="stylesheet" href="style.css?v=3.8.0">
   <!-- HLS.js for HLS streaming support -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
 </head>
@@ -446,6 +446,19 @@
     <span id="globalAppToastText"></span>
   </div>
 
-  <script src="app.js?v=3.5.0"></script>
+  <!-- App Exit Confirmation Dialog Modal -->
+  <div class="exit-modal-overlay hidden" id="exitModalOverlay" onclick="closeExitModal(event)">
+    <div class="exit-modal-card" onclick="event.stopPropagation()">
+      <div class="exit-modal-icon">🎬</div>
+      <h3 class="exit-modal-title">Keluar dari MARSZTREAM?</h3>
+      <p class="exit-modal-desc">Apakah Anda yakin ingin menutup dan keluar dari aplikasi?</p>
+      <div class="exit-modal-actions">
+        <button class="btn-exit-cancel" onclick="closeExitModal()">Batal</button>
+        <button class="btn-exit-confirm" onclick="confirmExitApp()">Ya, Keluar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=3.8.0"></script>
 </body>
 </html>
