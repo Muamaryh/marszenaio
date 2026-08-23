@@ -1,6 +1,6 @@
-# 🎬 DracinHub - All-In-One Short Drama Streaming App
+# 🎬 MARSZTREAM - All-In-One Short Drama Streaming App
 
-Aplikasi web streaming drama pendek (Dracin / Short Drama) All-In-One terlengkap dengan integrasi **Anichin Official API**.
+Aplikasi web streaming drama pendek (Dracin / Short Drama) All-In-One terlengkap dengan integrasi **Anichin Official API** dan **Sansekai Dual-API Fallback**.
 
 ---
 

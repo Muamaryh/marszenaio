@@ -1,7 +1,7 @@
 {
-  "name": "dracin-app",
-  "version": "1.0.0",
-  "description": "DracinHub - All-In-One (AIO) Short Drama Streaming Web Application",
+  "name": "marsztream-app",
+  "version": "2.2.0",
+  "description": "MARSZTREAM - All-In-One (AIO) Short Drama Streaming Web Application",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

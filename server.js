@@ -150,8 +150,8 @@ app.get('/api/debug/stream', async (req, res) => {
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
-    app: 'DracinHub - AIO Short Drama',
-    version: '1.0.0',
+    app: 'MARSZTREAM - AIO Short Drama',
+    version: '2.2.0',
     timestamp: new Date().toISOString()
   });
 });
@@ -163,7 +163,7 @@ app.get('*', (req, res) => {
 
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   app.listen(PORT, () => {
-    console.log(`🎬 DracinHub AIO Short Drama Server running on http://localhost:${PORT}`);
+    console.log(`🎬 MARSZTREAM AIO Short Drama Server running on http://localhost:${PORT}`);
   });
 }
 

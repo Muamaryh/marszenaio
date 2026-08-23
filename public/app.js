@@ -58,7 +58,7 @@ function getFallbackPosterSvg(title = 'Drama') {
     <rect width="100%" height="100%" fill="url(#g)"/>
     <circle cx="150" cy="160" r="50" fill="#facc15" fill-opacity="0.12"/>
     <text x="150" y="176" font-size="42" text-anchor="middle">🎬</text>
-    <text x="150" y="250" fill="#facc15" font-size="13" font-weight="900" font-family="system-ui, sans-serif" text-anchor="middle" letter-spacing="1.5">DRACINHUB</text>
+    <text x="150" y="250" fill="#facc15" font-size="13" font-weight="900" font-family="system-ui, sans-serif" text-anchor="middle" letter-spacing="1.5">MARSZTREAM</text>
     <text x="150" y="278" fill="#a1a1aa" font-size="12" font-weight="700" font-family="system-ui, sans-serif" text-anchor="middle">${safeTitle}</text>
   </svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;

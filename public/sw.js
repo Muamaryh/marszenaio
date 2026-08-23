@@ -1,8 +1,8 @@
 /**
- * DracinHub - Service Worker (PWA Shell Caching)
+ * MARSZTREAM - Service Worker (PWA Shell Caching)
  */
 
-const CACHE_NAME = 'dracinhub-pwa-v1';
+const CACHE_NAME = 'marsztream-pwa-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
