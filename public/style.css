@@ -3114,9 +3114,10 @@ body.theater-open .bottom-nav-bar {
 }
 
 [data-theme="dark"] .brand-badge {
-  background: #272732;
-  border-color: #383847;
-  color: var(--primary);
+  background: var(--accent-yellow) !important;
+  border-color: #000000 !important;
+  color: #000000 !important;
+  box-shadow: 1.5px 1.5px 0px #000000;
 }
 
 [data-theme="dark"] .btn-provider-trigger {
