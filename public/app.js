@@ -1216,7 +1216,7 @@ function appendSearchGrid(dramas, targetContainerId = 'popupSearchGrid') {
     `;
 
     card.onclick = () => {
-      closeSearchModal();
+      closeSearchModal(true);
       openDrama(actualSrc, d.id, d.title);
     };
     grid.appendChild(card);
@@ -1587,12 +1587,18 @@ function initInfiniteScroll() {
 let playbackSessionId = 0;
 
 async function openDrama(source, dramaId, fallbackTitle = '', startEpisode = null) {
-  try { history.pushState({ view: 'theater', id: dramaId }, '', window.location.pathname + '#player'); } catch (e) {}
+  hide('searchModalOverlay');
+  hide('providerModal');
+  hide('exitModalOverlay');
+  hide('fullscreenEpDrawer');
+
+  if (window.location.hash !== '#player') {
+    try { history.pushState({ view: 'theater', id: dramaId }, '', window.location.pathname + '#player'); } catch (e) {}
+  }
   source = resolveActualSource(dramaId, source);
   const currentSession = ++playbackSessionId;
   document.body.classList.add('theater-open');
   show('theaterModal');
-  hide('fullscreenEpDrawer');
 
   // Sinkronkan active source ke provider drama yang dipilih
   if (source) {
