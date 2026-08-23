@@ -1882,26 +1882,13 @@ function setupVideoPlayer(data, sessionId, startTime = 0) {
     video.addEventListener('loadedmetadata', onMetaHls, { once: true });
     video.addEventListener('canplay', onMetaHls, { once: true });
 
-    const selectIndonesianAudioTrack = () => {
-      const tracks = hls.audioTracks || [];
-      if (tracks.length > 0) {
-        const indoIdx = tracks.findIndex(t => {
-          const str = ((t.name || '') + ' ' + (t.lang || '')).toLowerCase();
-          return str.includes('id') || str.includes('indo') || str.includes('bahasa');
-        });
-        if (indoIdx !== -1 && hls.audioTrack !== indoIdx) {
-          hls.audioTrack = indoIdx;
-        }
-      }
-    };
-
     hls.on(Hls.Events.MANIFEST_PARSED, (event, manifestData) => {
       if (sessionId !== playbackSessionId) return;
       hide('videoLoader');
       if (manifestData.levels && manifestData.levels.length > 1) {
         setupHlsQualities(manifestData.levels);
       }
-      selectIndonesianAudioTrack();
+      setupHlsAudioTracks(hls.audioTracks);
       video.muted = false;
       video.volume = 1;
       applyResumePosition();
@@ -1916,7 +1903,7 @@ function setupVideoPlayer(data, sessionId, startTime = 0) {
 
     hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, (event, audioData) => {
       if (sessionId !== playbackSessionId) return;
-      selectIndonesianAudioTrack();
+      setupHlsAudioTracks(audioData.audioTracks || hls.audioTracks);
       video.muted = false;
       video.volume = 1;
     });
@@ -2085,6 +2072,54 @@ function populateQualityOptions(qualities) {
       if (q.isDefault) opt.selected = true;
       select.appendChild(opt);
     });
+  }
+}
+
+function setupHlsAudioTracks(tracks) {
+  const select = el('audioTrackSelect');
+  if (!select) return;
+
+  if (!tracks || tracks.length <= 1) {
+    hide('audioTrackSelect');
+    return;
+  }
+
+  show('audioTrackSelect');
+  select.innerHTML = '';
+
+  let selectedIdx = 0;
+  tracks.forEach((t, idx) => {
+    const opt = document.createElement('option');
+    opt.value = idx;
+    const nameStr = ((t.name || '') + ' ' + (t.lang || '')).toLowerCase();
+    let label = t.name || `Audio ${idx + 1}`;
+
+    if (nameStr.includes('id') || nameStr.includes('indo') || nameStr.includes('bahasa')) {
+      label = '🇮🇩 Indonesia';
+      selectedIdx = idx;
+    } else if (nameStr.includes('zh') || nameStr.includes('cn')) {
+      label = '🇨🇳 Mandarin';
+    } else if (nameStr.includes('en')) {
+      label = '🇺🇸 English';
+    }
+
+    opt.textContent = `🔊 ${label}`;
+    select.appendChild(opt);
+  });
+
+  if (appState.hlsPlayer) {
+    appState.hlsPlayer.audioTrack = selectedIdx;
+    select.value = selectedIdx;
+  }
+}
+
+function changeAudioTrack(val) {
+  if (appState.hlsPlayer && !isNaN(parseInt(val))) {
+    const idx = parseInt(val);
+    appState.hlsPlayer.audioTrack = idx;
+    const select = el('audioTrackSelect');
+    const label = select?.options[select.selectedIndex]?.text || `Audio ${idx}`;
+    showToast(`Dubbing diubah: ${label}`);
   }
 }
 
