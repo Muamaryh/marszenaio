@@ -286,6 +286,7 @@ function normalizeDramaDetail(raw, fallbackId = '') {
       const epNum = Number(ep.episodeNumber || ep.episode_number || ep.ep || ep.chapter_index || ep.chapter_id || (index + 1));
       const epTitle = ep.title || ep.name || ep.chapter_title || `Episode ${epNum}`;
       const isLocked = Boolean(ep.isLocked || ep.is_locked || ep.is_lock || false);
+      let videoUrl = ep.videoUrl || ep.video_url || ep.url || ep.play_url || ep.hls_url || ep.m3u8 || '';
       if (videoUrl.startsWith('/api/') || videoUrl.startsWith('/')) {
         const token = getToken();
         const cleanPath = videoUrl.startsWith('/api/') ? videoUrl.substring(4) : videoUrl;
