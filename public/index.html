@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=6.0.0">
+  <link rel="stylesheet" href="style.css?v=6.5.0">
   <!-- HLS.js for HLS streaming support -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
 </head>
@@ -367,9 +367,10 @@
 
                     <!-- Subtitle Position Switcher -->
                     <select id="subPositionSelect" class="player-select" onchange="changeSubPosition(this.value)" title="Posisi Subtitle (Bisa juga digeser langsung di layar)">
-                      <option value="60">📍 Posisi: Bawah</option>
-                      <option value="95" selected>📍 Posisi: Tengah-Bawah</option>
-                      <option value="145">📍 Posisi: Atas</option>
+                      <option value="65">📍 Sub: Bawah</option>
+                      <option value="130" selected>📍 Sub: Tengah-Bawah</option>
+                      <option value="200">📍 Sub: Tengah Layar</option>
+                      <option value="280">📍 Sub: Atas</option>
                     </select>
 
                     <!-- Speed Switcher -->
@@ -479,6 +480,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=6.0.0"></script>
+  <script src="app.js?v=6.5.0"></script>
 </body>
 </html>

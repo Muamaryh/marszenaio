@@ -2384,8 +2384,8 @@ body {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 85px; /* Standar nyaman di atas bar kontrol */
-  max-width: 90%;
+  bottom: 130px; /* Posisi nyaman di tengah-bawah layar vertical drama */
+  max-width: 88%;
   width: auto;
   text-align: center;
   z-index: 18;
@@ -2402,30 +2402,37 @@ body {
 
 .player-subtitle-overlay .subtitle-text {
   display: inline-block;
-  background: rgba(0, 0, 0, 0.78);
+  background: rgba(0, 0, 0, 0.82);
   color: #ffffff;
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 1.05rem;
   font-weight: 800;
   line-height: 1.35;
   padding: 5px 14px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.85);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.9);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 8px rgba(0, 0, 0, 0.9);
   white-space: pre-wrap;
 }
 
+@media (max-width: 768px) {
+  .player-subtitle-overlay {
+    bottom: 120px;
+    max-width: 92%;
+  }
+  .player-subtitle-overlay .subtitle-text {
+    font-size: 0.92rem;
+    padding: 4px 12px;
+    font-weight: 800;
+  }
+}
+
 video::cue {
-  color: #ffffff;
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-weight: 700;
-  font-size: 1rem;
-  line-height: 1.35;
-  background-color: rgba(0, 0, 0, 0.78);
-  border-radius: 4px;
-  padding: 3px 10px;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.8);
+  color: transparent !important;
+  background-color: transparent !important;
+  font-size: 0 !important;
+  opacity: 0 !important;
 }
 
 @media (max-width: 768px) {

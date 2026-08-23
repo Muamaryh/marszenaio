@@ -2029,75 +2029,104 @@ function populateSubtitleOptions(subtitles) {
   }
 }
 
-function changeSubtitle(subUrl) {
-  const video = el('playerVideo');
+let currentSubtitlesList = [];
+
+function parseVttOrSrt(text) {
+  const items = [];
+  if (!text) return items;
+  const blocks = text.replace(/\r\n|\r/g, '\n').split('\n\n');
+  
+  const timeToSec = (timeStr) => {
+    const parts = timeStr.trim().split(':');
+    if (parts.length === 3) {
+      const secParts = parts[2].split('.');
+      return parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseFloat(secParts.join('.'));
+    } else if (parts.length === 2) {
+      const secParts = parts[1].split('.');
+      return parseInt(parts[0]) * 60 + parseFloat(secParts.join('.'));
+    }
+    return 0;
+  };
+
+  blocks.forEach(block => {
+    const lines = block.trim().split('\n');
+    let timeLineIdx = lines.findIndex(l => l.includes('-->'));
+    if (timeLineIdx !== -1) {
+      const timeLine = lines[timeLineIdx];
+      const match = timeLine.match(/(\d+:\d+:\d+[.,]\d+|\d+:\d+[.,]\d+)\s*-->\s*(\d+:\d+:\d+[.,]\d+|\d+:\d+[.,]\d+)/);
+      if (match) {
+        const start = timeToSec(match[1].replace(',', '.'));
+        const end = timeToSec(match[2].replace(',', '.'));
+        const textLines = lines.slice(timeLineIdx + 1).filter(l => l.trim().length > 0).join('\n');
+        if (textLines) {
+          items.push({ start, end, text: textLines });
+        }
+      }
+    }
+  });
+
+  return items;
+}
+
+async function changeSubtitle(subUrl) {
+  currentSubtitlesList = [];
   const subOverlay = el('playerSubtitleOverlay');
   const subTextNode = el('subtitleTextNode');
+  if (subOverlay) subOverlay.classList.add('hidden');
+  if (subTextNode) subTextNode.innerHTML = '';
+
+  const video = el('playerVideo');
   if (!video) return;
 
-  // Bersihkan track subtitle
+  // Bersihkan track subtitle native lama
   while (video.getElementsByTagName('track').length > 0) {
     video.removeChild(video.getElementsByTagName('track')[0]);
   }
 
-  if (subOverlay) {
-    subOverlay.classList.add('hidden');
-    if (subTextNode) subTextNode.innerHTML = '';
-  }
-
   if (subUrl === 'none' || !subUrl) return;
 
-  const track = document.createElement('track');
-  track.kind = 'subtitles';
-  track.label = 'Selected';
-  track.srclang = 'id';
-  track.default = true;
-
-  // Subtitle proxied through our SRT -> VTT converter
-  track.src = `/api/stream/subtitle?url=${encodeURIComponent(subUrl)}`;
-  video.appendChild(track);
-
-  const handleCues = (textTrack) => {
-    if (!textTrack) return;
-    textTrack.mode = 'hidden';
-    textTrack.oncuechange = () => {
-      if (!subOverlay || !subTextNode) return;
-      const cues = textTrack.activeCues;
-      if (cues && cues.length > 0) {
-        let text = Array.from(cues).map(c => c.text).join('\n');
-        subTextNode.innerHTML = escapeHtml(text).replace(/\n/g, '<br>');
-        subOverlay.classList.remove('hidden');
-      } else {
-        subTextNode.innerHTML = '';
-        subOverlay.classList.add('hidden');
-      }
-    };
-  };
-
-  track.addEventListener('load', () => {
-    try {
-      handleCues(track.track);
-    } catch (e) {}
-  });
-
-  setTimeout(() => {
-    if (video.textTracks && video.textTracks.length > 0) {
-      for (let i = 0; i < video.textTracks.length; i++) {
-        handleCues(video.textTracks[i]);
-      }
+  try {
+    const res = await fetch(`/api/stream/subtitle?url=${encodeURIComponent(subUrl)}`);
+    const text = await res.text();
+    currentSubtitlesList = parseVttOrSrt(text);
+    if (video.currentTime) {
+      updateActiveSubtitle(video.currentTime);
     }
-  }, 300);
+  } catch (e) {
+    console.warn('Gagal memuat subtitle:', e);
+  }
+}
+
+function updateActiveSubtitle(curTime) {
+  const subOverlay = el('playerSubtitleOverlay');
+  const subTextNode = el('subtitleTextNode');
+  if (!subOverlay || !subTextNode) return;
+
+  if (currentSubtitlesList.length === 0) {
+    subOverlay.classList.add('hidden');
+    return;
+  }
+
+  const cur = typeof curTime === 'number' ? curTime : (el('playerVideo')?.currentTime || 0);
+  const active = currentSubtitlesList.find(s => cur >= s.start && cur <= s.end);
+
+  if (active && active.text) {
+    subTextNode.innerHTML = escapeHtml(active.text).replace(/\n/g, '<br>');
+    subOverlay.classList.remove('hidden');
+  } else {
+    subOverlay.classList.add('hidden');
+  }
 }
 
 function changeSubPosition(val) {
   const subOverlay = el('playerSubtitleOverlay');
   if (!subOverlay) return;
-  const num = parseInt(val) || 95;
+  const num = parseInt(val) || 130;
   subOverlay.style.bottom = `${num}px`;
   try {
     localStorage.setItem('dracin_sub_pos_bottom', num);
   } catch (e) {}
-  showToast(`Posisi subtitle: ${num}px`);
+  showToast(`Posisi subtitle: ${num}px (bisa juga digeser bebas)`);
 }
 
 function initDraggableSubtitle() {
@@ -2105,29 +2134,30 @@ function initDraggableSubtitle() {
   const container = el('videoContainer');
   if (!subOverlay || !container) return;
 
-  // Pulihkan posisi subtitle yang tersimpan sebelumnya
+  // Default posisi tengah-bawah nyaman untuk drama pendek vertical (130px)
+  let savedBottom = 130;
   try {
-    const savedBottom = localStorage.getItem('dracin_sub_pos_bottom') || '95';
-    if (savedBottom) {
-      subOverlay.style.bottom = `${savedBottom}px`;
-      const select = el('subPositionSelect');
-      if (select) {
-        const opts = Array.from(select.options);
-        const match = opts.find(o => Math.abs(parseInt(o.value) - parseInt(savedBottom)) < 25);
-        if (match) select.value = match.value;
-      }
-    }
+    const stored = localStorage.getItem('dracin_sub_pos_bottom');
+    if (stored) savedBottom = parseInt(stored) || 130;
   } catch (e) {}
+
+  subOverlay.style.bottom = `${savedBottom}px`;
+  const select = el('subPositionSelect');
+  if (select) {
+    const opts = Array.from(select.options);
+    const match = opts.find(o => Math.abs(parseInt(o.value) - savedBottom) < 30);
+    if (match) select.value = match.value;
+  }
 
   let isDragging = false;
   let startY = 0;
-  let startBottom = 85;
+  let startBottom = savedBottom;
 
   const onStart = (clientY) => {
     isDragging = true;
     startY = clientY;
     const computed = window.getComputedStyle(subOverlay);
-    startBottom = parseFloat(computed.bottom) || 85;
+    startBottom = parseFloat(computed.bottom) || 130;
     subOverlay.style.transition = 'none';
   };
 
@@ -2135,8 +2165,8 @@ function initDraggableSubtitle() {
     if (!isDragging) return;
     const deltaY = startY - clientY;
     const containerRect = container.getBoundingClientRect();
-    const maxBottom = Math.max(containerRect.height - 70, 150);
-    const minBottom = 25;
+    const maxBottom = Math.max(containerRect.height - 80, 200);
+    const minBottom = 30;
     let newBottom = Math.min(Math.max(startBottom + deltaY, minBottom), maxBottom);
     subOverlay.style.bottom = `${newBottom}px`;
   };
@@ -2446,6 +2476,7 @@ function initPlayerEventListeners() {
     if (dur > 0 && el('videoSeekBar')) {
       el('videoSeekBar').value = (cur / dur) * 1000;
     }
+    updateActiveSubtitle(cur);
 
     // Auto-next backup trigger saat video mencapai akhir playlist (<0.4s tersisa)
     if (dur > 2 && cur > 0 && cur >= (dur - 0.45) && !video.paused) {
@@ -2464,8 +2495,13 @@ function initPlayerEventListeners() {
     const dur = video.duration || 0;
     if (dur > 0) {
       video.currentTime = (e.target.value / 1000) * dur;
+      updateActiveSubtitle(video.currentTime);
     }
     showControls(4000);
+  });
+
+  video.addEventListener('seeked', () => {
+    updateActiveSubtitle(video.currentTime);
   });
 
   el('volSlider')?.addEventListener('input', (e) => {
