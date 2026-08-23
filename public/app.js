@@ -2089,6 +2089,17 @@ function changeSubtitle(subUrl) {
   }, 300);
 }
 
+function changeSubPosition(val) {
+  const subOverlay = el('playerSubtitleOverlay');
+  if (!subOverlay) return;
+  const num = parseInt(val) || 95;
+  subOverlay.style.bottom = `${num}px`;
+  try {
+    localStorage.setItem('dracin_sub_pos_bottom', num);
+  } catch (e) {}
+  showToast(`Posisi subtitle: ${num}px`);
+}
+
 function initDraggableSubtitle() {
   const subOverlay = el('playerSubtitleOverlay');
   const container = el('videoContainer');
@@ -2096,9 +2107,15 @@ function initDraggableSubtitle() {
 
   // Pulihkan posisi subtitle yang tersimpan sebelumnya
   try {
-    const savedBottom = localStorage.getItem('dracin_sub_pos_bottom');
+    const savedBottom = localStorage.getItem('dracin_sub_pos_bottom') || '95';
     if (savedBottom) {
       subOverlay.style.bottom = `${savedBottom}px`;
+      const select = el('subPositionSelect');
+      if (select) {
+        const opts = Array.from(select.options);
+        const match = opts.find(o => Math.abs(parseInt(o.value) - parseInt(savedBottom)) < 25);
+        if (match) select.value = match.value;
+      }
     }
   } catch (e) {}
 
