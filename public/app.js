@@ -675,20 +675,25 @@ async function loadSources() {
     // Fallback default list
     appState.sources = [
       { key: 'dramawave', name: 'DramaWave', badge: 'HD & Subtitle', desc: 'Direct M3U8 streaming dengan 20+ subtitle multi-bahasa' },
-      { key: 'freereels', name: 'FreeReels', badge: 'Gratis & Sub', desc: 'Direct stream cepat dengan subtitle Indonesia' },
-      { key: 'netshort', name: 'NetShort', badge: 'Direct MP4', desc: 'Kualitas original MP4 dengan subtitle Indonesia' },
       { key: 'dramabox', name: 'DramaBox', badge: 'Popular', desc: 'Provider drama box nomor 1 di Asia' },
-      { key: 'shortmax', name: 'ShortMax', badge: 'Trending', desc: 'Katalog ribuan drama pendek bertema CEO & Reinkarnasi' },
-      { key: 'melolo', name: 'Melolo', badge: 'Multi-Bitrate', desc: 'Pilihan resolusi 720p, 540p, 360p' },
-      { key: 'dramanova', name: 'DramaNova', badge: 'Romance / 18+', desc: 'Drama romantis & dewasa' },
-      { key: 'reelshort', name: 'ReelShort', badge: 'Hot', desc: 'Drama pendek billionaire & werewolf viral' },
+      { key: 'dramaboxv2', name: 'DramaBox V2', badge: 'Fast V2', desc: 'DramaBox API Versi 2 tercepat & terlengkap' },
+      { key: 'netshort', name: 'NetShort', badge: 'Direct MP4', desc: 'Kualitas original MP4 dengan sulih suara Indonesia' },
       { key: 'goodshort', name: 'GoodShort', badge: 'Recom', desc: 'Drama pilihan terfavorit penonton' },
+      { key: 'shortmax', name: 'ShortMax', badge: 'Trending', desc: 'Katalog ribuan drama pendek bertema CEO & Reinkarnasi' },
+      { key: 'reelshort', name: 'ReelShort', badge: 'Hot', desc: 'Drama pendek billionaire & werewolf viral' },
+      { key: 'melolo', name: 'Melolo', badge: 'Multi-Bitrate', desc: 'Pilihan resolusi 720p, 540p, 360p' },
+      { key: 'freereels', name: 'FreeReels', badge: 'Gratis & Sub', desc: 'Direct stream cepat dengan subtitle Indonesia' },
       { key: 'flickreels', name: 'FlickReels', badge: 'Top Rank', desc: 'Serial drama rating tinggi' },
-      { key: 'idrama', name: 'iDrama', badge: 'Viral', desc: 'Koleksi drama pendek Asia terpopuler' },
       { key: 'dramabite', name: 'DramaBite', badge: 'Fresh', desc: 'Update drama baru setiap hari' },
-      { key: 'moboreels', name: 'MoboReels', badge: 'Trending', desc: 'Drama pendek pilihan trending penonton' },
+      { key: 'dramanova', name: 'DramaNova', badge: 'Romance / 18+', desc: 'Drama romantis & dewasa' },
       { key: 'flareflow', name: 'FlareFlow', badge: 'HD & Sub', desc: 'Drama romantis & aksi trending terbaru' },
-      { key: 'pinedrama', name: 'PineDrama', badge: 'TikTok HD', desc: 'Drama pendek viral & dubbing Indonesia' }
+      { key: 'moboreels', name: 'MoboReels', badge: 'Trending', desc: 'Drama pendek pilihan trending penonton' },
+      { key: 'starshort', name: 'StarShort', badge: 'Popular', desc: 'Serial drama pendek bintang viral' },
+      { key: 'stardustv', name: 'StardustTV', badge: 'HD', desc: 'Koleksi drama pendek Stardust' },
+      { key: 'idrama', name: 'iDrama', badge: 'Viral', desc: 'Koleksi drama pendek Asia terpopuler' },
+      { key: 'pinedrama', name: 'PineDrama', badge: 'TikTok HD', desc: 'Drama pendek viral & dubbing Indonesia' },
+      { key: 'wetv', name: 'WeTV', badge: 'Official', desc: 'Drama & serial WeTV resmi' },
+      { key: 'iqiyi', name: 'iQIYI', badge: 'VIP HD', desc: 'Koleksi drama pendek eksklusif iQIYI' }
     ];
   }
 

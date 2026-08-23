@@ -12,20 +12,25 @@ const DEFAULT_TOKEN = 'dk_live_faedb6c9a57c892d64e3091e30773900';
 
 const SOURCES = {
   dramawave:  { name: 'DramaWave',  id: 'LeMYdgoXZM', badge: 'HD & Subtitle', desc: 'Direct M3U8 streaming dengan 20+ subtitle multi-bahasa', icon: 'https://video-v6.mydramawave.com/favicon.ico' },
-  freereels:  { name: 'FreeReels',  id: '51bAUXzvfP', badge: 'Gratis & Sub', desc: 'Direct stream cepat dengan subtitle Indonesia', icon: 'https://freereels.com/favicon.ico' },
-  netshort:   { name: 'NetShort',   id: '2034157133506805762', badge: 'Direct MP4', desc: 'Kualitas original MP4 dengan subtitle Indonesia', icon: 'https://netshort.com/favicon.ico' },
   dramabox:   { name: 'DramaBox',   id: '42000007806', badge: 'Popular', desc: 'Provider drama box nomor 1 di Asia', icon: 'https://dramaboxdb.com/favicon.ico' },
-  shortmax:   { name: 'ShortMax',   id: '18854', badge: 'Trending', desc: 'Katalog ribuan drama pendek bertema CEO & Reinkarnasi', icon: 'https://akamai-static.shorttv.live/favicon.ico' },
-  melolo:     { name: 'Melolo',     id: '7522723499182394385', badge: 'Multi-Bitrate', desc: 'Pilihan resolusi 720p, 540p, 360p', icon: 'https://melolo.com/favicon.ico' },
-  dramanova:  { name: 'DramaNova',  id: '102062', badge: 'Romance / 18+', desc: 'Drama romantis & dewasa', icon: 'https://dramanova.com/favicon.ico' },
-  reelshort:  { name: 'ReelShort',  id: '699d1eefa3a7262cff05534b', badge: 'Hot', desc: 'Drama pendek romantis dan billionaire viral', icon: 'https://www.reelshort.com/favicon.ico' },
+  dramaboxv2: { name: 'DramaBox V2',id: '42000007806', badge: 'Fast V2', desc: 'DramaBox API Versi 2 tercepat & terlengkap', icon: 'https://dramaboxdb.com/favicon.ico' },
+  netshort:   { name: 'NetShort',   id: '2034157133506805762', badge: 'Direct MP4', desc: 'Kualitas original MP4 dengan sulih suara Indonesia', icon: 'https://netshort.com/favicon.ico' },
   goodshort:  { name: 'GoodShort',  id: '31001188126', badge: 'Recom', desc: 'Drama pilihan terfavorit penonton', icon: 'https://goodshort.com/favicon.ico' },
+  shortmax:   { name: 'ShortMax',   id: '18854', badge: 'Trending', desc: 'Katalog ribuan drama pendek bertema CEO & Reinkarnasi', icon: 'https://akamai-static.shorttv.live/favicon.ico' },
+  reelshort:  { name: 'ReelShort',  id: '699d1eefa3a7262cff05534b', badge: 'Hot', desc: 'Drama pendek romantis dan billionaire viral', icon: 'https://www.reelshort.com/favicon.ico' },
+  melolo:     { name: 'Melolo',     id: '7522723499182394385', badge: 'Multi-Bitrate', desc: 'Pilihan resolusi 720p, 540p, 360p', icon: 'https://melolo.com/favicon.ico' },
+  freereels:  { name: 'FreeReels',  id: '51bAUXzvfP', badge: 'Gratis & Sub', desc: 'Direct stream cepat dengan subtitle Indonesia', icon: 'https://freereels.com/favicon.ico' },
   flickreels: { name: 'FlickReels', id: '5672', badge: 'Top Rank', desc: 'Serial drama rating tinggi', icon: 'https://flickreels.com/favicon.ico' },
-  idrama:     { name: 'iDrama',     id: '160000641712', badge: 'Viral', desc: 'Koleksi drama pendek Asia terpopuler', icon: 'https://idrama.com/favicon.ico' },
   dramabite:  { name: 'DramaBite',  id: '15384', badge: 'Fresh', desc: 'Update drama baru setiap hari', icon: 'https://dramabite.com/favicon.ico' },
-  moboreels:  { name: 'MoboReels',  id: '41896322', badge: 'Trending', desc: 'Drama pendek pilihan trending penonton', icon: 'https://moboreels.com/favicon.ico' },
+  dramanova:  { name: 'DramaNova',  id: '102062', badge: 'Romance / 18+', desc: 'Drama romantis & dewasa', icon: 'https://dramanova.com/favicon.ico' },
   flareflow:  { name: 'FlareFlow',  id: '746751', badge: 'HD & Sub', desc: 'Drama romantis & aksi trending terbaru', icon: 'https://flareflow.tv/favicon.ico' },
-  pinedrama:  { name: 'PineDrama',  id: 'pinedrama', badge: 'TikTok HD', desc: 'Drama pendek viral & dubbing Indonesia', icon: 'https://pinedrama.com/favicon.ico' }
+  moboreels:  { name: 'MoboReels',  id: '41896322', badge: 'Trending', desc: 'Drama pendek pilihan trending penonton', icon: 'https://moboreels.com/favicon.ico' },
+  starshort:  { name: 'StarShort',  id: 'j0NM', badge: 'Popular', desc: 'Serial drama pendek bintang viral', icon: 'https://starshort.com/favicon.ico' },
+  stardustv:  { name: 'StardustTV', id: '146', badge: 'HD', desc: 'Koleksi drama pendek Stardust', icon: 'https://stardustv.com/favicon.ico' },
+  idrama:     { name: 'iDrama',     id: '160000641712', badge: 'Viral', desc: 'Koleksi drama pendek Asia terpopuler', icon: 'https://idrama.com/favicon.ico' },
+  pinedrama:  { name: 'PineDrama',  id: 'pinedrama', badge: 'TikTok HD', desc: 'Drama pendek viral & dubbing Indonesia', icon: 'https://pinedrama.com/favicon.ico' },
+  wetv:       { name: 'WeTV',       id: 'wetv', badge: 'Official', desc: 'Drama & serial WeTV resmi', icon: 'https://wetv.vip/favicon.ico' },
+  iqiyi:      { name: 'iQIYI',      id: 'iqiyi', badge: 'VIP HD', desc: 'Koleksi drama pendek eksklusif iQIYI', icon: 'https://static.iqiyi.com/favicon.ico' }
 };
 
 let ws = null;
